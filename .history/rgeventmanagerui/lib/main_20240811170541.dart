@@ -3,14 +3,12 @@
 import 'package:english_words/english_words.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:rg_event_management_ui/login.dart';
-
 
 void main() {
   runApp(MyApp());
 }
 
-class MyApp extends StatelessWidget  {
+class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
@@ -18,12 +16,12 @@ class MyApp extends StatelessWidget  {
     return ChangeNotifierProvider(
       create: (context) => MyAppState(),
       child: MaterialApp(
-        title: 'rg event management ui',
+        title: 'Namer App',
         theme: ThemeData(
           useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(seedColor: const Color.fromARGB(255, 183, 55, 16)),
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepOrange),
         ),
-        home: Login(),
+        home: MyHomePage(),
       ),
     );
   }
@@ -61,12 +59,12 @@ class MyAppState extends ChangeNotifier {
   }
 }
 
-class EventsHomePage extends StatefulWidget {
+class MyHomePage extends StatefulWidget {
   @override
-  State<EventsHomePage> createState() => _EventsHomePageState();
+  State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _EventsHomePageState extends State<EventsHomePage> {
+class _MyHomePageState extends State<MyHomePage> {
   var selectedIndex = 0;
 
   @override
