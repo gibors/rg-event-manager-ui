@@ -14,20 +14,16 @@ class _LoginState extends State<Login> {
   final userText = TextEditingController();
   final passwordText = TextEditingController();
 
-
-
   @override
   Widget build(BuildContext context) {
-
-
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
     return Scaffold(
       backgroundColor: AppColors.backColor,
-      appBar: AppBar(
-        elevation: 0.0,
-        title: Text('RG eventos'),
-      ),
+      // appBar: AppBar(
+      //   elevation: 0.0,
+      //   title: Text('RG eventos'),
+      // ),
       body: SizedBox(
         height: height,
         width: width,
@@ -37,18 +33,13 @@ class _LoginState extends State<Login> {
           children: [ Expanded(
               child: Container(
                 height: height,
-                color: const Color.fromARGB(255, 232, 193, 202),
+                color: AppColors.greyColor,
                 child: Center(
-                  child: Text(
-                    ' Administrador de eventos RG',
-                    style: TextStyle(
-                      fontSize: 36.0,
-                      color: AppColors.blueDarkColor,
-                      fontWeight: FontWeight.w700,
-                      fontStyle: FontStyle.normal,
-                    
-                    ),
-                  )  
+                  child: Image(image: AssetImage('assets/images/rg.png'),
+                    width: 500.0,
+                    height: 500.0,
+                  ),
+                 
                 ),  
                 
               ),
@@ -141,7 +132,7 @@ class _LoginState extends State<Login> {
                       SizedBox(height: height * 0.014),
                       Padding(
                         padding: const EdgeInsets.only(left: 0.0),
-                        child: Text('Password',
+                        child: Text('Password:',
                           style: TextStyle(
                             fontSize: 12.0,
                             color: AppColors.blueDarkColor,
@@ -184,13 +175,15 @@ class _LoginState extends State<Login> {
                         color: Colors.transparent,
                         child: InkWell(
                           onTap:  () async {
+                            
                             if(userText.text == "admin" && passwordText.text == "admin"){
                               Navigator.push(context,
                               MaterialPageRoute(builder: (context) {
                                 return  EventsHomePage();
                                 }));
                             // UserService().fetchAlbum();
-                          } else {
+                     } else {
+                            passwordText.clear();
                             showDialog(
                               context: context,
                               builder: (BuildContext context) {
@@ -208,9 +201,8 @@ class _LoginState extends State<Login> {
                                 );
                               },
                             );
-                          }
-                            
-                          },
+                          }  },
+                          
                           borderRadius: BorderRadius.circular(16.0),
                           child: Ink(
                             padding: const EdgeInsets.symmetric(horizontal: 70.0, vertical: 18.0),
