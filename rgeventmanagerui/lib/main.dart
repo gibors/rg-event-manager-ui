@@ -93,16 +93,12 @@ class _EventsHomePageState extends State<EventsHomePage> {
     switch (selectedIndex) {
       case 0:
         page = GeneratorPage();
-        break;
       case 1:
         page = ProveedoresPage();
-        break;
       case 2: 
         page = EmployeesView();
-        break;
         case 3: 
         page = EmployeesView();
-        break;
       default:
         throw UnimplementedError('no widget for $selectedIndex');
     }
