@@ -1,0 +1,4 @@
+enum EventNum {
+  name,
+  description,
+}

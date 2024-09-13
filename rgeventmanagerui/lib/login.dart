@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:rg_event_management_ui/app_colors.dart';
 import 'package:rg_event_management_ui/main.dart';
+import 'package:rg_event_management_ui/models/AuthResponse.dart';
 import 'package:rg_event_management_ui/services/user_service.dart';
 import 'dart:developer';
 
@@ -10,11 +12,15 @@ class Login extends StatefulWidget {
 }
 
 class _LoginState extends State<Login> {
+
   final userText = TextEditingController();
   final passwordText = TextEditingController();
-
+  var token = "";
   @override
   Widget build(BuildContext context) {
+    
+    var appState = context.watch<MyAppState>();
+
     double height = MediaQuery.of(context).size.height;
     double width = MediaQuery.of(context).size.width;
     return Scaffold(
@@ -33,7 +39,7 @@ class _LoginState extends State<Login> {
             Expanded(
               child: Container(
                 height: height,
-                color: AppColors.greyColor,
+                color: const Color.fromARGB(255, 170, 170, 170),
                 child: Center(
                   child: Image(
                     image: AssetImage('assets/images/rg.png'),
@@ -172,43 +178,41 @@ class _LoginState extends State<Login> {
                         color: Colors.transparent,
                         child: InkWell(
                           onTap: () async {
-                            var token = "";
                             UserService()
                                 .login(userText.text, passwordText.text)
                                 .then(
-                                    (String s) => setState(() {
-                                          token = s;
-                                        }),
-                                    onError: (s) => {log('error: $s')});
-
-                            if (token != "") {
-                              log('token: $token');
-                              Navigator.push(context,
-                                  MaterialPageRoute(builder: (context) {
-                                return EventsHomePage();
-                              }));
-                              // UserService().fetchAlbum();
-                            } else {
-                              passwordText.clear();
-                              showDialog(
-                                context: context,
-                                builder: (BuildContext context) {
-                                  return AlertDialog(
-                                    title: Text('Error'),
-                                    content: Text(
-                                        'Usuario o contraseña incorrectos'),
-                                    actions: <Widget>[
-                                      TextButton(
-                                        onPressed: () {
-                                          Navigator.of(context).pop();
-                                        },
-                                        child: Text('Cerrar'),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              );
-                            }
+                                    (AuthResponse response) => setState(() {
+                                          token = response.token;
+                                          if (token != "" && response.error == "") {
+                                            log('token: $token');
+                                            appState.setToken(token);
+                                            Navigator.push(context,
+                                            MaterialPageRoute(builder: (context) {
+                                              return EventsHomePage();
+                                            }));
+                                          } else {
+                                            passwordText.clear();
+                                            showDialog(
+                                              context: context,
+                                              builder: (BuildContext context) {
+                                                return AlertDialog(
+                                                  title: Text('Error'),
+                                                  content: Text(
+                                                      'Usuario o contraseña incorrectos'),
+                                                  actions: <Widget>[
+                                                    TextButton(
+                                                      onPressed: () {
+                                                        Navigator.of(context).pop();
+                                                      },
+                                                      child: Text('Cerrar'),
+                                                    ),
+                                                  ],
+                                                );
+                                              },
+                                            );
+                                        }
+                            }),
+                            onError: (s) => {log('error: $s')});
                           },
                           borderRadius: BorderRadius.circular(16.0),
                           child: Ink(
