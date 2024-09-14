@@ -203,7 +203,7 @@ TextEditingController grado = TextEditingController();
                       decoration: InputDecoration(labelText: 'Additional Cost'),
                       keyboardType: TextInputType.number,
                       validator: (value) {
-                        if (value?.isEmpty ?? true) {
+                        if (value.isEmpty) {
                           return 'Please enter the additional cost';
                         }
                         return null;
@@ -215,7 +215,7 @@ TextEditingController grado = TextEditingController();
               ),
               ElevatedButton(
                 onPressed: () {
-                  if (_formKey.currentState!.validate()) {
+                  if (_formKey.currentState.validate()) {
                     saveEvent();
                   }
                 },
@@ -225,8 +225,7 @@ TextEditingController grado = TextEditingController();
           ),
         ),
       ),
-    );
-       
+      
   }
   
 
