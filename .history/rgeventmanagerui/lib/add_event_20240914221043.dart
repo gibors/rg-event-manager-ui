@@ -13,9 +13,6 @@ class AddEventPopup extends StatefulWidget {
 }
 
 class _AddEventPopup extends State<AddEventPopup> {
-
-  List<Widget> contactFields = [];
-
   final _formKey = GlobalKey<FormState>();
   var isEditMode = false;
 
@@ -67,53 +64,6 @@ class _AddEventPopup extends State<AddEventPopup> {
     var appState = context.read<MyAppState>();
     grado.text = "Secundaria";
     token = appState.appToken;
-
-    contactFields.add(
-      Row(
-        children: [
-          Expanded(
-            child: TextFormField(
-              controller: TextEditingController(),
-              decoration: InputDecoration(labelText: 'Nombre de contacto:'),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter the contact name';
-                }
-                return null;
-              },
-            ),
-          ),
-          SizedBox(width: 16.0),
-          Expanded(
-            child: TextFormField(
-              controller: TextEditingController(),
-              decoration: InputDecoration(labelText: 'Teléfono de contacto:'),
-              keyboardType: TextInputType.phone,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter the contact phone';
-                }
-                return null;
-              },
-            ),
-          ),
-          SizedBox(width: 16.0),
-          Expanded(
-            child: TextFormField(
-              controller: TextEditingController(),
-              decoration: InputDecoration(labelText: 'Correo de contacto:'),
-              keyboardType: TextInputType.emailAddress,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter the contact email';
-                }
-                return null;
-              },
-            ),
-          ),
-        ],
-      ),
-    );
 
     if (appState.selectedEvent != null) {
       selectedEvent = appState.selectedEvent;
@@ -224,57 +174,6 @@ class _AddEventPopup extends State<AddEventPopup> {
     });
   }
 
-                    void addContactField() {
-                    setState(() {
-                      contactFields.add(
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextFormField(
-                                controller: TextEditingController(),
-                                decoration: InputDecoration(labelText: 'Nombre de contacto:'),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter the contact name';
-                                  }
-                                  return null;
-                                },
-                              ),
-                            ),
-                            SizedBox(width: 16.0),
-                            Expanded(
-                              child: TextFormField(
-                                controller: TextEditingController(),
-                                decoration: InputDecoration(labelText: 'Teléfono de contacto:'),
-                                keyboardType: TextInputType.phone,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter the contact phone';
-                                  }
-                                  return null;
-                                },
-                              ),
-                            ),
-                            SizedBox(width: 16.0),
-                            Expanded(
-                              child: TextFormField(
-                                controller: TextEditingController(),
-                                decoration: InputDecoration(labelText: 'Correo de contacto:'),
-                                keyboardType: TextInputType.emailAddress,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter the contact email';
-                                  }
-                                  return null;
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    });
-                  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -291,7 +190,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                 children: [
                   Row(
                     children: [
-                      Text('Información general', style: TextStyle(fontSize: 20.0, color: Colors.grey[400]))
+                      Text('Information', style: TextStyle(fontSize: 20.0, color: Colors.grey[400]))
                     ],
                   ),
                   SizedBox(height: 16.0),
@@ -372,11 +271,11 @@ class _AddEventPopup extends State<AddEventPopup> {
                       Expanded(
                         child: TextFormField(
                           controller: minCapacity,
-                          decoration: InputDecoration(labelText: selectedEventType!= null && selectedEventType!.id != 3 ? 'Número Invitados': 'Mínimo de graduados'),
+                          decoration: InputDecoration(labelText: selectedEventType!.id != 3 ? 'Número Invitados': 'Mínimo de graduados'),
                           keyboardType: TextInputType.number,
                           validator: (value) {
                             if (value == null || value!.isEmpty) {
-                              return selectedEventType!= null && selectedEventType!.id != 3 ? 'Ingresa número Invitados': 'Ingresa el mínimo de graduados';
+                              return selectedEventType!.id != 3 ? 'Ingresa número Invitados': 'Ingresa el mínimo de graduados';
                             }
                             return null;
                           },
@@ -493,71 +392,19 @@ class _AddEventPopup extends State<AddEventPopup> {
                 ),
                 SizedBox(width: 16.0),
                 Expanded( 
-                  flex: 1,
-                  child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                    'Fecha del evento:',
-                    style: TextStyle(
-                      fontSize: 16.0,
-                    ),
-                    ),
-                    SizedBox(height: 10.0),
-                    CalendarDatePicker( 
-                    initialDate: selectedDate ?? DateTime.now(),
-                    firstDate: DateTime.now().subtract(Duration(days: 365)),
-                    lastDate: DateTime.now().add(Duration(days: 365)),
-                    onDateChanged: (date) {
-                      // Handle date change
-                      selectedDate = date;
-                      log('Selected date: $date');
+                  child: TextFormField(
+                    controller: additionalCost,
+                    decoration: InputDecoration(labelText: 'Costo adicional'),
+                    keyboardType: TextInputType.number,
+                    validator: (value) {
+                      if (value == null || value!.isEmpty) {
+                        return 'Ingresa el costo adicional';
+                      }
+                      return null;
                     },
-                    
-                    initialCalendarMode: DatePickerMode.day,
-                    selectableDayPredicate: (date) {
-                     
-                      return true;
-                    },
-                    
-                    ),
-                  ],
-                ),
-                ),
+                  ),),
                     ]
                   ),
-                  // SizedBox(height: 16.0),
-                   Row(
-                    children: [
-                      Text('Contacto', style: TextStyle(fontSize: 20.0, color: Colors.grey[400]))
-                    ],
-                  ),
-                
-                  Container(
-                    child: Column(
-                      children: contactFields,
-                    ),
-                  ),
-                  
-                  SizedBox(height: 16.0),
-                  Row(
-                    children: [
-                      ElevatedButton(
-                        
-                        onPressed: addContactField,
-                        child: Text('Agregar contacto'),
-                      ),
-                      SizedBox(width: 16.0),
-                      ElevatedButton(
-                        onPressed: () {
-                          contactFields.removeLast();
-                          setState(() {});
-                        },
-                        child: Text('Eliminar contacto'),
-                      ),
-                    ],
-                  ),
-                  
                   SizedBox(height: 16.0),
                   ElevatedButton(
                     onPressed: () {
@@ -565,7 +412,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                       //   saveEvent();
                       // }
                     },
-                    child: Text('Guardar'),
+                    child: Text('Save'),
                   ),
                 ],
               ),

@@ -557,7 +557,6 @@ class _AddEventPopup extends State<AddEventPopup> {
                       ),
                     ],
                   ),
-                  
                   SizedBox(height: 16.0),
                   ElevatedButton(
                     onPressed: () {

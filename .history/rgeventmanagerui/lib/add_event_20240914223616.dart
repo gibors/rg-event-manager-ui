@@ -372,11 +372,11 @@ class _AddEventPopup extends State<AddEventPopup> {
                       Expanded(
                         child: TextFormField(
                           controller: minCapacity,
-                          decoration: InputDecoration(labelText: selectedEventType!= null && selectedEventType!.id != 3 ? 'Número Invitados': 'Mínimo de graduados'),
+                          decoration: InputDecoration(labelText: selectedEventType!.id != 3 ? 'Número Invitados': 'Mínimo de graduados'),
                           keyboardType: TextInputType.number,
                           validator: (value) {
                             if (value == null || value!.isEmpty) {
-                              return selectedEventType!= null && selectedEventType!.id != 3 ? 'Ingresa número Invitados': 'Ingresa el mínimo de graduados';
+                              return selectedEventType!.id != 3 ? 'Ingresa número Invitados': 'Ingresa el mínimo de graduados';
                             }
                             return null;
                           },
@@ -493,71 +493,64 @@ class _AddEventPopup extends State<AddEventPopup> {
                 ),
                 SizedBox(width: 16.0),
                 Expanded( 
-                  flex: 1,
-                  child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                    'Fecha del evento:',
-                    style: TextStyle(
-                      fontSize: 16.0,
-                    ),
-                    ),
-                    SizedBox(height: 10.0),
-                    CalendarDatePicker( 
-                    initialDate: selectedDate ?? DateTime.now(),
-                    firstDate: DateTime.now().subtract(Duration(days: 365)),
-                    lastDate: DateTime.now().add(Duration(days: 365)),
-                    onDateChanged: (date) {
-                      // Handle date change
-                      selectedDate = date;
-                      log('Selected date: $date');
-                    },
-                    
-                    initialCalendarMode: DatePickerMode.day,
-                    selectableDayPredicate: (date) {
-                     
-                      return true;
-                    },
-                    
-                    ),
-                  ],
-                ),
-                ),
+                  child: Text(''),),
                     ]
                   ),
-                  // SizedBox(height: 16.0),
+                  SizedBox(height: 16.0),
                    Row(
                     children: [
                       Text('Contacto', style: TextStyle(fontSize: 20.0, color: Colors.grey[400]))
                     ],
                   ),
-                
-                  Container(
-                    child: Column(
-                      children: contactFields,
-                    ),
+                  Expanded(
+                    children: contactFields.map((contactField) {
+                      return Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: contactField.nameController,
+                              decoration: InputDecoration(labelText: 'Nombre'),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Ingrese el nombre del contacto';
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
+                          SizedBox(width: 16.0),
+                          Expanded(
+                            child: TextFormField(
+                              controller: contactField.emailController,
+                              decoration: InputDecoration(labelText: 'Email'),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Ingrese el email del contacto';
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
+                          SizedBox(width: 16.0),
+                          IconButton(
+                            icon: Icon(Icons.delete),
+                            onPressed: () {
+                              removeContactField(contactField);
+                            },
+                          ),
+                        ],
+                      );
+                    }).toList(),
                   ),
-                  
                   SizedBox(height: 16.0),
                   Row(
                     children: [
                       ElevatedButton(
-                        
                         onPressed: addContactField,
                         child: Text('Agregar contacto'),
                       ),
-                      SizedBox(width: 16.0),
-                      ElevatedButton(
-                        onPressed: () {
-                          contactFields.removeLast();
-                          setState(() {});
-                        },
-                        child: Text('Eliminar contacto'),
-                      ),
                     ],
                   ),
-                  
                   SizedBox(height: 16.0),
                   ElevatedButton(
                     onPressed: () {
@@ -565,7 +558,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                       //   saveEvent();
                       // }
                     },
-                    child: Text('Guardar'),
+                    child: Text('Save'),
                   ),
                 ],
               ),

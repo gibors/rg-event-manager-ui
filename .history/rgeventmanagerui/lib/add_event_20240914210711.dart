@@ -13,9 +13,6 @@ class AddEventPopup extends StatefulWidget {
 }
 
 class _AddEventPopup extends State<AddEventPopup> {
-
-  List<Widget> contactFields = [];
-
   final _formKey = GlobalKey<FormState>();
   var isEditMode = false;
 
@@ -67,53 +64,6 @@ class _AddEventPopup extends State<AddEventPopup> {
     var appState = context.read<MyAppState>();
     grado.text = "Secundaria";
     token = appState.appToken;
-
-    contactFields.add(
-      Row(
-        children: [
-          Expanded(
-            child: TextFormField(
-              controller: TextEditingController(),
-              decoration: InputDecoration(labelText: 'Nombre de contacto:'),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter the contact name';
-                }
-                return null;
-              },
-            ),
-          ),
-          SizedBox(width: 16.0),
-          Expanded(
-            child: TextFormField(
-              controller: TextEditingController(),
-              decoration: InputDecoration(labelText: 'Teléfono de contacto:'),
-              keyboardType: TextInputType.phone,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter the contact phone';
-                }
-                return null;
-              },
-            ),
-          ),
-          SizedBox(width: 16.0),
-          Expanded(
-            child: TextFormField(
-              controller: TextEditingController(),
-              decoration: InputDecoration(labelText: 'Correo de contacto:'),
-              keyboardType: TextInputType.emailAddress,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter the contact email';
-                }
-                return null;
-              },
-            ),
-          ),
-        ],
-      ),
-    );
 
     if (appState.selectedEvent != null) {
       selectedEvent = appState.selectedEvent;
@@ -224,57 +174,6 @@ class _AddEventPopup extends State<AddEventPopup> {
     });
   }
 
-                    void addContactField() {
-                    setState(() {
-                      contactFields.add(
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextFormField(
-                                controller: TextEditingController(),
-                                decoration: InputDecoration(labelText: 'Nombre de contacto:'),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter the contact name';
-                                  }
-                                  return null;
-                                },
-                              ),
-                            ),
-                            SizedBox(width: 16.0),
-                            Expanded(
-                              child: TextFormField(
-                                controller: TextEditingController(),
-                                decoration: InputDecoration(labelText: 'Teléfono de contacto:'),
-                                keyboardType: TextInputType.phone,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter the contact phone';
-                                  }
-                                  return null;
-                                },
-                              ),
-                            ),
-                            SizedBox(width: 16.0),
-                            Expanded(
-                              child: TextFormField(
-                                controller: TextEditingController(),
-                                decoration: InputDecoration(labelText: 'Correo de contacto:'),
-                                keyboardType: TextInputType.emailAddress,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter the contact email';
-                                  }
-                                  return null;
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    });
-                  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -291,7 +190,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                 children: [
                   Row(
                     children: [
-                      Text('Información general', style: TextStyle(fontSize: 20.0, color: Colors.grey[400]))
+                      Text('Information', style: TextStyle(fontSize: 20.0, color: Colors.grey[400]))
                     ],
                   ),
                   SizedBox(height: 16.0),
@@ -372,11 +271,11 @@ class _AddEventPopup extends State<AddEventPopup> {
                       Expanded(
                         child: TextFormField(
                           controller: minCapacity,
-                          decoration: InputDecoration(labelText: selectedEventType!= null && selectedEventType!.id != 3 ? 'Número Invitados': 'Mínimo de graduados'),
+                          decoration: InputDecoration(labelText: selectedEventType!.id != 3 ? 'Numero Invitados': 'Mínimo de graduados'),
                           keyboardType: TextInputType.number,
                           validator: (value) {
                             if (value == null || value!.isEmpty) {
-                              return selectedEventType!= null && selectedEventType!.id != 3 ? 'Ingresa número Invitados': 'Ingresa el mínimo de graduados';
+                              return 'Please enter the additional cost';
                             }
                             return null;
                           },
@@ -387,177 +286,189 @@ class _AddEventPopup extends State<AddEventPopup> {
                   SizedBox(height: 16.0),
                   Row(
                     children: [
-                Expanded(
-                    child: RawAutocomplete<Location>(
-                      displayStringForOption: _displayStringLocationsForOption,
-                  key: _autocompleteKey,
-                  focusNode: _focusNode,
-                  textEditingController: _textEditingLocationController,
-                  optionsBuilder: (TextEditingValue textEditingValue) {
-                    return locations.where((Location option) {
-                      return option.locationName.toLowerCase().startsWith(textEditingValue.text.toLowerCase());
-                    }).toList();
-                  },
-                  optionsViewBuilder: (BuildContext context,
-                      AutocompleteOnSelected<Location> onSelected,
-                      Iterable<Location> options) {
-                    return Material(
-                      elevation: 4.0,
-                      child: ListView(
-                        children: options
-                            .map((Location option) => GestureDetector(
-                                  onTap: () {
-                                    onSelected(option);
-                                  },
-                                  child: ListTile(
-                                    title: Text(option.locationName),
-                                  ),
-                                ))
-                            .toList(),
+                      Expanded(
+                        child: TextFormField(
+                          controller: contactName,
+                          decoration: InputDecoration(labelText: 'Contact Name'),
+                          validator: (value) {
+                            if (value == null || value!.isEmpty) {
+                              return 'Please enter the contact name';
+                            }
+                            return null;
+                          },
+                        ),
                       ),
-                    );
-                  },
-                  fieldViewBuilder: (
-                    BuildContext context,
-                    TextEditingController fieldTextEditingController,
-                    FocusNode fieldFocusNode,
-                    VoidCallback onFieldSubmitted,
-                  ) {
-                    return TextFormField(
-                      controller: fieldTextEditingController,
-                      focusNode: fieldFocusNode,
-                      decoration: const InputDecoration(labelText: 'Selecciona salón'),
-                    );
-                  },
-                  onSelected: (Location selection) {
-                    log('Selected location: ${selection.locationName}');
-                    _textEditingCapacityController.text = selection.capacity.toString();
-                          setState(() {
-                            selectedLocation = selection;
-                          });
-                        },
-                  ),
-                  ),
-                  SizedBox(width: 16.0),
-                  Expanded(
-                    child: RawAutocomplete<Location>(
-                      displayStringForOption: _displayStringCapacityForOption,
-              key: _autocompleteKeyCapacity,
-              focusNode: _focusCapacityNode,
-              textEditingController: _textEditingCapacityController,
-              optionsBuilder: (TextEditingValue textEditingValue) {
-                return locations.where((Location option) {
-                  return option.capacity.toString().startsWith(textEditingValue.text.toLowerCase());
-                }).toList();
-              },
-              optionsViewBuilder: (BuildContext context,
-                  AutocompleteOnSelected<Location> onSelected,
-                  Iterable<Location> options) {
-                return Material(
-                  elevation: 4.0,
-                  child: ListView(
-                    children: options
-                        .map((Location option) => GestureDetector(
-                              onTap: () {
-                                onSelected(option);
-                              },
-                              child: ListTile(
-                                title: Text(option.capacity.toString()),
-                              ),
-                            ))
-                        .toList(),
-                  ),
-                );
-              },
-              fieldViewBuilder: (
-                BuildContext context,
-                TextEditingController fieldTextEditingController,
-                FocusNode fieldFocusNode,
-                VoidCallback onFieldSubmitted,
-              ) {
-                return TextFormField(
-                  controller: fieldTextEditingController,
-                  focusNode: fieldFocusNode,
-                  decoration: const InputDecoration(labelText: 'Selecciona capacidad'),
-                );
-              },
-              onSelected: (Location selection) {
-                log('Selected location: ${selection.locationName}');
-                _textEditingLocationController.text = selection.locationName;
-                _textEditingLocationController.selection = TextSelection.fromPosition( TextPosition(offset: _textEditingCapacityController.text.length));
-                      setState(() {
-                        selectedLocation = selection;
-                      });
-                    },
-            ),
-                ),
-                SizedBox(width: 16.0),
-                Expanded( 
-                  flex: 1,
-                  child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                    'Fecha del evento:',
-                    style: TextStyle(
-                      fontSize: 16.0,
-                    ),
-                    ),
-                    SizedBox(height: 10.0),
-                    CalendarDatePicker( 
-                    initialDate: selectedDate ?? DateTime.now(),
-                    firstDate: DateTime.now().subtract(Duration(days: 365)),
-                    lastDate: DateTime.now().add(Duration(days: 365)),
-                    onDateChanged: (date) {
-                      // Handle date change
-                      selectedDate = date;
-                      log('Selected date: $date');
-                    },
-                    
-                    initialCalendarMode: DatePickerMode.day,
-                    selectableDayPredicate: (date) {
-                     
-                      return true;
-                    },
-                    
-                    ),
-                  ],
-                ),
-                ),
-                    ]
-                  ),
-                  // SizedBox(height: 16.0),
-                   Row(
-                    children: [
-                      Text('Contacto', style: TextStyle(fontSize: 20.0, color: Colors.grey[400]))
+                      SizedBox(width: 16.0),
+                      Expanded(
+                        child: TextFormField(
+                          controller: contactPhone,
+                          decoration: InputDecoration(labelText: 'Contact Phone'),
+                          keyboardType: TextInputType.phone,
+                          validator: (value) {
+                            if (value == null || value!.isEmpty) {
+                              return 'Please enter the contact phone';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                      SizedBox(width: 16.0),
+                      Expanded(
+                        child: TextFormField(
+                          controller: contactEmail,
+                          decoration: InputDecoration(labelText: 'Contact Email'),
+                          keyboardType: TextInputType.emailAddress,
+                          validator: (value) {
+                            if (value == null || value!.isEmpty) {
+                              return 'Please enter the contact email';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
                     ],
                   ),
-                
-                  Container(
-                    child: Column(
-                      children: contactFields,
-                    ),
-                  ),
-                  
                   SizedBox(height: 16.0),
                   Row(
                     children: [
-                      ElevatedButton(
-                        
-                        onPressed: addContactField,
-                        child: Text('Agregar contacto'),
+                      Expanded(
+                        child: TextFormField(
+                          controller: eventCost,
+                          decoration: InputDecoration(labelText: 'Event Cost'),
+                          keyboardType: TextInputType.number,
+                          validator: (value) {
+                            if (value == null || value!.isEmpty) {
+                              return 'Please enter the event cost';
+                            }
+                            return null;
+                          },
+                        ),
                       ),
                       SizedBox(width: 16.0),
-                      ElevatedButton(
-                        onPressed: () {
-                          contactFields.removeLast();
-                          setState(() {});
-                        },
-                        child: Text('Eliminar contacto'),
+                      Expanded(
+                        child: TextFormField(
+                          controller: eventCostPackage10,
+                          decoration: InputDecoration(labelText: 'Event Cost Package 10'),
+                          keyboardType: TextInputType.number,
+                          validator: (value) {
+                            if (value == null || value!.isEmpty) {
+                              return 'Please enter the event cost package 10';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                      SizedBox(width: 16.0),
+                      Expanded(
+                        child: TextFormField(
+                          controller: eventCostPackage10NoPre,
+                          decoration: InputDecoration(labelText: 'Event Cost Package 10 No Pre'),
+                          keyboardType: TextInputType.number,
+                          validator: (value) {
+                            if (value == null || value!.isEmpty) {
+                              return 'Please enter the event cost package 10 no pre';
+                            }
+                            return null;
+                          },
+                        ),
                       ),
                     ],
                   ),
-                  
+                  SizedBox(height: 16.0),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: eventCostPackageHalf,
+                          decoration: InputDecoration(labelText: 'Event Cost Package Half'),
+                          keyboardType: TextInputType.number,
+                          validator: (value) {
+                            if (value == null || value!.isEmpty) {
+                              return 'Please enter the event cost package half';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                      SizedBox(width: 16.0),
+                      Expanded(
+                        child: TextFormField(
+                          controller: eventCostPackageHalfNoPre,
+                          decoration: InputDecoration(labelText: 'Event Cost Package Half No Pre'),
+                          keyboardType: TextInputType.number,
+                          validator: (value) {
+                            if (value == null || value!.isEmpty) {
+                              return 'Please enter the event cost package half no pre';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                      SizedBox(width: 16.0),
+                      Expanded(
+                        child: TextFormField(
+                          controller: eventCostPackageDouble,
+                          decoration: InputDecoration(labelText: 'Event Cost Package Double'),
+                          keyboardType: TextInputType.number,
+                          validator: (value) {
+                            if (value == null || value!.isEmpty) {
+                              return 'Please enter the event cost package double';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 16.0),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _textEditingLocationController,
+                          decoration: InputDecoration(labelText: 'Location'),
+                          onTap: () {
+                            // TODO: Implement location selection logic
+                          },
+                          validator: (value) {
+                            if (value == null || value!.isEmpty) {
+                              return 'Please select a location';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                      SizedBox(width: 16.0),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _textEditingCapacityController,
+                          decoration: InputDecoration(labelText: 'Capacity'),
+                          keyboardType: TextInputType.number,
+                          validator: (value) {
+                            if (value == null || value!.isEmpty) {
+                              return 'Please enter the capacity';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                      SizedBox(width: 16.0),
+                      Expanded(
+                        child: TextFormField(
+                          decoration: InputDecoration(labelText: 'Event Type'),
+                          onTap: () {
+                            // TODO: Implement event type selection logic
+                          },
+                          validator: (value) {
+                            if (value == null || value!.isEmpty) {
+                              return 'Please select an event type';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
                   SizedBox(height: 16.0),
                   ElevatedButton(
                     onPressed: () {
@@ -565,7 +476,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                       //   saveEvent();
                       // }
                     },
-                    child: Text('Guardar'),
+                    child: Text('Save'),
                   ),
                 ],
               ),

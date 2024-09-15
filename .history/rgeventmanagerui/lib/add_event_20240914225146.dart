@@ -493,40 +493,10 @@ class _AddEventPopup extends State<AddEventPopup> {
                 ),
                 SizedBox(width: 16.0),
                 Expanded( 
-                  flex: 1,
-                  child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                    'Fecha del evento:',
-                    style: TextStyle(
-                      fontSize: 16.0,
-                    ),
-                    ),
-                    SizedBox(height: 10.0),
-                    CalendarDatePicker( 
-                    initialDate: selectedDate ?? DateTime.now(),
-                    firstDate: DateTime.now().subtract(Duration(days: 365)),
-                    lastDate: DateTime.now().add(Duration(days: 365)),
-                    onDateChanged: (date) {
-                      // Handle date change
-                      selectedDate = date;
-                      log('Selected date: $date');
-                    },
-                    
-                    initialCalendarMode: DatePickerMode.day,
-                    selectableDayPredicate: (date) {
-                     
-                      return true;
-                    },
-                    
-                    ),
-                  ],
-                ),
-                ),
+                  child: Text(''),),
                     ]
                   ),
-                  // SizedBox(height: 16.0),
+                  SizedBox(height: 50.0),
                    Row(
                     children: [
                       Text('Contacto', style: TextStyle(fontSize: 20.0, color: Colors.grey[400]))
@@ -557,7 +527,6 @@ class _AddEventPopup extends State<AddEventPopup> {
                       ),
                     ],
                   ),
-                  
                   SizedBox(height: 16.0),
                   ElevatedButton(
                     onPressed: () {
