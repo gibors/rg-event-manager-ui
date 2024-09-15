@@ -524,39 +524,6 @@ class _AddEventPopup extends State<AddEventPopup> {
                 ),
                     ]
                   ),
-                  SizedBox(height: 16.0),
-                  Visibility(
-                    visible: selectedEventType != null && selectedEventType!.id == 3,
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            controller: grado,
-                            decoration: InputDecoration(labelText: 'Grado'),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter the event name';
-                              }
-                              return null;
-                            },
-                          ),
-                        ),
-                        SizedBox(width: 16.0),
-                        Expanded(
-                          child: TextFormField(
-                            controller: school,
-                            decoration: InputDecoration(labelText: 'Escuela'),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter the event name';
-                              }
-                              return null;
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                    SizedBox(height: 32.0),
                    Row(
                     children: [
@@ -687,12 +654,13 @@ class _AddEventPopup extends State<AddEventPopup> {
                       ),
                     ],
                   ),
+                  )
                   SizedBox(height: 16.0),
                   ElevatedButton(
                     onPressed: () {
-                      if (_formKey != null && _formKey!.currentState != null && _formKey.currentState!.validate()) {
-                        saveEvent();
-                      }
+                      // if (_formKey!.currentState.validate()) {
+                      //   saveEvent();
+                      // }
                     },
                     child: Text('Guardar'),
                   ),

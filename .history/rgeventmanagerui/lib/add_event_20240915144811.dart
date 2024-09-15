@@ -557,6 +557,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                       ],
                     ),
                   ),
+                  
                    SizedBox(height: 32.0),
                    Row(
                     children: [
