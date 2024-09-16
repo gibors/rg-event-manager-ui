@@ -15,7 +15,7 @@ class AddEventPopup extends StatefulWidget {
 class _AddEventPopup extends State<AddEventPopup> {
 
   List<Widget> contactFields = [];
-
+  List<String> grados = ["Preescolar", "Primaria", "Secundaria", "Preparatoria", "Licenciatura", "Maestria", "Doctorado"];
   final _formKey = GlobalKey<FormState>();
   var isEditMode = false;
 
@@ -73,11 +73,11 @@ class _AddEventPopup extends State<AddEventPopup> {
         children: [
           Expanded(
             child: TextFormField(
-              controller: TextEditingController(),
+              controller: contactName,
               decoration: InputDecoration(labelText: 'Nombre de contacto:'),
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Please enter the contact name';
+                  return 'Ingresa el nombre del contacto';
                 }
                 return null;
               },
@@ -86,12 +86,12 @@ class _AddEventPopup extends State<AddEventPopup> {
           SizedBox(width: 16.0),
           Expanded(
             child: TextFormField(
-              controller: TextEditingController(),
+              controller: contactPhone,
               decoration: InputDecoration(labelText: 'Teléfono de contacto:'),
               keyboardType: TextInputType.phone,
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Please enter the contact phone';
+                  return 'Ingresa el teléfono del contacto';
                 }
                 return null;
               },
@@ -100,12 +100,12 @@ class _AddEventPopup extends State<AddEventPopup> {
           SizedBox(width: 16.0),
           Expanded(
             child: TextFormField(
-              controller: TextEditingController(),
+              controller: contactEmail,
               decoration: InputDecoration(labelText: 'Correo de contacto:'),
               keyboardType: TextInputType.emailAddress,
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Please enter the contact email';
+                  return 'Ingresa el correo del contacto';
                 }
                 return null;
               },
@@ -234,12 +234,12 @@ class _AddEventPopup extends State<AddEventPopup> {
                               child: TextFormField(
                                 controller: TextEditingController(),
                                 decoration: InputDecoration(labelText: 'Nombre de contacto:'),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter the contact name';
-                                  }
-                                  return null;
-                                },
+                                // validator: (value) {
+                                //   if (value == null || value.isEmpty) {
+                                //     return 'Please enter the contact name';
+                                //   }
+                                //   return null;
+                                // },
                               ),
                             ),
                             SizedBox(width: 16.0),
@@ -248,12 +248,12 @@ class _AddEventPopup extends State<AddEventPopup> {
                                 controller: TextEditingController(),
                                 decoration: InputDecoration(labelText: 'Teléfono de contacto:'),
                                 keyboardType: TextInputType.phone,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter the contact phone';
-                                  }
-                                  return null;
-                                },
+                                // validator: (value) {
+                                //   if (value == null || value.isEmpty) {
+                                //     return 'Please enter the contact phone';
+                                //   }
+                                //   return null;
+                                // },
                               ),
                             ),
                             SizedBox(width: 16.0),
@@ -262,12 +262,12 @@ class _AddEventPopup extends State<AddEventPopup> {
                                 controller: TextEditingController(),
                                 decoration: InputDecoration(labelText: 'Correo de contacto:'),
                                 keyboardType: TextInputType.emailAddress,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter the contact email';
-                                  }
-                                  return null;
-                                },
+                                // validator: (value) {
+                                //   if (value == null || value.isEmpty) {
+                                //     return 'Please enter the contact email';
+                                //   }
+                                //   return null;
+                                // },
                               ),
                             ),
                           ],
@@ -282,11 +282,11 @@ class _AddEventPopup extends State<AddEventPopup> {
     return Scaffold(
         appBar: AppBar(
           title: Text(title,
-              style: TextStyle(fontSize: 24.0, color: Color.fromRGBO(250, 50, 100, 0.8))),
+              style: TextStyle(fontSize: 24.0, color: Color.fromRGBO(250, 10, 100, 0.8))),
         ),
         body: SingleChildScrollView(
           child: Padding(
-            padding: EdgeInsets.all(16.0),
+            padding: EdgeInsets.all(22.0),
             child: Form(
               key: _formKey,
               child: Column(
@@ -305,7 +305,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                           decoration: InputDecoration(labelText: 'Nombre'),
                           validator: (value) {
                             if (value == null || value!.isEmpty) {
-                              return 'Please enter the event name';
+                              return 'Ingresaa el nombre del evento';
                             }
                             return null;
                           },
@@ -337,7 +337,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                     },
                     fieldViewBuilder: (BuildContext context, TextEditingController textEditingController, FocusNode focusNode, VoidCallback onFieldSubmitted) {
                       return TextFormField(
-                        validator: (value) => value!.isEmpty ? 'Seleccione el tipo de evento' : null,
+                        validator: (value) => value == null || value.isEmpty ? 'Ingresa el tipo de evento' : null,
                       controller: textEditingController,
                       focusNode: focusNode,
                       decoration: InputDecoration(
@@ -373,9 +373,11 @@ class _AddEventPopup extends State<AddEventPopup> {
                       SizedBox(width: 16.0),
                       Expanded(
                         child: TextFormField(
+                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                           controller: minCapacity,
                           decoration: InputDecoration(labelText: selectedEventType == null || selectedEventType!.id != 3 ? 'Número Invitados': 'Mínimo de graduados'),
                           keyboardType: TextInputType.number,
+
                           validator: (value) {
                             if (value == null || value!.isEmpty) {
                               return selectedEventType == null || selectedEventType!.id != 3 ? 'Ingresa número invitados': 'Ingresa el mínimo de graduados';
@@ -429,6 +431,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                       controller: fieldTextEditingController,
                       focusNode: fieldFocusNode,
                       decoration: const InputDecoration(labelText: 'Selecciona salón'),
+                      validator: (value) => value == null || value.isEmpty ? 'Ingresa el salón' : null,
                     );
                   },
                   onSelected: (Location selection) {
@@ -438,6 +441,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                             selectedLocation = selection;
                           });
                         },
+                        
                   ),
                   ),
                   SizedBox(width: 16.0),
@@ -499,12 +503,13 @@ class _AddEventPopup extends State<AddEventPopup> {
                   child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    TextField(
+                    TextFormField(
                       readOnly: true,
                       controller: TextEditingController(text: selectedDate?.toString().substring(0, 10) ?? ''),
                       decoration: InputDecoration(
                         labelText: 'Fecha del evento',
                       ),
+                      validator: (value) => value == null || value.isEmpty ? 'Ingresa la fecha del evento' : null,
                       onTap: () async {
                         final DateTime? picked = await showDatePicker(
                           context: context,
@@ -534,8 +539,8 @@ class _AddEventPopup extends State<AddEventPopup> {
                             controller: grado,
                             decoration: InputDecoration(labelText: 'Grado'),
                             validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter the event name';
+                              if ((selectedEventType != null && selectedEventType!.id == 3) && (  value == null || value.isEmpty)) {
+                                return 'Ingresa el grado';
                               }
                               return null;
                             },
@@ -547,8 +552,8 @@ class _AddEventPopup extends State<AddEventPopup> {
                             controller: school,
                             decoration: InputDecoration(labelText: 'Escuela'),
                             validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter the event name';
+                              if ((selectedEventType != null && selectedEventType!.id == 3) && (  value == null || value.isEmpty)) {
+                                return 'IIngresa la escuela';
                               }
                               return null;
                             },
@@ -601,100 +606,109 @@ class _AddEventPopup extends State<AddEventPopup> {
                       Expanded(
                         child: TextFormField(
                           controller: eventCost,
+                          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}'))],
                           decoration: InputDecoration(labelText: 'Costo por platillo:'),
                           keyboardType: TextInputType.number,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Please enter the event cost';
+                              return 'Ingresa el costo del platillo';
                             }
                             return null;
                           },
                         ),
                       ),
-                      SizedBox(width: 16.0),
-                      Expanded(
+                      SizedBox(width: 32.0),
+                      Visibility(
+                        visible: selectedEventType != null && selectedEventType!.id == 3,
+                        child: Expanded(
+                          child: TextFormField(
+                            controller: additionalCost,
+                            inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}'))],
+                            decoration: InputDecoration(labelText: 'Costo adicional:'),
+                            keyboardType: TextInputType.number,
+                            // validator: (value) {
+                            //   if ((selectedEventType != null && selectedEventType!.id == 3) && (value == null || value.isEmpty)) {
+                            //     return 'Ingresa el costo adicional';
+                            //   }
+                            //   return null;
+                            // },
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 200.0),
+                      Text(''),
+                    ],
+                  ),
+                  SizedBox(height: 32.0),
+                  Visibility(
+                    visible: selectedEventType != null && selectedEventType!.id == 3,
+                    child:
+                  Row(
+                    children: [
+                                            Expanded(
                         child: TextFormField(
                           controller: eventCostPackage10,
+                          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}'))],
                           decoration: InputDecoration(labelText: 'Costo paquete 10:'),
                           keyboardType: TextInputType.number,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter the event cost';
-                            }
-                            return null;
-                          },
+                  
                         ),
                       ),
                       SizedBox(width: 16.0),
                       Expanded(
                         child: TextFormField(
+                           inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}'))],                         
                           controller: eventCostPackage10NoPre,
                           decoration: InputDecoration(labelText: 'Costo paquete 10 sin pre:'),
                           keyboardType: TextInputType.number,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter the event cost';
-                            }
-                            return null;
-                          },
+                          
                         ),
                       ),
-                    ],
-                  ),
-                  SizedBox(height: 16.0),
-                  Row(
-                    children: [
+                      SizedBox(width: 16.0),
                       Expanded(
                         child: TextFormField(
                           controller: eventCostPackageHalf,
+                          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}'))],
                           decoration: InputDecoration(labelText: 'Costo paquete 5:'),
                           keyboardType: TextInputType.number,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter the event cost';
-                            }
-                            return null;
-                          },
                         ),
                       ),
                       SizedBox(width: 16.0),
                       Expanded(
                         child: TextFormField(
                           controller: eventCostPackageHalfNoPre,
+                          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}'))],
                           decoration: InputDecoration(labelText: 'Costo paquete 5 sin pre:'),
                           keyboardType: TextInputType.number,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter the event cost';
-                            }
-                            return null;
-                          },
                         ),
                       ),
                       SizedBox(width: 16.0),
                       Expanded(
                         child: TextFormField(
                           controller: eventCostPackageDouble,
+                          inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}'))],
                           decoration: InputDecoration(labelText: 'Costo paquete doble:'),
                           keyboardType: TextInputType.number,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter the event cost';
-                            }
-                            return null;
-                          },
+
                         ),
                       ),
                     ],
                   ),
-                  SizedBox(height: 16.0),
+                  ),
+                  SizedBox(height: 50.0),
+
                   ElevatedButton(
+                    style: ButtonStyle(
+                      backgroundColor: MaterialStateProperty.all<Color>(Color.fromRGBO(250, 50, 100, 0.8)),
+                      foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
+                      fixedSize: MaterialStateProperty.all<Size>(Size(200, 80)),
+                    ),
                     onPressed: () {
                       if (_formKey != null && _formKey!.currentState != null && _formKey.currentState!.validate()) {
                         saveEvent();
                       }
                     },
-                    child: Text('Guardar'),
+                    child: Text('Guardar Evento'),
                   ),
                 ],
               ),
