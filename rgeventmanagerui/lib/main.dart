@@ -10,7 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:pluto_grid/pluto_grid.dart';
 import 'package:provider/provider.dart';
 import 'package:rg_event_management_ui/login.dart';
-import 'package:rg_event_management_ui/add_event.dart';
+import 'package:rg_event_management_ui/modules/add_event.dart';
 import 'package:rg_event_management_ui/models/Event.dart';
 import 'package:rg_event_management_ui/services/eventservice.dart';
 
