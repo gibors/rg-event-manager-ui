@@ -13,6 +13,10 @@ class AddEventPopup extends StatefulWidget {
 }
 
 class _AddEventPopup extends State<AddEventPopup> {
+  List<TextEditingController> contactNameList = [];
+  List<TextEditingController> contactPhoneList = [];
+  List<TextEditingController> contactEmailList = [];
+
   List<Widget> contactFields = [];
   List<String> grados = [
     "Preescolar",
@@ -44,9 +48,7 @@ class _AddEventPopup extends State<AddEventPopup> {
   TextEditingController school = TextEditingController();
 
   TextEditingController grado = TextEditingController();
-  TextEditingController contactName = TextEditingController();
-  TextEditingController contactPhone = TextEditingController();
-  TextEditingController contactEmail = TextEditingController();
+
   TextEditingController eventCost = TextEditingController();
   TextEditingController eventCostPackage10 = TextEditingController();
   TextEditingController eventCostPackage10NoPre = TextEditingController();
@@ -72,8 +74,16 @@ class _AddEventPopup extends State<AddEventPopup> {
   @override
   void initState() {
     var appState = context.read<MyAppState>();
-    grado.text = "Secundaria";
+    // grado.text = "Secundaria";
     token = appState.appToken;
+
+    TextEditingController contactName = TextEditingController();
+    TextEditingController contactPhone = TextEditingController();
+    TextEditingController contactEmail = TextEditingController();
+
+    contactNameList.add(contactName);
+    contactPhoneList.add(contactPhone);
+    contactEmailList.add(contactEmail);
 
     contactFields.add(
       Row(
@@ -153,9 +163,7 @@ class _AddEventPopup extends State<AddEventPopup> {
       eventName.text = selectedEvent!.name;
       minCapacity.text = selectedEvent!.minCapacity.toString();
       additionalCost.text = selectedEvent!.pricing.additionalCost.toString();
-      contactName.text = selectedEvent!.contactName;
-      contactPhone.text = selectedEvent!.contactPhone.trim();
-      contactEmail.text = selectedEvent!.contactEmail;
+
       eventCost.text = selectedEvent!.pricing.dishCost.toString();
       eventCostPackage10.text = selectedEvent!.pricing.paq10TICost.toString();
       eventCostPackage10NoPre.text =
@@ -186,18 +194,27 @@ class _AddEventPopup extends State<AddEventPopup> {
     if (eventName.text.isEmpty) {
       return;
     }
+    var contacts = <Contact>[];
 
+    for (var i = 0; i < contactFields.length; i++) {
+      contacts.add(Contact(
+        id: -1,
+        name: contactNameList[i].text,
+        phone: contactPhoneList[i].text,
+        email: contactEmailList[i].text,
+      ));
+    }
     var event = Event(
+      id: selectedEvent?.id ?? -1,
       name: eventName.text,
       minCapacity: int.parse(minCapacity.text.isEmpty ? "0" : minCapacity.text),
-      contactName: contactName.text,
-      contactPhone: contactPhone.text,
-      contactEmail: contactEmail.text,
+      contacts: contacts,
       eventType: selectedEventType!,
       location: selectedLocation!,
       eventDate: selectedDate! ?? DateTime.now(),
+
       pricing: Pricing(
-        id: 0,
+        id: selectedEvent?.pricing.id ?? -1,
         additionalCost: double.parse(
             additionalCost.text.isEmpty ? "0" : additionalCost.text),
         dishCost: double.parse(eventCost.text.isEmpty ? "0" : eventCost.text),
@@ -223,15 +240,52 @@ class _AddEventPopup extends State<AddEventPopup> {
       updatedBy: 'admin',
       status: 'active',
       folio: 0,
-      id: 0,
     );
 
     EventService().createEvent(event, token).then((value) {
-      Navigator.of(context).popAndPushNamed('/events');
+      Navigator.of(context)
+          .pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => EventsHomePage(),
+        ),
+      )
+          .then((_) {
+        // Refresh data or perform any necessary actions after returning to the page
+        setState(() {
+          log('Event created');
+          selectedEvent = null;
+        });
+      });
+    }, onError: (error) {
+      log('Error creating event: $error');
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Error'),
+            content: Text('Error al guardar el evento'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text('Cerrar'),
+              )
+            ],
+          );
+        },
+      );
     });
   }
 
   void addContactField() {
+    TextEditingController contactName = TextEditingController();
+    TextEditingController contactPhone = TextEditingController();
+    TextEditingController contactEmail = TextEditingController();
+
+    contactNameList.add(contactName);
+    contactPhoneList.add(contactPhone);
+    contactEmailList.add(contactEmail);
     setState(() {
       if (contactFields.length < 4) {
         contactFields.add(
@@ -239,43 +293,37 @@ class _AddEventPopup extends State<AddEventPopup> {
             children: [
               Expanded(
                 child: TextFormField(
-                  controller: TextEditingController(),
+                  controller: contactName,
                   decoration: InputDecoration(labelText: 'Nombre de contacto:'),
-                  // validator: (value) {
-                  //   if (value == null || value.isEmpty) {
-                  //     return 'Please enter the contact name';
-                  //   }
-                  //   return null;
-                  // },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter the contact name';
+                    }
+                    return null;
+                  },
                 ),
               ),
               SizedBox(width: 16.0),
               Expanded(
                 child: TextFormField(
-                  controller: TextEditingController(),
+                  controller: contactPhone,
                   decoration:
                       InputDecoration(labelText: 'Teléfono de contacto:'),
                   keyboardType: TextInputType.phone,
-                  // validator: (value) {
-                  //   if (value == null || value.isEmpty) {
-                  //     return 'Please enter the contact phone';
-                  //   }
-                  //   return null;
-                  // },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter the contact phone';
+                    }
+                    return null;
+                  },
                 ),
               ),
               SizedBox(width: 16.0),
               Expanded(
                 child: TextFormField(
-                  controller: TextEditingController(),
+                  controller: contactEmail,
                   decoration: InputDecoration(labelText: 'Correo de contacto:'),
                   keyboardType: TextInputType.emailAddress,
-                  // validator: (value) {
-                  //   if (value == null || value.isEmpty) {
-                  //     return 'Please enter the contact email';
-                  //   }
-                  //   return null;
-                  // },
                 ),
               ),
             ],
@@ -585,19 +633,54 @@ class _AddEventPopup extends State<AddEventPopup> {
                   child: Row(
                     children: [
                       Expanded(
-                        child: TextFormField(
-                          controller: grado,
-                          decoration: InputDecoration(labelText: 'Grado'),
-                          validator: (value) {
-                            if ((selectedEventType != null &&
-                                    selectedEventType!.id == 3) &&
-                                (value == null || value.isEmpty)) {
-                              return 'Ingresa el grado';
-                            }
-                            return null;
-                          },
-                        ),
-                      ),
+                          child: RawAutocomplete<String>(
+                        displayStringForOption: (dynamic option) =>
+                            option.toString(),
+                        optionsBuilder: (TextEditingValue textEditingValue) {
+                          return grados.where((String option) {
+                            return option.toLowerCase().startsWith(
+                                textEditingValue.text.toLowerCase());
+                          }).toList();
+                        },
+                        fieldViewBuilder: (BuildContext context,
+                            TextEditingController fieldTextEditingController,
+                            FocusNode fieldFocusNode,
+                            VoidCallback onFieldSubmitted) {
+                          return TextFormField(
+                            controller: fieldTextEditingController,
+                            focusNode: fieldFocusNode,
+                            decoration: const InputDecoration(
+                                labelText: 'Selecciona grado'),
+                            validator: (value) => value == null || value.isEmpty
+                                ? 'Ingresa el grado'
+                                : null,
+                          );
+                        },
+                        optionsViewBuilder: (BuildContext context,
+                            void Function(String) onSelected,
+                            Iterable<String> options) {
+                          return Material(
+                            elevation: 4.0,
+                            child: ListView(
+                              children: options
+                                  .map((String option) => GestureDetector(
+                                        onTap: () {
+                                          onSelected(option);
+                                        },
+                                        child: ListTile(
+                                          title: Text(option),
+                                        ),
+                                      ))
+                                  .toList(),
+                            ),
+                          );
+                        },
+                        onSelected: (String selection) {
+                          setState(() {
+                            grado.text = selection;
+                          });
+                        },
+                      )),
                       SizedBox(width: 16.0),
                       Expanded(
                         child: TextFormField(

@@ -1,17 +1,13 @@
-
 class Event {
-  
   final int id;
   final String name;
   final int minCapacity;
   final int folio;
-  final String contactName;
-  final String contactPhone;
-  final String contactEmail;
   final EventType eventType;
   final Location location;
   final Pricing pricing;
-  final DateTime createdDate; 
+  final List<Contact> contacts;
+  final DateTime createdDate;
   final DateTime eventDate;
   final DateTime updatedDate;
   final String createdBy;
@@ -19,23 +15,38 @@ class Event {
   final String status;
 
   // Event(this.id, this.name, this.minCapacity, this.folio, this.eventType, this.location, this.pricing, this.createdDate, this.eventDate, this.updatedDate, this.createdBy, this.updatedBy, this.status )
-  Event({required this.id, required this.name, required this.eventDate, required this.minCapacity, required this.folio, required this.eventType, required this.location, required this.pricing, required this.createdDate, required this.updatedDate, required this.createdBy, required this.updatedBy, required this.status, required this.contactName, required this.contactPhone, required this.contactEmail});
+  Event({
+    required this.id,
+    required this.name,
+    required this.eventDate,
+    required this.minCapacity,
+    required this.folio,
+    required this.eventType,
+    required this.location,
+    required this.pricing,
+    required this.contacts,
+    required this.createdDate,
+    required this.updatedDate,
+    required this.createdBy,
+    required this.updatedBy,
+    required this.status,
+  });
 
   factory Event.fromJson(Map<String, dynamic> json) {
     return Event(
-      id: json['id'] ?? 0,
+      id: json['id'] ?? -1,
       name: json['name'] ?? '',
       minCapacity: json['minCapacity'] ?? 0,
       folio: json['folio'] ?? 0,
-      contactName: json['contactName'] ?? '',
-      contactPhone: json['contactPhone'] ?? '',
-      contactEmail: json['contactEmail'] ?? '',
       eventType: EventType.fromJson(json['eventType']),
       location: Location.fromJson(json['location']),
       pricing: Pricing.fromJson(json['pricing']),
+      contacts: (json['contacts'] as List)
+          .map((contact) => Contact.fromJson(contact))
+          .toList(),
       createdDate: DateTime.parse(json['createdDate']),
-      eventDate: DateTime.parse(json['eventDate']) ,
-      updatedDate: DateTime.parse(json['updatedDate']) ,
+      eventDate: DateTime.parse(json['eventDate']),
+      updatedDate: DateTime.parse(json['updatedDate']),
       createdBy: json['createdBy'] ?? '',
       updatedBy: json['updatedBy'] ?? '',
       status: json['status'] ?? '',
@@ -44,29 +55,50 @@ class Event {
 
   Map<String, dynamic> toJson() {
     return {
-      // 'id': id,
+      'id': id == -1 ? null : id,
       'name': name,
       'minCapacity': minCapacity,
-      'contactName': contactName,
-      'contactPhone': contactPhone,
-      'contactEmail': contactEmail,
-      // 'folio': folio,
       'eventType': eventType.toJson(),
       'location': location.toJson(),
       'pricing': pricing.toJson(),
-      // 'createdDate': createdDate,
       'eventDate': eventDate.toLocal().toIso8601String(),
-      // 'updatedDate': updatedDate,
-      // 'createdBy': createdBy,
-      // 'updatedBy': updatedBy,
-      // 'status': status,
+      'contacts': contacts.map((contact) => contact.toJson()).toList(),
     };
   }
+}
 
+class Contact {
+  final int id;
+  final String name;
+  final String phone;
+  final String email;
+
+  Contact(
+      {required this.id,
+      required this.name,
+      required this.phone,
+      required this.email});
+
+  factory Contact.fromJson(Map<String, dynamic> json) {
+    return Contact(
+      id: json['id'] ?? -1,
+      name: json['name'] ?? '',
+      phone: json['phone'] ?? '',
+      email: json['email'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id == -1 ? null : id,
+      'name': name,
+      'phone': phone,
+      'email': email,
+    };
+  }
 }
 
 class Address {
-  
   final int id;
   final String number;
   final String street;
@@ -74,14 +106,20 @@ class Address {
   final String state;
   final String zipCode;
 
-  Address({required this.id, required this.number, required this.street, required this.city, required this.state, required this.zipCode});
+  Address(
+      {required this.id,
+      required this.number,
+      required this.street,
+      required this.city,
+      required this.state,
+      required this.zipCode});
 
   factory Address.fromJson(Map<String, dynamic> json) {
     return Address(
-      id: json['id'] ?? 0 ,
+      id: json['id'] ?? 0,
       number: json['number'] ?? "",
       street: json['street'] ?? "",
-      city: json['city'] ?? "" ,
+      city: json['city'] ?? "",
       state: json['state'] ?? "",
       zipCode: json['zipCode'] ?? "",
     );
@@ -97,27 +135,29 @@ class Address {
       'zipCode': zipCode,
     };
   }
-   
-
 }
 
 class Location {
-  
   final int id;
   final String locationName;
   final int capacity;
   final Address address;
   final String locationType;
 
-  Location({required this.id, required this.locationName, required this.capacity, required this.address, required this.locationType});
+  Location(
+      {required this.id,
+      required this.locationName,
+      required this.capacity,
+      required this.address,
+      required this.locationType});
 
   factory Location.fromJson(Map<String, dynamic> json) {
     return Location(
       id: json['id'] ?? 0,
-      locationName: json['locationName'] ?? "" ,
-      capacity: json['capacity'] ?? 0 ,
+      locationName: json['locationName'] ?? "",
+      capacity: json['capacity'] ?? 0,
       address: Address.fromJson(json['address']),
-      locationType: json['locationType'] ?? "1" ,
+      locationType: json['locationType'] ?? "1",
     );
   }
 
@@ -130,14 +170,13 @@ class Location {
       'locationType': locationType,
     };
   }
-
 }
 
 class EventType {
   final int id;
   final String description;
-  
-   EventType({required this.id, required this.description});
+
+  EventType({required this.id, required this.description});
 
   factory EventType.fromJson(Map<String, dynamic> json) {
     return EventType(
@@ -152,26 +191,33 @@ class EventType {
       'description': description,
     };
   }
-
 }
 
 class Pricing {
   final int id;
   final double dishCost;
-  final double  additionalCost;
-  final double  paq10TICost;
-  final double  paq10SPCost;
-  final double  paq5TIPCost;
-  final double  paq5SPCost;
-  final double  paq10DoubleCost;
-  
-    Pricing({required this.id, required this.dishCost, required this.additionalCost, required this.paq10TICost, required this.paq10SPCost, required this.paq5TIPCost, required this.paq5SPCost, required this.paq10DoubleCost});
+  final double additionalCost;
+  final double paq10TICost;
+  final double paq10SPCost;
+  final double paq5TIPCost;
+  final double paq5SPCost;
+  final double paq10DoubleCost;
+
+  Pricing(
+      {required this.id,
+      required this.dishCost,
+      required this.additionalCost,
+      required this.paq10TICost,
+      required this.paq10SPCost,
+      required this.paq5TIPCost,
+      required this.paq5SPCost,
+      required this.paq10DoubleCost});
 
   factory Pricing.fromJson(Map<String, dynamic> json) {
     return Pricing(
-       id: json['id'] ?? 0  ,
-      dishCost: json['dishCost'] ?? 0 ,
-      additionalCost: json['additionalCost'] ?? 0 ,
+      id: json['id'] ?? -1,
+      dishCost: json['dishCost'] ?? 0,
+      additionalCost: json['additionalCost'] ?? 0,
       paq10TICost: json['paq10TICost'] ?? 0,
       paq10SPCost: json['paq10SPCost'] ?? 0,
       paq5TIPCost: json['paq5TIPCost'] ?? 0,
@@ -182,7 +228,7 @@ class Pricing {
 
   Map<String, dynamic> toJson() {
     return {
-      // 'id': id,
+      'id': id == -1 ? null : id,
       'dishCost': dishCost,
       'additionalCost': additionalCost,
       'paq10TICost': paq10TICost,
@@ -192,5 +238,4 @@ class Pricing {
       'paq10DoubleCost': paq10DoubleCost,
     };
   }
-
 }
