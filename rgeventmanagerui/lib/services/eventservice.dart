@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:dio/dio.dart';
 import 'package:rg_event_management_ui/models/Event.dart';
+import 'package:rg_event_management_ui/models/Student.dart';
 
 class EventService {
   final Dio _dio;
@@ -75,20 +76,16 @@ class EventService {
     }
   }
 
-  Future<void> updateEvent(Event event) async {
+  Future <List<Student>> getStudentsByEvent(String token, int eventId) async {
     try {
-      await _dio.put('https://api.example.com/events/${event.id}', data: event.toJson());
-    } catch (e) {
-      throw Exception('Failed to update event: $e');
-    }
-  }
+      final response = await _dio.get('http://localhost:8080/api/v1/students/events/$eventId',options: Options(headers: {
+          'Authorization': 'Bearer $token'}));
+      final data = response.data as List<dynamic>;
+      final students = data.map((student) => Student.fromJson(student)).toList();
+      return students;
 
-  Future<void> deleteEvent(int id) async {
-    try {
-      await _dio.delete('https://api.example.com/events/$id');
     } catch (e) {
-      throw Exception('Failed to delete event: $e');
-    }
+      throw Exception('Failed to fetch students: $e');
+    } 
   }
 }
-

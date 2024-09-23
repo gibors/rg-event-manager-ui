@@ -1,9 +1,7 @@
-
-// import 'dart:ui';
-
 import 'dart:async';
 import 'dart:developer';
 import 'package:another_flushbar/flushbar.dart';
+// ignore: depend_on_referenced_packages
 import 'package:intl/intl.dart';
 import 'package:english_words/english_words.dart';
 import 'package:flutter/material.dart';
@@ -13,6 +11,7 @@ import 'package:rg_event_management_ui/login.dart';
 import 'package:rg_event_management_ui/modules/add_event.dart';
 import 'package:rg_event_management_ui/models/Event.dart';
 import 'package:rg_event_management_ui/services/eventservice.dart';
+import 'package:rg_event_management_ui/modules/graduationlist.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();  
@@ -274,9 +273,6 @@ class _EventsPage extends State<EventsPage> {
               ),
             );
         },),
-          
-        PlutoColumn(title: ''
-        , field: 'edit_event', type: PlutoColumnType.text(),)
         ];
         
   List<PlutoRow> rows = [];
@@ -332,7 +328,6 @@ class _EventsPage extends State<EventsPage> {
               IconButton(
                 icon: Icon(Icons.picture_as_pdf),
                 onPressed: () {
-                  // appState.getNext();
                 },
               ),
               SizedBox(width: 20),
@@ -340,7 +335,6 @@ class _EventsPage extends State<EventsPage> {
               IconButton(
                 icon: Icon(Icons.download),
                 onPressed: () {
-                  // appState.toggleFavorite();
                 },
               ),
                SizedBox(width: 20),
@@ -375,19 +369,29 @@ class _EventsPage extends State<EventsPage> {
                 },
               ),
               SizedBox(width: 20),
-              Text('Eliminar evento', style: Theme.of(context).textTheme.bodyLarge),
+              Text(appState.selectedEvent != null && appState.selectedEvent!.eventType.id == 3 ? 'Administrar Graduados' :'Administrar Pago'  , style: Theme.of(context).textTheme.bodyLarge),
                 IconButton(onPressed: () {
-                  
+                 Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => GraduationListPage(),
+                      ),
+                    );
                 }
-                , icon: Icon( Icons.delete),)
+                , icon: Icon( Icons.payments_outlined),)
               ],),
                  
               ))
             ],
           )
           ,
-          SizedBox(height: 30)
-        ,
+          SizedBox(height: 30),
+          Row(children: [
+            Text('Total de eventos: ${snapshot.data!.length}', style: Theme.of(context).textTheme.bodyMedium),
+             SizedBox(width: 30),
+             Text('Evento seleccionado: ${appState.selectedEvent != null ? appState.selectedEvent!.name : 'Ninguno'}', style: Theme.of(context).textTheme.bodyMedium),
+
+          ],),
+          SizedBox(height: 20),
         Expanded(
           child: PlutoGrid(
             mode: mode,
@@ -401,7 +405,6 @@ class _EventsPage extends State<EventsPage> {
                     'event_location': PlutoCell(value: e.location.locationName),
                     'event_capacity': PlutoCell(value: e.location.capacity),
                     'event_status': PlutoCell(value: e.status),
-                    'edit_event': PlutoCell(value: (e.status == 'Activo' && e.eventType.id == 3) ? 'Agregar Pago' :''),
                   }
                 )).toList(),
           onChanged: (PlutoGridOnChangedEvent event) {
@@ -410,13 +413,12 @@ class _EventsPage extends State<EventsPage> {
           onSelected: (event) => {
             log('selected event: ${event.row!.cells['event_name']!.value}'),
             appState.setSelectedEvent(snapshot.data!.firstWhere((element) => element.name == event.row!.cells['event_name']!.value)),
-            // Navigator.of(context).push(MaterialPageRoute(builder: (context) => AddEventPopup()))
 
           },
           onLoaded: (PlutoGridOnLoadedEvent event) {
             stateManagerProviders = event.stateManager;
             event.stateManager.setShowColumnFilter(true);
-            event.stateManager.setSelecting(true);
+            event.stateManager.setSelecting(false);
               event.stateManager
                     .setSelectingMode(PlutoGridSelectingMode.row);
               event.stateManager.setEditing(false);
@@ -431,10 +433,14 @@ class _EventsPage extends State<EventsPage> {
             resolveDefaultColumnFilter: (column, resolver) {
                 return resolver<ContainsClass>() as PlutoFilterType;
               }           
-              // return resolver<PlutoFilterTypeContains>() as PlutoFilterType;}
               ),
           ),
-          )
+          createFooter: (stateManager) {
+                      stateManager.setPageSize(15   , notify: false); // default 40
+          return PlutoPagination(stateManager);
+
+          },
+          ) 
         ),
         ],
         

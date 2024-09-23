@@ -6,18 +6,20 @@ import 'package:provider/provider.dart';
 import 'package:rg_event_management_ui/main.dart';
 import 'package:rg_event_management_ui/models/Event.dart';
 import 'package:rg_event_management_ui/services/eventservice.dart';
-
+import 'package:rg_event_management_ui/modules/graduationlist.dart';
 class AddEventPopup extends StatefulWidget {
   @override
   State<AddEventPopup> createState() => _AddEventPopup();
 }
 
 class _AddEventPopup extends State<AddEventPopup> {
+  
   List<TextEditingController> contactNameList = [];
   List<TextEditingController> contactPhoneList = [];
   List<TextEditingController> contactEmailList = [];
-
+  List<TextEditingController> contactIds = [];
   List<Widget> contactFields = [];
+
   List<String> grados = [
     "Preescolar",
     "Primaria",
@@ -42,11 +44,12 @@ class _AddEventPopup extends State<AddEventPopup> {
   static String _displayStringCapacityForOption(Location option) =>
       option.capacity.toString();
 
+
+
   TextEditingController eventName = TextEditingController();
   TextEditingController minCapacity = TextEditingController();
   TextEditingController additionalCost = TextEditingController();
   TextEditingController school = TextEditingController();
-
   TextEditingController grado = TextEditingController();
 
   TextEditingController eventCost = TextEditingController();
@@ -66,71 +69,24 @@ class _AddEventPopup extends State<AddEventPopup> {
   final TextEditingController _textEditingCapacityController =
       TextEditingController();
 
+      final TextEditingController _textEditingGradoController = TextEditingController();
+
   final FocusNode _focusNode = FocusNode();
   final FocusNode _focusCapacityNode = FocusNode();
+  final FocusNode _focusGradoNode = FocusNode();
+
   final GlobalKey _autocompleteKey = GlobalKey();
   final GlobalKey _autocompleteKeyCapacity = GlobalKey();
+  final GlobalKey _autocompleteKeyGrado = GlobalKey();
 
   @override
   void initState() {
     var appState = context.read<MyAppState>();
-    // grado.text = "Secundaria";
     token = appState.appToken;
 
-    TextEditingController contactName = TextEditingController();
-    TextEditingController contactPhone = TextEditingController();
-    TextEditingController contactEmail = TextEditingController();
-
-    contactNameList.add(contactName);
-    contactPhoneList.add(contactPhone);
-    contactEmailList.add(contactEmail);
-
-    contactFields.add(
-      Row(
-        children: [
-          Expanded(
-            child: TextFormField(
-              controller: contactName,
-              decoration: InputDecoration(labelText: 'Nombre de contacto:'),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Ingresa el nombre del contacto';
-                }
-                return null;
-              },
-            ),
-          ),
-          SizedBox(width: 16.0),
-          Expanded(
-            child: TextFormField(
-              controller: contactPhone,
-              decoration: InputDecoration(labelText: 'Teléfono de contacto:'),
-              keyboardType: TextInputType.phone,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Ingresa el teléfono del contacto';
-                }
-                return null;
-              },
-            ),
-          ),
-          SizedBox(width: 16.0),
-          Expanded(
-            child: TextFormField(
-              controller: contactEmail,
-              decoration: InputDecoration(labelText: 'Correo de contacto:'),
-              keyboardType: TextInputType.emailAddress,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Ingresa el correo del contacto';
-                }
-                return null;
-              },
-            ),
-          ),
-        ],
-      ),
-    );
+    if(!isEditMode) {
+      addContactField();
+    }
 
     if (appState.selectedEvent != null) {
       selectedEvent = appState.selectedEvent;
@@ -154,7 +110,6 @@ class _AddEventPopup extends State<AddEventPopup> {
         locations = value;
       });
     });
-    // controller.addListener(onScroll);
     super.initState();
   }
 
@@ -181,6 +136,23 @@ class _AddEventPopup extends State<AddEventPopup> {
       _textEditingLocationController.text = selectedLocation!.locationName;
       _textEditingCapacityController.text =
           selectedLocation!.capacity.toString();
+          for(var i = 0; i < selectedEvent!.contacts.length; i++) {
+            if(i > 0) {
+              addContactField(selectedEvent!.contacts[i]);
+            }
+            contactNameList[i].text = selectedEvent!.contacts[i].name;
+            contactPhoneList[i].text = selectedEvent!.contacts[i].phone;
+            contactEmailList[i].text = selectedEvent!.contacts[i].email;
+            contactIds[i].text = selectedEvent!.contacts[i].id.toString();
+          }
+
+      if (selectedEventType != null && selectedEventType!.id == 3) {
+        grado.text = selectedEvent!.grade ?? "";
+        school.text = selectedEvent!.school ?? "";
+        _textEditingGradoController.text = grado.text;
+      }
+
+
     }
   }
 
@@ -198,7 +170,7 @@ class _AddEventPopup extends State<AddEventPopup> {
 
     for (var i = 0; i < contactFields.length; i++) {
       contacts.add(Contact(
-        id: -1,
+        id: contactIds[i].text.isEmpty ? -1 : int.parse(contactIds[i].text),
         name: contactNameList[i].text,
         phone: contactPhoneList[i].text,
         email: contactEmailList[i].text,
@@ -233,6 +205,10 @@ class _AddEventPopup extends State<AddEventPopup> {
             ? "0"
             : eventCostPackageDouble.text),
       ),
+      grade: selectedEventType != null && selectedEventType!.id == 3
+          ? grado.text
+          : null,
+      school: selectedEventType != null && selectedEventType!.id == 3 ? school.text : null,
       // not sending these fields
       createdDate: DateTime.now(),
       updatedDate: DateTime.now(),
@@ -278,14 +254,31 @@ class _AddEventPopup extends State<AddEventPopup> {
     });
   }
 
-  void addContactField() {
+  void removeContactField(int index) {
+    if (contactFields.length > 1) {
+      contactFields.removeAt(index);
+      setState(() {
+        contactNameList.removeAt(index);
+        contactPhoneList.removeAt(index);
+        contactEmailList.removeAt(index);
+        contactIds.removeAt(index);
+      });
+    }
+  }
+
+  void addContactField([Contact? contact]) {
     TextEditingController contactName = TextEditingController();
     TextEditingController contactPhone = TextEditingController();
     TextEditingController contactEmail = TextEditingController();
+    TextEditingController contactId = TextEditingController();
+    int index = contactFields.length;
+    contactId.text = contact?.id.toString() ?? "";
 
     contactNameList.add(contactName);
     contactPhoneList.add(contactPhone);
     contactEmailList.add(contactEmail);
+    contactIds.add(contactId);
+
     setState(() {
       if (contactFields.length < 4) {
         contactFields.add(
@@ -297,7 +290,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                   decoration: InputDecoration(labelText: 'Nombre de contacto:'),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter the contact name';
+                      return 'Ingrese el nombre del contacto';
                     }
                     return null;
                   },
@@ -307,12 +300,13 @@ class _AddEventPopup extends State<AddEventPopup> {
               Expanded(
                 child: TextFormField(
                   controller: contactPhone,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   decoration:
                       InputDecoration(labelText: 'Teléfono de contacto:'),
                   keyboardType: TextInputType.phone,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter the contact phone';
+                      return 'Ingrese el teléfono del contacto';
                     }
                     return null;
                   },
@@ -324,8 +318,28 @@ class _AddEventPopup extends State<AddEventPopup> {
                   controller: contactEmail,
                   decoration: InputDecoration(labelText: 'Correo de contacto:'),
                   keyboardType: TextInputType.emailAddress,
+                  validator: (value) {
+                      String pattern = r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
+                    if ( value != null && value.isNotEmpty && !RegExp(pattern).hasMatch(value)) {
+                      log('Invalid email');
+                      return 'Ingresa un correo válido';
+                    }
+                    
+                  },
                 ),
               ),
+              SizedBox(width: 16.0),
+              Visibility(
+                visible: true,
+                child: Expanded(
+                child: IconButton(
+                  color:  Colors.red,
+                  onPressed: 
+                 () {
+                   contactFields.length > 1 ? removeContactField(index) : null;
+                }, icon: Icon(Icons.delete))
+              ),),
+              
             ],
           ),
         );
@@ -335,6 +349,7 @@ class _AddEventPopup extends State<AddEventPopup> {
 
   @override
   Widget build(BuildContext context) {
+    var appState = context.read<MyAppState>();
     return Scaffold(
       appBar: AppBar(
         title: Text(title,
@@ -537,11 +552,12 @@ class _AddEventPopup extends State<AddEventPopup> {
                       key: _autocompleteKeyCapacity,
                       focusNode: _focusCapacityNode,
                       textEditingController: _textEditingCapacityController,
+                      
                       optionsBuilder: (TextEditingValue textEditingValue) {
                         return locations.where((Location option) {
-                          return option.capacity
-                              .toString()
-                              .startsWith(textEditingValue.text.toLowerCase());
+                          return textEditingValue.text.isNotEmpty  && option.capacity <= int.parse(textEditingValue.text) + 100 && option.capacity >= int.parse(textEditingValue.text) - 100;
+                          ;
+                              
                         }).toList();
                       },
                       optionsViewBuilder: (BuildContext context,
@@ -571,6 +587,9 @@ class _AddEventPopup extends State<AddEventPopup> {
                       ) {
                         return TextFormField(
                           controller: fieldTextEditingController,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly
+                          ],
                           focusNode: fieldFocusNode,
                           decoration: const InputDecoration(
                               labelText: 'Selecciona capacidad'),
@@ -611,9 +630,8 @@ class _AddEventPopup extends State<AddEventPopup> {
                             final DateTime? picked = await showDatePicker(
                               context: context,
                               initialDate: selectedDate ?? DateTime.now(),
-                              firstDate:
-                                  DateTime.now().subtract(Duration(days: 365)),
-                              lastDate: DateTime.now().add(Duration(days: 365)),
+                              firstDate: selectedDate ?? DateTime.now(),
+                              lastDate: DateTime.now().add(Duration(days: 1000)),
                             );
                             if (picked != null && picked != selectedDate) {
                               setState(() {
@@ -634,6 +652,9 @@ class _AddEventPopup extends State<AddEventPopup> {
                     children: [
                       Expanded(
                           child: RawAutocomplete<String>(
+                        key: _autocompleteKeyGrado,
+                        focusNode: _focusGradoNode,
+                            textEditingController: _textEditingGradoController,
                         displayStringForOption: (dynamic option) =>
                             option.toString(),
                         optionsBuilder: (TextEditingValue textEditingValue) {
@@ -690,7 +711,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                             if ((selectedEventType != null &&
                                     selectedEventType!.id == 3) &&
                                 (value == null || value.isEmpty)) {
-                              return 'IIngresa la escuela';
+                              return 'Ingresa la escuela';
                             }
                             return null;
                           },
@@ -720,18 +741,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                           contactFields.length < 4 ? addContactField : null,
                       child: Text('Agregar contacto'),
                     ),
-                    SizedBox(width: 16.0),
-                    OutlinedButton(
-                      onPressed: contactFields.length <= 1
-                          ? null
-                          : () {
-                              if (contactFields.length > 1) {
-                                contactFields.removeLast();
-                                setState(() {});
-                              }
-                            },
-                      child: Text('Eliminar contacto'),
-                    ),
+                   
                   ],
                 ),
                 SizedBox(height: 22.0),
@@ -858,13 +868,16 @@ class _AddEventPopup extends State<AddEventPopup> {
                   ),
                 ),
                 SizedBox(height: 50.0),
-                ElevatedButton(
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    ElevatedButton(
                   style: ButtonStyle(
                     backgroundColor: MaterialStateProperty.all<Color>(
                         Color.fromRGBO(250, 50, 100, 0.8)),
                     foregroundColor:
                         MaterialStateProperty.all<Color>(Colors.white),
-                    fixedSize: MaterialStateProperty.all<Size>(Size(200, 80)),
+                    fixedSize: MaterialStateProperty.all<Size>(Size(180, 80)),
                   ),
                   onPressed: () {
                     if (_formKey != null &&
@@ -875,6 +888,49 @@ class _AddEventPopup extends State<AddEventPopup> {
                   },
                   child: Text('Guardar Evento'),
                 ),
+                SizedBox(width: 16.0),
+                ElevatedButton(onPressed: ()
+                {
+                  Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                        builder: (context) => EventsHomePage(),
+                      ),
+                    );
+                }, child: Text('Cancelar'),
+                style: ButtonStyle(
+                  backgroundColor: MaterialStateProperty.all<Color>(
+                      Color.fromRGBO(250, 50, 100, 0.8)),
+                  foregroundColor:
+                      MaterialStateProperty.all<Color>(Colors.white),
+                  fixedSize: MaterialStateProperty.all<Size>(Size(180, 80)),
+                ),
+                ),
+                SizedBox(width: 16.0),  
+                Visibility(
+                  visible: selectedEvent != null &&  selectedEventType != null && selectedEventType!.id == 3,
+                  child: ElevatedButton( 
+                  onPressed: () { 
+                    appState.selectedEvent = selectedEvent;
+                    appState.setToken(token);
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                        builder: (context) => GraduationListPage(),
+                     
+                      ),
+                    );
+                  },
+                child: Text(selectedEvent != null && selectedEventType != null && selectedEventType!.id == 3 ? 'Administrar graduados': 'Administrar pagos'),
+                    style: ButtonStyle(
+                      backgroundColor: MaterialStateProperty.all<Color>(
+                          Color.fromRGBO(250, 50, 100, 0.8)),
+                      foregroundColor:
+                          MaterialStateProperty.all<Color>(Colors.white),
+                      fixedSize: MaterialStateProperty.all<Size>(Size(220, 80)),
+                    ),
+                )
+                )
+                  ]),
+                
               ],
             ),
           ),

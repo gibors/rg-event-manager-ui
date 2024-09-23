@@ -7,6 +7,8 @@ class Event {
   final Location location;
   final Pricing pricing;
   final List<Contact> contacts;
+  final String? grade;
+  final String? school;
   final DateTime createdDate;
   final DateTime eventDate;
   final DateTime updatedDate;
@@ -30,6 +32,8 @@ class Event {
     required this.createdBy,
     required this.updatedBy,
     required this.status,
+    required this.grade,
+    required this.school,
   });
 
   factory Event.fromJson(Map<String, dynamic> json) {
@@ -50,6 +54,8 @@ class Event {
       createdBy: json['createdBy'] ?? '',
       updatedBy: json['updatedBy'] ?? '',
       status: json['status'] ?? '',
+      grade: json['grade'] ?? null,
+      school: json['school'] ?? null,
     );
   }
 
@@ -63,6 +69,8 @@ class Event {
       'pricing': pricing.toJson(),
       'eventDate': eventDate.toLocal().toIso8601String(),
       'contacts': contacts.map((contact) => contact.toJson()).toList(),
+      'grade': grade,
+      'school': school,
     };
   }
 }
