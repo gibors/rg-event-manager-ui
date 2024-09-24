@@ -8,8 +8,10 @@ import 'package:flutter/material.dart';
 import 'package:pluto_grid/pluto_grid.dart';
 import 'package:provider/provider.dart';
 import 'package:rg_event_management_ui/login.dart';
+import 'package:rg_event_management_ui/models/Student.dart';
 import 'package:rg_event_management_ui/modules/add_event.dart';
 import 'package:rg_event_management_ui/models/Event.dart';
+import 'package:rg_event_management_ui/modules/eventpayment.dart';
 import 'package:rg_event_management_ui/services/eventservice.dart';
 import 'package:rg_event_management_ui/modules/graduationlist.dart';
 
@@ -56,6 +58,7 @@ class MyAppState extends ChangeNotifier {
   var history = <WordPair>[];
   var appToken = "";
   Event? selectedEvent;
+  Student? selectedStudent;
   // List<PlutoRow> rows = [];
 
   GlobalKey? historyListKey;
@@ -79,6 +82,11 @@ class MyAppState extends ChangeNotifier {
 
   void setSelectedEvent(Event event){
     selectedEvent = event;
+    notifyListeners();
+  }
+
+  void setSelectedStudent(Student student){
+    selectedStudent = student;
     notifyListeners();
   }
 
@@ -371,11 +379,20 @@ class _EventsPage extends State<EventsPage> {
               SizedBox(width: 20),
               Text(appState.selectedEvent != null && appState.selectedEvent!.eventType.id == 3 ? 'Administrar Graduados' :'Administrar Pago'  , style: Theme.of(context).textTheme.bodyLarge),
                 IconButton(onPressed: () {
-                 Navigator.of(context).push(
+                  
+                  if(appState.selectedEvent != null && appState.selectedEvent!.eventType.id == 3){
+                    Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => GraduationListPage(),
+                          ),
+                        );
+                  } else {
+                    Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) => GraduationListPage(),
+                        builder: (context) => EventPaymentPage(),
                       ),
                     );
+                  }
                 }
                 , icon: Icon( Icons.payments_outlined),)
               ],),

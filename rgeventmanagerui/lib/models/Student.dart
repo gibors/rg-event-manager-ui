@@ -1,6 +1,7 @@
 class Student {
   final int id;
   final String name;
+  final String lastName;
   final int age;
   final String email;
   final String phone;
@@ -12,6 +13,7 @@ class Student {
   Student(
       {required this.id,
       required this.name,
+      required this.lastName,
       required this.age,
       required this.email,
       required this.phone,
@@ -24,6 +26,7 @@ class Student {
     return Student(
       id: json['id'] ?? -1,
       name: json['name'],
+      lastName: json['lastName'],
       age: json['age'],
       email: json['email'],
       phone: json['phone'],
@@ -37,6 +40,7 @@ class Student {
   Map<String, dynamic> toJson() => {
     'id': id == -1 ? null : id,
     'name': name,
+    'lastName': lastName,
     'age': age,
     'email': email,
     'phone': phone,

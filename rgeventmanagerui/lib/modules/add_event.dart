@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:rg_event_management_ui/main.dart';
 import 'package:rg_event_management_ui/models/Event.dart';
+import 'package:rg_event_management_ui/modules/eventpayment.dart';
 import 'package:rg_event_management_ui/services/eventservice.dart';
 import 'package:rg_event_management_ui/modules/graduationlist.dart';
 class AddEventPopup extends StatefulWidget {
@@ -912,12 +913,22 @@ class _AddEventPopup extends State<AddEventPopup> {
                   onPressed: () { 
                     appState.selectedEvent = selectedEvent;
                     appState.setToken(token);
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(
-                        builder: (context) => GraduationListPage(),
-                     
-                      ),
-                    );
+                    if(appState.selectedEvent != null && appState.selectedEvent!.eventType.id == 3){
+
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(
+                          builder: (context) => GraduationListPage(),
+                      
+                        ),
+                      );
+                    } else {
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(
+                          builder: (context) => EventPaymentPage(),
+                      
+                        ),
+                      );
+                    }
                   },
                 child: Text(selectedEvent != null && selectedEventType != null && selectedEventType!.id == 3 ? 'Administrar graduados': 'Administrar pagos'),
                     style: ButtonStyle(
