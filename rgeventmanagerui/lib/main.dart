@@ -9,9 +9,12 @@ import 'package:pluto_grid/pluto_grid.dart';
 import 'package:provider/provider.dart';
 import 'package:rg_event_management_ui/login.dart';
 import 'package:rg_event_management_ui/models/Student.dart';
+import 'package:rg_event_management_ui/models/Supplier.dart';
 import 'package:rg_event_management_ui/modules/add_event.dart';
 import 'package:rg_event_management_ui/models/Event.dart';
+import 'package:rg_event_management_ui/modules/employees_list.dart';
 import 'package:rg_event_management_ui/modules/eventpayment.dart';
+import 'package:rg_event_management_ui/modules/provider_list.dart';
 import 'package:rg_event_management_ui/services/eventservice.dart';
 import 'package:rg_event_management_ui/modules/graduationlist.dart';
 
@@ -59,6 +62,7 @@ class MyAppState extends ChangeNotifier {
   var appToken = "";
   Event? selectedEvent;
   Student? selectedStudent;
+  Supplier? selectedProvider;
   // List<PlutoRow> rows = [];
 
   GlobalKey? historyListKey;
@@ -95,6 +99,21 @@ class MyAppState extends ChangeNotifier {
     // notifyListeners();
   }
 
+  void clearSelectedStudent(){
+    selectedStudent = null;
+    // notifyListeners();
+  }
+
+  void setSelectedProvider(Supplier provider){
+    selectedProvider = provider;
+    notifyListeners();
+  }
+
+  void clearSelectedProvider(){
+    selectedProvider = null;
+    // notifyListeners();
+  }
+
 }
 
 class EventsHomePage extends StatefulWidget {
@@ -116,10 +135,14 @@ class _EventsHomePageState extends State<EventsHomePage> {
       case 0:
         page = EventsPage();
       case 1:
-        page = ProveedoresPage();
+        page = ProviderListPage();
       case 2: 
         page = EmployeesView();
         case 3: 
+        page = EmployeesView();
+        case 4:
+        page = EmployeesView();
+        case 5:
         page = EmployeesView();
       default:
         throw UnimplementedError('no widget for $selectedIndex');
@@ -165,6 +188,14 @@ class _EventsHomePageState extends State<EventsHomePage> {
                         icon: Icon(Icons.account_balance),
                         label: 'Contabilidad',
                       ),
+                        BottomNavigationBarItem(
+                        icon: Icon(Icons.money_rounded),
+                        label: 'Cotización',
+                      ),
+                      BottomNavigationBarItem(
+                        icon: Icon(Icons.security),
+                        label: 'Seguridad',
+                      ),
                     ],
                     currentIndex: selectedIndex,
                     onTap: (value) {
@@ -199,6 +230,14 @@ class _EventsHomePageState extends State<EventsHomePage> {
                       NavigationRailDestination(
                         icon: Icon(Icons.account_balance),
                         label: Text('Contabilidad'),
+                      ),
+                      NavigationRailDestination(
+                        icon: Icon(Icons.money_rounded),
+                        label: Text('Cotización'),
+                      ),
+                      NavigationRailDestination(
+                        icon: Icon(Icons.security),
+                        label: Text('Seguridad'),
                       ),
                     ],
                     selectedIndex: selectedIndex,
@@ -246,12 +285,12 @@ class _EventsPage extends State<EventsPage> {
             type: PlutoColumnType.text(),
           ),
           PlutoColumn(
-            title: 'Invitados',
+            title: 'Invitados/Min graduados',
             field: 'envent_guests',
             type: PlutoColumnType.text(),
-            width: 120,
+            width: 200,
           ),
-          PlutoColumn(
+            PlutoColumn(
             title: 'Salón',
             field: 'event_location',
             type: PlutoColumnType.text(),
@@ -269,7 +308,7 @@ class _EventsPage extends State<EventsPage> {
 
             if (rendererContext.cell.value == 'Cerrado') {
               textColor = Colors.red;
-            } else if (rendererContext.cell.value == 'Activo') {
+            } else if (rendererContext.cell.value == 'En progreso') {
               textColor = Colors.green;
             }
 
@@ -394,7 +433,7 @@ class _EventsPage extends State<EventsPage> {
                     );
                   }
                 }
-                , icon: Icon( Icons.payments_outlined),)
+                , icon: Icon( appState.selectedEvent != null && appState.selectedEvent!.eventType.id == 3 ? Icons.school_outlined :Icons.payment_rounded),)
               ],),
                  
               ))
@@ -421,7 +460,7 @@ class _EventsPage extends State<EventsPage> {
                     'envent_guests': PlutoCell(value: e.minCapacity),
                     'event_location': PlutoCell(value: e.location.locationName),
                     'event_capacity': PlutoCell(value: e.location.capacity),
-                    'event_status': PlutoCell(value: e.status),
+                    'event_status': PlutoCell(value: e.status == 'Activo' ? 'En progreso' : 'Cerrado'),
                   }
                 )).toList(),
           onChanged: (PlutoGridOnChangedEvent event) {
@@ -475,163 +514,6 @@ class _EventsPage extends State<EventsPage> {
   
 }
 
-
-class ProveedoresPage extends StatelessWidget {
-
-  List<PlutoColumn> columns = [
-
-  /// Text Column definition
-
-  /// Number Column definition
-  PlutoColumn(
-    title: 'nombre proovedor',
-    field: 'provider_name',
-    type: PlutoColumnType.text(),
-  ),
-
-  /// Select Column definition
-  PlutoColumn(
-    title: 'ubicación',
-    field: 'provider_location',
-    type: PlutoColumnType.text(),
-  ),
-
-  /// Datetime Column definition
-  PlutoColumn(
-    title: 'material proovedor',
-    field: 'provider_material',
-    type: PlutoColumnType.text(),
-  ),
-
-  /// Time Column definition
-  PlutoColumn(
-    title: 'Telefono',
-    field: 'provider_phone',
-    type: PlutoColumnType.number(),
-  ),
-   /// Time Column definition
-    PlutoColumn(
-    title: 'correo',
-    field: 'provider_email',
-    type: PlutoColumnType.text(),
-  ),
-];
-
-List<PlutoRow> rows = [
-  PlutoRow(
-    cells: {
-      'provider_name': PlutoCell(value: 'Juanito'),
-      'provider_location': PlutoCell(value: 'Veracruz'),
-      'provider_material': PlutoCell(value: 'Flores'),
-      'provider_phone': PlutoCell(value: 33333333),
-      'provider_email': PlutoCell(value: 'girea.ico@gmail.com'),
-    }
-  ),
-  PlutoRow(
-    cells: {
-      'provider_name': PlutoCell(value: 'Pedrito'),
-      'provider_location': PlutoCell(value: 'Veracrúz'),
-      'provider_material': PlutoCell(value: 'Mesas'),
-      'provider_phone': PlutoCell(value: 2323232323),
-      'provider_email': PlutoCell(value: 'girea.ico@gmail.com'),
-    }
-  ),
-  PlutoRow(
-    cells: {
-      'provider_name': PlutoCell(value: 'Maria'),
-      'provider_location': PlutoCell(value: 'Xalapa'),
-      'provider_material': PlutoCell(value: 'Sillas'),
-      'provider_phone': PlutoCell(value: 3232323232323),
-      'provider_email': PlutoCell(value: 'girea.ico@gmail.com'),
-    }
-  ),
-  ];
-  @override
-  Widget build(BuildContext context) {
-    var theme = Theme.of(context);
-    var appState = context.watch<MyAppState>();
-
-    // if (appState.favorites.isEmpty) {
-    //   return Center(
-    //     child: Text('No favorites yet.'),
-    //   );
-    // }
-
-     return  Center( 
-      child: Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [ 
-          Row(
-            children: [
-              Text('Exportar a PDF', style: Theme.of(context).textTheme.bodyLarge),
-              IconButton(
-                icon: Icon(Icons.picture_as_pdf),
-                onPressed: () {
-                  appState.getNext();
-                },
-              ),
-              Text('Descargar excel', style: Theme.of(context).textTheme.bodyLarge),
-              IconButton(
-                icon: Icon(Icons.download),
-                onPressed: () {
-                  // appState.toggleFavorite();
-                },
-              ),
-              Text('Agregar proveedor', style: Theme.of(context).textTheme.bodyLarge),
-
-              IconButton(
-                icon: Icon(Icons.add_box),
-                onPressed: () {
-                  // appState.toggleFavorite();
-                },
-              ),
-            ],
-          )
-        ,
-        Expanded(
-          child: PlutoGrid(
-          columns: columns,
-          rows: rows,
-          onChanged: (PlutoGridOnChangedEvent event) {
-            print(event);
-          },
-          onLoaded: (PlutoGridOnLoadedEvent event) {
-            print(event);
-          },
-          ),
-        ),
-        ],
-      ),
-      ),
-    );
-  }
-}
-
-class EmployeesView extends StatefulWidget {
-  const EmployeesView({Key? key}) : super(key: key);
-
-  @override
-  State<EmployeesView> createState() => _EmployeesViewState();
-}
-
-class _EmployeesViewState extends State<EmployeesView> {
-
-  final _key = GlobalKey();
-
-  @override
-  Widget build(BuildContext context) {
-    final appState = context.watch<MyAppState>();
-    appState.historyListKey = _key;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Pagina en progreso...'),
-      )
-    );
-  }
-  }
 
 class ContainsClass implements PlutoFilterType {
   @override

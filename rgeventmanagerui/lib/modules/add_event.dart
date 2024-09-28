@@ -325,6 +325,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                       log('Invalid email');
                       return 'Ingresa un correo válido';
                     }
+                    return null;
                     
                   },
                 ),
@@ -379,7 +380,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                         controller: eventName,
                         decoration: InputDecoration(labelText: 'Nombre'),
                         validator: (value) {
-                          if (value == null || value!.isEmpty) {
+                          if (value == null || value.isEmpty) {
                             return 'Ingresaa el nombre del evento';
                           }
                           return null;
@@ -474,7 +475,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                                 : 'Mínimo de graduados'),
                         keyboardType: TextInputType.number,
                         validator: (value) {
-                          if (value == null || value!.isEmpty) {
+                          if (value == null || value.isEmpty) {
                             return selectedEventType == null ||
                                     selectedEventType!.id != 3
                                 ? 'Ingresa número invitados'
@@ -557,7 +558,6 @@ class _AddEventPopup extends State<AddEventPopup> {
                       optionsBuilder: (TextEditingValue textEditingValue) {
                         return locations.where((Location option) {
                           return textEditingValue.text.isNotEmpty  && option.capacity <= int.parse(textEditingValue.text) + 100 && option.capacity >= int.parse(textEditingValue.text) - 100;
-                          ;
                               
                         }).toList();
                       },
@@ -652,7 +652,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                   child: Row(
                     children: [
                       Expanded(
-                          child: RawAutocomplete<String>(
+                        child: RawAutocomplete<String>(
                         key: _autocompleteKeyGrado,
                         focusNode: _focusGradoNode,
                             textEditingController: _textEditingGradoController,
@@ -729,6 +729,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                             TextStyle(fontSize: 20.0, color: Colors.grey[400]))
                   ],
                 ),
+                SizedBox(height: 22.0),
                 Container(
                   child: Column(
                     children: contactFields,
@@ -774,7 +775,13 @@ class _AddEventPopup extends State<AddEventPopup> {
                         },
                       ),
                     ),
+
                     SizedBox(width: 32.0),
+                    Visibility( visible: selectedEventType == null ||( selectedEventType != null &&
+                          selectedEventType!.id != 3),
+                      child: 
+                    Expanded( flex: 2,
+                      child: Text(''))),
                     Visibility(
                       visible: selectedEventType != null &&
                           selectedEventType!.id == 3,
@@ -874,15 +881,14 @@ class _AddEventPopup extends State<AddEventPopup> {
                   children: [
                     ElevatedButton(
                   style: ButtonStyle(
-                    backgroundColor: MaterialStateProperty.all<Color>(
+                    backgroundColor: WidgetStateProperty.all<Color>(
                         Color.fromRGBO(250, 50, 100, 0.8)),
                     foregroundColor:
-                        MaterialStateProperty.all<Color>(Colors.white),
-                    fixedSize: MaterialStateProperty.all<Size>(Size(180, 80)),
+                        WidgetStateProperty.all<Color>(Colors.white),
+                    fixedSize: WidgetStateProperty.all<Size>(Size(180, 80)),
                   ),
                   onPressed: () {
-                    if (_formKey != null &&
-                        _formKey!.currentState != null &&
+                    if (_formKey.currentState != null &&
                         _formKey.currentState!.validate()) {
                       saveEvent();
                     }
@@ -897,14 +903,14 @@ class _AddEventPopup extends State<AddEventPopup> {
                         builder: (context) => EventsHomePage(),
                       ),
                     );
-                }, child: Text('Cancelar'),
+                },
                 style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all<Color>(
+                  backgroundColor: WidgetStateProperty.all<Color>(
                       Color.fromRGBO(250, 50, 100, 0.8)),
                   foregroundColor:
-                      MaterialStateProperty.all<Color>(Colors.white),
-                  fixedSize: MaterialStateProperty.all<Size>(Size(180, 80)),
-                ),
+                      WidgetStateProperty.all<Color>(Colors.white),
+                  fixedSize: WidgetStateProperty.all<Size>(Size(180, 80)),
+                ), child: Text('Cancelar'),
                 ),
                 SizedBox(width: 16.0),  
                 Visibility(
@@ -930,14 +936,14 @@ class _AddEventPopup extends State<AddEventPopup> {
                       );
                     }
                   },
-                child: Text(selectedEvent != null && selectedEventType != null && selectedEventType!.id == 3 ? 'Administrar graduados': 'Administrar pagos'),
                     style: ButtonStyle(
-                      backgroundColor: MaterialStateProperty.all<Color>(
+                      backgroundColor: WidgetStateProperty.all<Color>(
                           Color.fromRGBO(250, 50, 100, 0.8)),
                       foregroundColor:
-                          MaterialStateProperty.all<Color>(Colors.white),
-                      fixedSize: MaterialStateProperty.all<Size>(Size(220, 80)),
+                          WidgetStateProperty.all<Color>(Colors.white),
+                      fixedSize: WidgetStateProperty.all<Size>(Size(220, 80)),
                     ),
+                child: Text(selectedEvent != null && selectedEventType != null && selectedEventType!.id == 3 ? 'Administrar graduados': 'Administrar pagos'),
                 )
                 )
                   ]),

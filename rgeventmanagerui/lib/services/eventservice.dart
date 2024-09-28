@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:dio/dio.dart';
 import 'package:rg_event_management_ui/models/Event.dart';
+import 'package:rg_event_management_ui/models/Supplier.dart';
 import 'package:rg_event_management_ui/models/Student.dart';
 
 class EventService {
@@ -87,5 +88,69 @@ class EventService {
     } catch (e) {
       throw Exception('Failed to fetch students: $e');
     } 
+  }
+
+    Future <Student> saveStudent(Student student, String token) async {
+    try {
+
+     var data = student.toJson();
+      log('data: $data');
+      final response = await _dio.post('http://localhost:8080/api/v1/students',data: data, options: Options(headers: {
+          'Authorization': 'Bearer $token'}));
+
+      final studentResponse = Student.fromJson(response.data);
+      return studentResponse;
+
+    } catch (e) {
+      throw Exception('Failed to fetch students: $e');
+    } 
+  }
+
+  Future<List<Payment>> getPaymentsByEventId(String token, int eventId) async {
+    try {
+      final response = await _dio.get('http://localhost:8080/api/v1/payments/events/$eventId',options: Options(headers: {
+          'Authorization': 'Bearer $token'}));
+      final data = response.data as List<dynamic>;
+      final payments = data.map((payment) => Payment.fromJson(payment)).toList();
+      return payments;
+    } catch (e) {
+      throw Exception('Failed to fetch payments: $e');
+    }
+  }
+
+  Future<void> createPayment(Payment payment, String token) async {
+    try {
+      var data = payment.toJson();
+      log('data: $data');
+      await _dio.post('http://localhost:8080/api/v1/payments', data: data,
+      options: Options(headers: {
+          'Authorization': 'Bearer $token'}));
+    } catch (e) {
+      throw Exception('Failed to create payment: $e');
+    }
+  }
+
+  Future <List<Supplier>> getAllProviders(String token) async {
+      try {
+      final response = await _dio.get('http://localhost:8080/api/v1/suppliers',options: Options(headers: {
+          'Authorization': 'Bearer $token'}));
+      final data = response.data as List<dynamic>;
+      final providers = data.map((provider) => Supplier.fromJson(provider)).toList();
+      return providers;
+    } catch (e) {
+      throw Exception('Failed to fetch event types: $e');
+    }
+  }
+
+  Future<List<ServiceType>> getServices(String token) async {
+    try {
+      final response = await _dio.get('http://localhost:8080/api/v1/suppliers/service-types',options: Options(headers: {
+          'Authorization': 'Bearer $token'}));
+      final data = response.data as List<dynamic>;
+      final services = data.map((service) => ServiceType.fromJson(service)).toList();
+      return services;
+    } catch (e) {
+      throw Exception('Failed to fetch services: $e');
+    }
   }
 }

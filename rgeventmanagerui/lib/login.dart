@@ -25,10 +25,10 @@ class _LoginState extends State<Login> {
     double width = MediaQuery.of(context).size.width;
     return Scaffold(
       backgroundColor: AppColors.backColor,
-      // appBar: AppBar(
-      //   elevation: 0.0,
-      //   title: Text('RG eventos'),
-      // ),
+      appBar: AppBar(
+        title: Text('Pantalla inicial', style: TextStyle(color: AppColors.blueDarkColor,
+        fontWeight: FontWeight.w700),),
+      ),
       body: SizedBox(
         height: height,
         width: width,
@@ -39,12 +39,12 @@ class _LoginState extends State<Login> {
             Expanded(
               child: Container(
                 height: height,
-                color: const Color.fromARGB(255, 170, 170, 170),
+                color:AppColors.blueDarkColor,
                 child: Center(
                   child: Image(
                     image: AssetImage('assets/images/rg.png'),
-                    width: 500.0,
-                    height: 500.0,
+                    width: 600.0,
+                    height: 600.0,
                   ),
                 ),
               ),
@@ -87,8 +87,8 @@ class _LoginState extends State<Login> {
                         'Ingresa tus datos para continuar',
                         style: TextStyle(
                           fontSize: 14.0,
-                          fontWeight: FontWeight.w400,
-                          color: AppColors.textColor,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.pinkColor,
                         ),
                       ),
                       SizedBox(height: height * 0.064),
@@ -98,7 +98,7 @@ class _LoginState extends State<Login> {
                           'Usuario: ',
                           style: TextStyle(
                             fontSize: 12.0,
-                            color: AppColors.blueDarkColor,
+                            color: AppColors.pinkColor,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -140,7 +140,7 @@ class _LoginState extends State<Login> {
                           'Password:',
                           style: TextStyle(
                             fontSize: 12.0,
-                            color: AppColors.blueDarkColor,
+                            color: AppColors.pinkColor,
                             fontWeight: FontWeight.w700,
                           ),
                         ),

@@ -9,6 +9,9 @@ class Student {
   final double additionalQuantity;
   final double totalCost;
   final int eventId;
+  final String comments;
+  final List<Payment> payments;
+  bool paid = false;
 
   Student(
       {required this.id,
@@ -20,7 +23,9 @@ class Student {
       required this.packageType,
       required this.additionalQuantity,
       required this.totalCost,
-      required this.eventId});
+      required this.eventId,
+      required this.comments,
+      required this.payments});
 
   factory Student.fromJson(Map<String, dynamic> json) {
     return Student(
@@ -34,6 +39,10 @@ class Student {
       additionalQuantity: json['additionalQuantity'],
       totalCost: json['totalCost'],
       eventId: json['eventId'],
+      comments: json['comments'],
+      payments: (json['payments'] as List)
+          .map((payment) => Payment.fromJson(payment))
+          .toList(),
     );
   }
 
@@ -48,7 +57,45 @@ class Student {
     'additionalQuantity': additionalQuantity,
     'totalCost': totalCost,
     'eventId': eventId,
-  };
-
-  
+    'comments': comments,
+    'payments': payments.map((payment) => payment.toJson()).toList(),
+  };  
 }
+
+  class Payment {
+  final int id;
+  final double amount;
+  final String paymentMethod;
+  final DateTime paymentDate;
+  final int studentId;
+  final int eventId;
+
+  Payment(
+      {required this.id,
+      required this.amount,
+      required this.paymentMethod,
+      required this.paymentDate,
+      required this.studentId,
+      required this.eventId});
+
+  factory Payment.fromJson(Map<String, dynamic> json) {
+    return Payment(
+      id: json['id'] ?? -1,
+      amount: json['amount'],
+      paymentMethod: json['paymentMethod'],
+      paymentDate: DateTime.parse(json['paymentDate']),
+      studentId: json['studentId'] ?? -1,
+      eventId: json['eventId'],
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id == -1 ? null : id,
+    'amount': amount,
+    'paymentMethod': paymentMethod,
+    'paymentDate': paymentDate.toLocal().toIso8601String(),
+    'studentId': studentId == -1 ? null : studentId,
+    'eventId': eventId,
+  };
+      
+  }

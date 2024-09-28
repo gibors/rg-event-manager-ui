@@ -54,8 +54,8 @@ class Event {
       createdBy: json['createdBy'] ?? '',
       updatedBy: json['updatedBy'] ?? '',
       status: json['status'] ?? '',
-      grade: json['grade'] ?? null,
-      school: json['school'] ?? null,
+      grade: json['grade'],
+      school: json['school'],
     );
   }
 
@@ -160,18 +160,20 @@ class Location {
       required this.locationType});
 
   factory Location.fromJson(Map<String, dynamic> json) {
-    return Location(
+
+      return Location(
       id: json['id'] ?? 0,
       locationName: json['locationName'] ?? "",
       capacity: json['capacity'] ?? 0,
       address: Address.fromJson(json['address']),
       locationType: json['locationType'] ?? "1",
     );
+    
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
+      'id': id == -1 ? null : id,
       'locationName': locationName,
       'capacity': capacity,
       'address': address.toJson(),
