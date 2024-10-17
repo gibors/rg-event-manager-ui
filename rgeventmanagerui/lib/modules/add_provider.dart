@@ -123,16 +123,14 @@ class _AddProviderPage extends State<AddProviderPage> {
   saveSupplier() {
     mapFormToObject();
     EventService().createorSaveProvider(selectedSupplier!, token).then((value) {
-      if (value != null) {
-        selectedSupplier = value;
-       Flushbar(
-        flushbarPosition: FlushbarPosition.TOP,
-          title: 'Proveedor guardado',
-          message: 'El proveedor ha sido guardado exitosamente',
-          duration: Duration(seconds: 3),
-        ).show(context);
-      } 
-      
+      selectedSupplier = value;
+     Flushbar(
+      flushbarPosition: FlushbarPosition.TOP,
+        title: 'Proveedor guardado',
+        message: 'El proveedor ha sido guardado exitosamente',
+        duration: Duration(seconds: 3),
+      ).show(context);
+          
     }, onError: (error) {
       log('Error saving provider: $error');
       Flushbar(

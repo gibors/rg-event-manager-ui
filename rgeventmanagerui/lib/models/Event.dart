@@ -1,4 +1,3 @@
-import 'dart:ffi';
 
 class Event {
   final int id;

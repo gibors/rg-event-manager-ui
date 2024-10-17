@@ -135,7 +135,7 @@ class _EventsHomePageState extends State<EventsHomePage> {
   void initState() {
     var appState = context.read<MyAppState>();
     
-    selectedIndex = appState!.selectedIndex ?? 0;
+    selectedIndex = appState.selectedIndex ?? 0;
     super.initState();
   }
   

@@ -135,30 +135,30 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
   }
 
   double calculateCost(packageType) {
-    var total_cost = 0.0;
+    var totalCost = 0.0;
 
     if (packageTypes.isNotEmpty) {
       switch (packageType) {
         case 'paq10ti':
-          total_cost = selectedEvent.pricing!.paq10TICost;
+          totalCost = selectedEvent.pricing!.paq10TICost;
         case 'paq10sp':
-          total_cost = selectedEvent.pricing!.paq10SPCost;
+          totalCost = selectedEvent.pricing!.paq10SPCost;
         case 'paq5ti':
-          total_cost = selectedEvent.pricing!.paq5TIPCost;
+          totalCost = selectedEvent.pricing!.paq5TIPCost;
         case 'paq5sp':
-          total_cost = selectedEvent.pricing!.paq5SPCost;
+          totalCost = selectedEvent.pricing!.paq5SPCost;
         case 'paq20':
-          total_cost = selectedEvent.pricing!.paq10DoubleCost;
+          totalCost = selectedEvent.pricing!.paq10DoubleCost;
         default:
-          total_cost = 0.0;
+          totalCost = 0.0;
       }
     } else {
-      total_cost = _dishNumber.text.isEmpty
+      totalCost = _dishNumber.text.isEmpty
           ? 0
           : double.parse(_dishNumber.text) * selectedEvent.pricing!.dishCost;
     }
 
-    return total_cost;
+    return totalCost;
   }
 
   saveStudentData() {
@@ -376,6 +376,7 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
                                 )),
                                 SizedBox(width: 20),
                                 Visibility(
+                                  visible: packageTypes.isEmpty,
                                   child: Expanded(
                                       child: TextFormField(
                                     controller: _dishNumber,
@@ -384,7 +385,6 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
                                         border: OutlineInputBorder()),
                                     readOnly: !isEditMode,
                                   )),
-                                  visible: packageTypes.isEmpty,
                                 ),
                                 Visibility(
                                     visible: packageTypes.isNotEmpty,

@@ -7,7 +7,6 @@ import 'package:provider/provider.dart';
 import 'package:rg_event_management_ui/app_colors.dart';
 import 'package:rg_event_management_ui/main.dart';
 import 'package:rg_event_management_ui/models/Employee.dart';
-import 'package:rg_event_management_ui/modules/employees_list.dart';
 import 'package:rg_event_management_ui/services/employees_service.dart';
 
 class AddEmployeePage extends StatefulWidget {

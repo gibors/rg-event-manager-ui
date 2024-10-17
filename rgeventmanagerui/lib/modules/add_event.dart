@@ -411,7 +411,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                 ),
                 SizedBox(width: 16.0),
                 Visibility(
-                  visible: contactFields.length >= 1,
+                  visible: contactFields.isNotEmpty,
                   child: Expanded(
                       child: IconButton(
                           color: Colors.redAccent,
