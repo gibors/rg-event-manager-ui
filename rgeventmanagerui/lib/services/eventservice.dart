@@ -153,4 +153,35 @@ class EventService {
       throw Exception('Failed to fetch services: $e');
     }
   }
+
+  Future<Supplier> createorSaveProvider(Supplier provider, String token) async {
+    try {
+      var data = provider.toJson();
+      log('data: $data');
+      var result = await _dio.post('http://localhost:8080/api/v1/suppliers', data: data,
+      options: Options(headers: {
+          'Authorization': 'Bearer $token'}));
+
+      log('result: $result');
+      final providerResponse = Supplier.fromJson(result.data);
+      return providerResponse;
+      
+    } catch (e) {
+      throw Exception('Failed to create provider: $e');
+    }
+  }
+
+  Future<String> getNextFolioStudent(token) async{
+    try {
+      final response = await _dio.get('http://localhost:8080/api/v1/students/folio',
+      options: Options(headers: {
+          'Authorization': 'Bearer $token'}));
+      final data = response.data;
+      var folio = data.toString();
+      return folio;
+
+    } catch (e) {
+      throw Exception('Failed to fetch next folio: $e');
+    }
+  }
 }

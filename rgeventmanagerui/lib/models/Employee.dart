@@ -1,35 +1,43 @@
 class Employee {
-  final String name;
-  final String email;
-  final String phone;
-  final String address;
-  final String photo;
 
-  Employee({
-    required this.name,
-    required this.email,
-    required this.phone,
-    required this.address,
-    required this.photo,
-  });
+final int id;
+final String name;
+final String firstSurname;
+final String secondSurname;
+final String email;
+final String phone;
+final String position;
 
-  factory Employee.fromJson(Map<String, dynamic> json) {
-    return Employee(
-      name: json['name'],
-      email: json['email'],
-      phone: json['phone'],
-      address: json['address'],
-      photo: json['photo'],
-    );
-  }
+Employee({
+  required this.id,
+  required this.name,
+  required this.firstSurname,
+  required this.secondSurname,
+  required this.email,
+  required this.phone,
+  required this.position,
+});
 
-  Map<String, dynamic> toJson() {
-    return {
-      'name': name,
-      'email': email,
-      'phone': phone,
-      'address': address,
-      'photo': photo,
-    };
-  }
+factory Employee.fromJson(Map<String, dynamic> json) {
+  return Employee(
+    id: json['id'] ?? -1,
+    name: json['name'] ?? '',
+    firstSurname: json['firstSurname'] ?? '',
+    secondSurname: json['secondSurname'] ?? '',
+    email: json['email'] ?? '',
+    phone: json['phone'] ?? '',
+    position: json['position'] ?? '',
+  );
 }
+
+Map<String, dynamic> toJson() => {
+  'id': id == -1 ? null : id,
+  'name': name,
+  'firstSurname': firstSurname,
+  'secondSurname': secondSurname,
+  'email': email,
+  'phone': phone,
+  'position': position,
+};
+}
+
