@@ -164,7 +164,7 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
   }
 
   saveStudentData() {
-    if (isGraduation) {
+    if (selectedStudent != null) {
       var student = Student(
         id: selectedStudent != null ? selectedStudent!.id : -1,
         name: _studentName.text,
@@ -189,9 +189,7 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
 
       EventService().saveStudent(student, token).then((studentResponse) {
         if (studentResponse.id != -1) {
-          setState(() {
-            selectedStudent = studentResponse;
-          });
+          selectedStudent = studentResponse;
           isEditMode = false;
           isNewStudent = false;
           mapSelectedStudent();
@@ -247,7 +245,7 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
         ? selectedStudent!.totalCost <=
             payments.where((e) =>
             e.paymentDetail == 'platillo' || e.paymentDetail == 'paquete').map((e) => e.amount).reduce((a, b) => a + b) +
-                double.parse(_paymentAmount.text)
+                double.parse(_paymentAmount.text.isEmpty ? '0' : _paymentAmount.text)
         : (selectedStudent!.totalCost <= double.parse(_paymentAmount.text));
     var payment = Payment(
         id: -1,
@@ -258,15 +256,35 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
         eventId: selectedEvent!.id,
         paymentDetail: _paymentDetail.text,
         iva: iva);
-
     EventService().createPayment(payment, token).then((value) {
-      success = true;
-      setState(() {
-        if (success) {
+        setState(() {
           paymentsHistory.add(payment);
-        }
-      });
+        });
+        Flushbar(
+          flushbarPosition: FlushbarPosition.TOP,
+          title: 'Éxito',
+          message: 'Pago agregado correctamente',
+          duration: Duration(seconds: 3),
+          backgroundColor: Colors.green,
+        ).show(context);     
+    }).catchError((error) {
+      success = false;
+      
+        Flushbar(
+          flushbarPosition: FlushbarPosition.TOP,
+          title: 'Error',
+          message: 'Error al agregar el pago, intente de nuevo o contacte a soporte',
+          duration: Duration(seconds: 3),
+          backgroundColor: Colors.red,
+        ).show(context);
+        return;
+      }
+      );
 
+
+      
+      log('payment added');
+      
       _paymentAmount.clear();
       _paymentMethodController.clear();
       _paymentDetail.clear();
@@ -285,26 +303,19 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
             });
       } 
       else if (selectedStudent.folio.isNotEmpty && paymentDetails.contains('adicional')) {
-        selectedStudent.additionalNumber = selectedStudent.additionalNumber +  int.parse(_additionalNumber.text);
         saveStudentData();
       }
 
-      Flushbar(
-        flushbarPosition: FlushbarPosition.TOP,
-        title: 'Éxito',
-        message: 'Pago agregado correctamente',
-        duration: Duration(seconds: 3),
-        backgroundColor: Colors.green,
-      ).show(context);
-    }, onError: (error) {
-      Flushbar(
-        flushbarPosition: FlushbarPosition.TOP,
-        title: 'Error',
-        message: 'Error al agregar el pago, intente de nuevo o contacte a soporte',
-        duration: Duration(seconds: 3),
-        backgroundColor: Colors.red,
-      ).show(context);
-    });
+     
+    // }, onError: (error) {
+    //   Flushbar(
+    //     flushbarPosition: FlushbarPosition.TOP,
+    //     title: 'Error',
+    //     message: 'Error al agregar el pago, intente de nuevo o contacte a soporte',
+    //     duration: Duration(seconds: 3),
+    //     backgroundColor: Colors.red,
+    //   ).show(context);
+    // });
   }
 
   @override
@@ -833,7 +844,7 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
                                 ),
                                 SizedBox(width: 20),
                                 Visibility(
-                                    visible: selectedStudent != null  && selectedStudent.folio.isNotEmpt,
+                                    visible: selectedStudent != null  && selectedStudent.folio.isNotEmpty,
                                     child: Expanded(
                                       child: TextFormField(
                                         inputFormatters: [

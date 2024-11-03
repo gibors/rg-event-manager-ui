@@ -268,7 +268,7 @@ class _GraduationListPageState extends State<GraduationListPage> {
                                   'remaining': PlutoCell(
                                       value: e.totalCost -
                                           (e.payments.isNotEmpty
-                                              ? e.payments
+                                              ? e.payments.where((element) => element.paymentDetail == 'platillo' || element.paymentDetail == 'paquete').toList()
                                                   .map((e) => e.amount)
                                                   .reduce((value, element) =>
                                                       value + element)
