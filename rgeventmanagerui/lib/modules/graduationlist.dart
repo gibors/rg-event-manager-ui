@@ -122,7 +122,7 @@ class _GraduationListPageState extends State<GraduationListPage> {
       backgroundColor: Colors.lightBlue[50],
       appBar: AppBar(
         title: Text(
-            appState.selectedEvent != null ? appState.selectedEvent!.name : '',
+            appState.selectedEvent != null ? '${appState.selectedEvent!.eventType.description} ${appState.selectedEvent!.name}' : '',
             style: TextStyle(fontSize: 24.0, color: Colors.blue[900])),
         leading: IconButton(
           icon: Icon(Icons.arrow_back),

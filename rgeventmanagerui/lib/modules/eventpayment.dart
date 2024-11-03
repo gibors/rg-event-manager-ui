@@ -92,7 +92,9 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
         paymentDetails.add('pre-fiesta');
         paymentDetails.add('pulsera');
       } else {
-        paymentDetails.add('platillo');
+        if(selectedStudent != null && selectedStudent.folio.isEmpty){
+          paymentDetails.add('platillo');
+        }
         paymentDetails.add('souvenir');
         paymentDetails.add('pre-fiesta');
       }
@@ -171,11 +173,8 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
         age: 0,
         email: '',
         phone: _telephone.text,
-        additionalQuantity:
-            _additionalNumber.text.isEmpty || _additionalNumber.text == '0'
-                ? 0
-                : double.parse(_additionalNumber.text) *
-                    selectedEvent.pricing!.additionalCost,
+        additionalQuantity: selectedStudent != null ? selectedStudent!.additionalQuantity + (_additionalNumber.text.isEmpty ? 
+        0 : (double.tryParse(_additionalNumber.text)! * selectedEvent.pricing.additionalCost) ) : 0,
         totalCost: calculateCost(_packageType.text),
         eventId: appState.selectedEvent.id,
         comments: _comment.text,
@@ -184,9 +183,8 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
             ? selectedStudent!.folio
             : '',
         dishCount: _dishNumber.text.isEmpty ? 0 : int.parse(_dishNumber.text),
-        additionalNumber: _additionalNumber.text.isEmpty
-            ? 0
-            : int.parse(_additionalNumber.text),
+        additionalNumber:selectedStudent != null ? selectedStudent!.additionalNumber + int.tryParse(_additionalNumber.text.isEmpty ?
+         "0" : _additionalNumber.text): 0,
       );
 
       EventService().saveStudent(student, token).then((studentResponse) {
@@ -214,11 +212,11 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
 
   addPayment() {
     var success = false;
-
+    var paymentAmount = _paymentDetail.text == 'adicional' ? double.parse(_additionalNumber.text) * selectedEvent.pricing!.additionalCost:  double.parse(_paymentAmount.text); 
     double iva = 0;
     if (_paymentMethodController.text.trim() == paymentMethods[2].trim()) {
       iva = double.parse(
-          (double.tryParse(_paymentAmount.text)! * 0.16).toStringAsFixed(2));
+          (paymentAmount * 0.16).toStringAsFixed(2));
     }
 
     var payments = paymentsHistory
@@ -229,28 +227,31 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
         ? payments.map((e) => e.amount).reduce((a, b) => a + b)
         : 0;
 
-    var totalAmount = totalPaid + double.parse(_paymentAmount.text);
-    if (totalAmount > selectedStudent!.totalCost) {
-      Flushbar(
-        flushbarPosition: FlushbarPosition.TOP,
-        title: 'Error',
-        message:
-            'El pago excede el costo total del paquete/platillo, solo puedes cobrar  \$${double.parse(_paymentAmount.text) - (totalAmount - selectedStudent!.totalCost)} y despues agregar pagos adicionales u otro servicio',
-        duration: Duration(seconds: 10),
-        backgroundColor: Colors.red,
-      ).show(context);
-      return;
+    // package or dish payment validation
+    if(_paymentDetail.text == 'platillo' || _paymentDetail.text == 'paquete') {
+      var totalAmount = totalPaid + double.parse(_paymentAmount.text);
+      if ( selectedStudent.folio.isEmpty && ( totalAmount > selectedStudent!.totalCost)) {
+        Flushbar(
+          flushbarPosition: FlushbarPosition.TOP,
+          title: 'Error',
+          message:
+              'El pago excede el costo total del paquete/platillo, solo puedes cobrar  \$${double.parse(_paymentAmount.text) - (totalAmount - selectedStudent!.totalCost)} y despues agregar pagos adicionales u otro servicio',
+          duration: Duration(seconds: 10),
+          backgroundColor: Colors.red,
+        ).show(context);
+        return;
+      }
     }
-
+    // check if the student has already paid the total cost
     var paid = payments.isNotEmpty
         ? selectedStudent!.totalCost <=
-            payments.map((e) => e.amount).reduce((a, b) => a + b) +
+            payments.where((e) =>
+            e.paymentDetail == 'platillo' || e.paymentDetail == 'paquete').map((e) => e.amount).reduce((a, b) => a + b) +
                 double.parse(_paymentAmount.text)
         : (selectedStudent!.totalCost <= double.parse(_paymentAmount.text));
-
     var payment = Payment(
         id: -1,
-        amount: double.parse(_paymentAmount.text),
+        amount: paymentAmount,
         paymentMethod: _paymentMethodController.text,
         paymentDate: DateTime.now(),
         studentId: selectedStudent != null ? selectedStudent!.id : -1,
@@ -265,17 +266,29 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
           paymentsHistory.add(payment);
         }
       });
+
       _paymentAmount.clear();
       _paymentMethodController.clear();
       _paymentDetail.clear();
-      if (paid) {
+      _additionalNumber.clear();
+
+      if (paid && selectedStudent.folio.isEmpty) {
         EventService().getNextFolioStudent(token).then((value) => {
               selectedStudent.folio = value,
-              paymentDetails.add('adicional'),
-              paymentDetails.remove('paquete'),
+              if(packageTypes.isNotEmpty){
+                paymentDetails.add('adicional'),
+                paymentDetails.remove('paquete'),
+              } else {
+                paymentDetails.remove('platillo'),
+              },
               saveStudentData()
             });
+      } 
+      else if (selectedStudent.folio.isNotEmpty && paymentDetails.contains('adicional')) {
+        selectedStudent.additionalNumber = selectedStudent.additionalNumber +  int.parse(_additionalNumber.text);
+        saveStudentData();
       }
+
       Flushbar(
         flushbarPosition: FlushbarPosition.TOP,
         title: 'Éxito',
@@ -287,7 +300,7 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
       Flushbar(
         flushbarPosition: FlushbarPosition.TOP,
         title: 'Error',
-        message: 'Error al agregar el pago',
+        message: 'Error al agregar el pago, intente de nuevo o contacte a soporte',
         duration: Duration(seconds: 3),
         backgroundColor: Colors.red,
       ).show(context);
@@ -514,24 +527,6 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
                                     });
                                   },
                                 ),
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
-       
                               ],
                             ),
                             SizedBox(height: 30),
@@ -723,7 +718,7 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
                                   decoration: InputDecoration(
                                       labelText: 'Monto del pago',
                                       border: OutlineInputBorder()),
-                                  validator: (value) =>
+                                  validator: (value) => _paymentDetail.text != 'adicional' &&
                                       value != null && value.isEmpty
                                           ? 'El monto del pago es requerido'
                                           : null,
@@ -838,16 +833,21 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
                                 ),
                                 SizedBox(width: 20),
                                 Visibility(
-                                    visible: selectedStudent != null &&
-                                        selectedStudent.folio.isNotEmpty,
+                                    visible: selectedStudent != null  && selectedStudent.folio.isNotEmpt,
                                     child: Expanded(
                                       child: TextFormField(
+                                        inputFormatters: [
+                                          FilteringTextInputFormatter.digitsOnly
+                                        ],
+                                        validator: (value) => selectedStudent!= null && selectedStudent.folio.isNotEmpty && _paymentDetail.text == 'adicional' && value != null &&
+                                                value.isEmpty
+                                            ? 'El número de personas es requerido'
+                                            : null,
                                         controller: _additionalNumber,
                                         decoration: InputDecoration(
                                           labelText: 'Personas adicionales',
                                           border: OutlineInputBorder(),
-                                        ),
-                                        readOnly: true,
+                                        ),                                        
                                       ),
                                     )),
                               ],
@@ -897,7 +897,8 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
                                                 ],
                                               );
                                             });
-                                      } else {
+                                      } 
+                                      else {
                                         showDialog(
                                             context: context,
                                             builder: (BuildContext context) {
@@ -923,7 +924,36 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
                                               );
                                             });
                                       }
-                                    } else {
+                                    }
+                                    else if(_formKey.currentState!.validate() && _paymentDetail.text == 'adicional' && selectedStudent!.folio.isNotEmpty)
+                                      {
+                                          showDialog(
+                                            context: context,
+                                            builder: (BuildContext context) {
+                                              return AlertDialog(
+                                                title: Text('Confirmar pago'),
+                                                content: Text(
+                                                    '¿Está seguro de agregar el pago adicional de ${double.tryParse(_additionalNumber.text)! * selectedEvent.pricing!.additionalCost} ?'),
+                                                actions: [
+                                                  TextButton(
+                                                      onPressed: () {
+                                                        Navigator.of(context)
+                                                            .pop();
+                                                      },
+                                                      child: Text('Cancelar')),
+                                                  TextButton(
+                                                      onPressed: () {
+                                                        Navigator.of(context)
+                                                            .pop();
+                                                        addPayment();
+                                                      },
+                                                      child: Text('Aceptar'))
+                                                ],
+                                              );
+                                            });
+
+                                      } 
+                                    else {
                                       Flushbar(
                                         flushbarPosition: FlushbarPosition.TOP,
                                         title: 'Error',

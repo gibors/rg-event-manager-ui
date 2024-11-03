@@ -8,7 +8,6 @@ import 'package:rg_event_management_ui/app_colors.dart';
 import 'package:rg_event_management_ui/main.dart';
 import 'package:rg_event_management_ui/models/Event.dart';
 import 'package:rg_event_management_ui/models/Supplier.dart';
-import 'package:rg_event_management_ui/modules/provider_list.dart';
 import 'package:rg_event_management_ui/services/eventservice.dart';
 
 class AddProviderPage extends StatefulWidget {

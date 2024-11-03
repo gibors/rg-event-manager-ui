@@ -13,11 +13,15 @@ import 'package:rg_event_management_ui/login.dart';
 import 'package:rg_event_management_ui/models/Employee.dart';
 import 'package:rg_event_management_ui/models/Student.dart';
 import 'package:rg_event_management_ui/models/Supplier.dart';
+import 'package:rg_event_management_ui/models/User.dart';
+import 'package:rg_event_management_ui/modules/accountability.dart';
 import 'package:rg_event_management_ui/modules/add_event.dart';
 import 'package:rg_event_management_ui/models/Event.dart';
+import 'package:rg_event_management_ui/modules/budgetpage.dart';
 import 'package:rg_event_management_ui/modules/employees_list.dart';
 import 'package:rg_event_management_ui/modules/eventpayment.dart';
 import 'package:rg_event_management_ui/modules/provider_list.dart';
+import 'package:rg_event_management_ui/modules/userlistpage.dart';
 import 'package:rg_event_management_ui/services/eventservice.dart';
 import 'package:rg_event_management_ui/modules/graduationlist.dart';
 
@@ -67,6 +71,7 @@ class MyAppState extends ChangeNotifier {
   Student? selectedStudent;
   Supplier? selectedProvider;
   Employee? selectedEmployee;
+  User? selectedUser;
   int selectedIndex = 0;
   // List<PlutoRow> rows = [];
 
@@ -105,9 +110,17 @@ class MyAppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setSelectedUser(User user){
+    selectedUser = user;
+    notifyListeners();
+  }
+
   void clearSelectedProvider(){
     selectedProvider = null;
-    // notifyListeners();
+  }
+
+  void clearSelectedUser(){
+    selectedUser = null;
   }
 
   void setSelectedEmployee(Employee employee){
@@ -153,11 +166,11 @@ class _EventsHomePageState extends State<EventsHomePage> {
       case 2: 
         page = EmployeesView();
         case 3: 
-        page = EmployeesView();
+        page = AccountabilityPage();
         case 4:
-        page = EmployeesView();
+        page = BudgetPage();
         case 5:
-        page = EmployeesView();
+        page = UserListPage();
       default:
         throw UnimplementedError('no widget for $selectedIndex');
     }
@@ -208,7 +221,7 @@ class _EventsHomePageState extends State<EventsHomePage> {
                       ),
                       BottomNavigationBarItem(
                         icon: Icon(Icons.security),
-                        label: 'Seguridad',
+                        label: 'Administrar Usuarios',
                       ),
                     ],
                     currentIndex: selectedIndex,
@@ -251,7 +264,7 @@ class _EventsHomePageState extends State<EventsHomePage> {
                       ),
                       NavigationRailDestination(
                         icon: Icon(Icons.security),
-                        label: Text('Seguridad'),
+                        label: Text('Administrar Usuarios'),
                       ),
                     ],
                     selectedIndex: selectedIndex,

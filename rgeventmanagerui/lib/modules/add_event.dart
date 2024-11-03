@@ -194,12 +194,12 @@ class _AddEventPopup extends State<AddEventPopup> {
     var contacts = <Contact>[];
 
     if (selectedEventType != null && selectedEventType!.id == 3) {
-      if (double.tryParse(eventCost.text)! > 0 &&
-          (double.tryParse(eventCostPackage10.text)! > 0 ||
-              double.tryParse(eventCostPackage10NoPre.text)! > 0 ||
-              double.tryParse(eventCostPackageHalf.text)! > 0 ||
-              double.tryParse(eventCostPackageHalfNoPre.text)! > 0 ||
-              double.tryParse(eventCostPackageDouble.text)! > 0)) {
+      if (double.tryParse(eventCost.text.isEmpty ? "0" : eventCost.text)! > 0 &&
+          (  double.tryParse(eventCostPackage10.text.isEmpty ? "0" : eventCostPackage10.text)! > 0 ||
+              double.tryParse(eventCostPackage10NoPre.text.isEmpty ? "0": eventCostPackage10NoPre.text)! > 0 ||
+              double.tryParse(eventCostPackageHalf.text .isEmpty ? "0": eventCostPackageHalf.text)! > 0 ||
+              double.tryParse(eventCostPackageHalfNoPre.text .isEmpty ? "0": eventCostPackageHalfNoPre.text)! > 0 ||
+              double.tryParse(eventCostPackageDouble.text .isEmpty ? "0": eventCostPackageDouble.text)! > 0)) {
         Flushbar(
           flushbarPosition: FlushbarPosition.TOP,
           backgroundColor: Colors.redAccent,
@@ -283,9 +283,10 @@ class _AddEventPopup extends State<AddEventPopup> {
     );
 
     EventService().createEvent(event, token).then((value) {
+        log('Event created id ${value.id}');
+
       setState(() {
-        log('Event created');
-        selectedEvent = event;
+        selectedEvent = value;
         isEditMode = true;
       });
 
@@ -435,7 +436,17 @@ class _AddEventPopup extends State<AddEventPopup> {
     var appState = context.read<MyAppState>();
     return Scaffold(
       appBar: AppBar(
-        title: Text(title,
+         leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+            appState.setIndex(0);
+                            Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                builder: (context) => EventsHomePage(),
+                              ),
+                            ); },
+        ),
+        title: Text(title,                
             style: TextStyle(
                 fontSize: 24.0, color: Color.fromRGBO(250, 10, 100, 0.8))),
       ),
@@ -562,7 +573,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                             ),
                             labelText: selectedEventType == null ||
                                     selectedEventType!.id != 3
-                                ? 'Número Invitados'
+                                ? (selectedEventType != null && (selectedEventType!.id == 1 || selectedEventType!.id == 2) ? 'Número adultos': 'Número de invitados')
                                 : 'Mínimo de graduados'),
                         keyboardType: TextInputType.number,
                         validator: (value) {
@@ -940,7 +951,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                             labelText: 'Costo por platillo:'),
                         keyboardType: TextInputType.number,
                         validator: (value) {
-                          if (value == null || value.isEmpty) {
+                          if (eventCostPackage10.text.isEmpty && (value == null || value.isEmpty)) {
                             return 'Ingresa el costo del platillo';
                           }
                           return null;

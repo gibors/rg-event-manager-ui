@@ -5,26 +5,24 @@ import 'package:flutter/material.dart';
 import 'package:pluto_grid/pluto_grid.dart';
 import 'package:provider/provider.dart';
 import 'package:rg_event_management_ui/main.dart';
-import 'package:rg_event_management_ui/models/Supplier.dart';
-import 'package:rg_event_management_ui/modules/add_provider.dart';
-import 'package:rg_event_management_ui/services/eventservice.dart';
+import 'package:rg_event_management_ui/models/User.dart';
+import 'package:rg_event_management_ui/modules/adduserpage.dart';
+import 'package:rg_event_management_ui/services/userservices.dart';
 
-class ProviderListPage extends StatefulWidget {
+class UserListPage extends StatefulWidget {
   @override
-  _ProviderListPageState createState() => _ProviderListPageState();
-
+  _UserListPageState createState() => _UserListPageState();
 }
 
-class _ProviderListPageState extends State<ProviderListPage> {
-  
-  var selectedSupplier;
+class _UserListPageState extends State<UserListPage> {
+  var selectedUser;
   List<PlutoRow> rows = [];
   List<PlutoRow> rowsEvents = [];
   late PlutoGridStateManager stateManagerProviders;
   PlutoGridMode mode = PlutoGridMode.selectWithOneTap;
 
   final controller = ScrollController();
-  late Future<List<Supplier>> _func;
+  late Future<List<User>> _func;
   double offset = 0;
 
   List<PlutoColumn>  columns = [
@@ -44,30 +42,23 @@ class _ProviderListPageState extends State<ProviderListPage> {
       type: PlutoColumnType.text(),
     ),
     PlutoColumn(
-      title: 'Telefono',
-      field: 'phone',
-      type: PlutoColumnType.text(),
-    ),
-       PlutoColumn(
-      title: 'Tipo de servicio',
-      field: 'serviceType',
+      title: 'Nombre de usuario',
+      field: 'username',
       type: PlutoColumnType.text(),
     ),
     PlutoColumn(
-      title: 'Cuenta bancaria',
-      field: 'accountNumber',
+      title: 'Role',
+      field: 'role',
       type: PlutoColumnType.text(),
     ),
     
   ];
 
-
-
   @override
   void initState() {
     var appState = context.read<MyAppState>();
     var token = appState.appToken;
-    _func = EventService().getAllProviders(token);
+    _func = UserService().getUsers(token);
     controller.addListener(onScroll);
     super.initState();
   }
@@ -82,15 +73,15 @@ class _ProviderListPageState extends State<ProviderListPage> {
       offset = (controller.hasClients) ? controller.offset : 0;
     });
   }
-  
+
   @override
   Widget build(BuildContext context) {
-        var appState = context.watch<MyAppState>();
+     var appState = context.watch<MyAppState>();
 
-      return SizedBox(
+         return SizedBox(
       // height: 800,
       // width: 1500,
-      child: FutureBuilder<List<Supplier>>(
+      child: FutureBuilder<List<User>>(
         future: _func,
         builder: (context, snapshot) => snapshot.hasData
             ? Center( 
@@ -115,30 +106,30 @@ class _ProviderListPageState extends State<ProviderListPage> {
                 },
               ),
                SizedBox(width: 20),
-              Text('Agregar proveedor', style: Theme.of(context).textTheme.bodyLarge),
+              Text('Agregar usuario', style: Theme.of(context).textTheme.bodyLarge),
 
               IconButton(
                 icon: Icon(Icons.add_box),
                 onPressed: () {
-                  appState.clearSelectedProvider();
-                  Navigator.of(context).push(MaterialPageRoute(builder: (context) => AddProviderPage()));
+                  appState.clearSelectedUser();
+                  Navigator.of(context).push(MaterialPageRoute(builder: (context) => AddUserPage()));
                 },
               ),
               SizedBox(width: 20),
-              Visibility(visible: selectedSupplier != null , 
+              Visibility(visible: selectedUser != null , 
               child: Container( child: Row(children: [
-                Text('Editar proveedor', style: Theme.of(context).textTheme.bodyLarge),
+                Text('Editar usuario', style: Theme.of(context).textTheme.bodyLarge),
               IconButton(
                 icon: Icon(Icons.edit),
                 onPressed: () {
-                  if (appState.selectedProvider != null){
-                    Navigator.of(context).push(MaterialPageRoute(builder: (context) => AddProviderPage()));
+                  if (appState.selectedUser != null){
+                    Navigator.of(context).push(MaterialPageRoute(builder: (context) => AddUserPage()));
                   } else {
  
                       Flushbar(
                          flushbarPosition: FlushbarPosition.TOP,
                         title: 'Error',
-                        message: 'Selecciona un proveedor para editar',
+                        message: 'Selecciona un usuario para editar',
                         duration: Duration(seconds: 3),
                         backgroundColor: Colors.red,
                       ).show(context);
@@ -155,9 +146,9 @@ class _ProviderListPageState extends State<ProviderListPage> {
           ,
           SizedBox(height: 30),
           Row(children: [
-            Text('Total de proveedores: ${snapshot.data!.length}', style: Theme.of(context).textTheme.bodyMedium),
+            Text('Total de usuarios: ${snapshot.data!.length}', style: Theme.of(context).textTheme.bodyMedium),
              SizedBox(width: 30),
-             Text('Proveedor seleccionado: ${selectedSupplier != null ? (selectedSupplier!.name + ' ' + selectedSupplier!.lastName) : 'Ninguno'}', style: Theme.of(context).textTheme.bodyMedium),
+             Text('Usuario seleccionado: ${selectedUser != null ? (selectedUser!.name + ' ' + selectedUser!.lastname) : 'Ninguno'}', style: Theme.of(context).textTheme.bodyMedium),
 
           ],),
           SizedBox(height: 20),
@@ -168,21 +159,20 @@ class _ProviderListPageState extends State<ProviderListPage> {
           rows: snapshot.data!.map((e) => PlutoRow( 
                   cells: {
                     'name': PlutoCell(value: e.name),
-                    'lastName': PlutoCell(value: e.lastName),
+                    'lastName': PlutoCell(value: e.lastname),
                     'email': PlutoCell(value: e.email),
-                    'phone': PlutoCell(value: e.phone),
-                    'serviceType': PlutoCell(value: e.serviceType.name),
-                    'accountNumber': PlutoCell(value: e.accountNumber),
+                    'username': PlutoCell(value: e.username),
+                    'role': PlutoCell(value: e.role == 1 ? 'Admin' : (e.role == 2 ? 'Operador' : 'Reporter')),
                   }
                 )).toList(),
           onChanged: (PlutoGridOnChangedEvent event) {
             print(event);
           },
           onSelected: (event) => {
-            log('selected supplier: ${event.row!.cells['name']!.value}'),
+            log('selected user: ${event.row!.cells['name']!.value}'),
             setState(() {
-              selectedSupplier = snapshot.data!.firstWhere((element) => element.name == event.row!.cells['name']!.value);
-              appState.setSelectedProvider(selectedSupplier);
+              selectedUser = snapshot.data!.firstWhere((element) => element.username == event.row!.cells['username']!.value);
+              appState.setSelectedUser(selectedUser);
             })
           },
           onLoaded: (PlutoGridOnLoadedEvent event) {
@@ -222,7 +212,5 @@ class _ProviderListPageState extends State<ProviderListPage> {
       )
     );
 
-       
   }
-
 }

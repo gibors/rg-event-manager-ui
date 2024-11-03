@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:rg_event_management_ui/app_colors.dart';
 import 'package:rg_event_management_ui/main.dart';
 import 'package:rg_event_management_ui/models/AuthResponse.dart';
-import 'package:rg_event_management_ui/services/user_service.dart';
+import 'package:rg_event_management_ui/services/userservices.dart';
 import 'dart:developer';
 
 class Login extends StatefulWidget {

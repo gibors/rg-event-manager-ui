@@ -64,15 +64,19 @@ class EventService {
     }
   }
 
-  Future<void> createEvent(Event event, String token) async {
+  Future<Event> createEvent(Event event, String token) async {
     try {
 
       var data = event.toJson();
       log('data: $data');
-      await _dio.post('http://localhost:8080/api/v1/events', data: data,
+      final response = await _dio.post('http://localhost:8080/api/v1/events', data: data,
       options: Options(headers: {
           'Authorization': 'Bearer $token'}));
+
+      final eventResponse = Event.fromJson(response.data);
+      return eventResponse;
     } catch (e) {
+      log('Dio saving event, post request error: ${e.toString()}');
       throw Exception('Failed to create event: $e');
     }
   }
