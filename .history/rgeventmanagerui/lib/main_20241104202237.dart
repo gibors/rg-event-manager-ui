@@ -198,8 +198,7 @@ class _EventsHomePageState extends State<EventsHomePage> {
                 Expanded(child: mainArea),
                 SizedBox(height: 200),
                 SafeArea(
-                  child: 
-                  BottomNavigationBar(
+                  child: BottomNavigationBar(
                     items: [
                       BottomNavigationBarItem(
                         icon: Icon(Icons.home),
@@ -239,23 +238,23 @@ class _EventsHomePageState extends State<EventsHomePage> {
           } else {
             return Row(
               children: [
-                SafeArea( 
-                  child: Row( 
-                    children: 
-                  [
-                    Text('Salir'),
-                    IconButton( 
-                      icon: Icon(Icons.logout_rounded),
-                      onPressed: () {
+                Expanded(
+                  child: Container(
+                    color: colorScheme.background,
+                    child: Center(
+                      child: OutlinedButton(
+                        onPressed: () {
                           appState.setToken("");
-                          Navigator.pushAndRemoveUntil(
-                            context,
-                            MaterialPageRoute(builder: (context) => Login()),
-                            (route) => false,
-                          );
-                      },
+                          appState.setIndex(selectedIndex);
+                          Navigator.of(context).push(MaterialPageRoute(builder: (context) => Login()));
+                        },
+                        child: Text('Cerrar sesión'),
+                      ),
                     ),
-                     NavigationRail(
+                  ),
+                )
+                SafeArea(
+                  child: NavigationRail(
                     extended: constraints.maxWidth >= 600,
                     destinations: [
                 
@@ -290,9 +289,7 @@ class _EventsHomePageState extends State<EventsHomePage> {
                         selectedIndex = value;
                       });
                     },
-                  ), 
-   
-                  ]),
+                  ),
                 ),
                 Expanded(child: mainArea),
               ],

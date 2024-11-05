@@ -28,15 +28,8 @@ class UserService {
         return AuthResponse.fromJson(response.data);
       }
     } catch (e) {
-      log('Dio post request error: ${e.toString()}');
-    try {
-      final dio = Dio();
-      final response = await dio.get('http://localhost:8080/api/v1/health');
-      return AuthResponse(token: "", type: "", error: "OK");
-    }catch(e){
-      log('HealthCheck request error: ${e.toString()}');
-            return AuthResponse(token: "", type: "", error: "DOWN");
-    }
+      log('Dio poost request error: ${e.toString()}');
+      return AuthResponse(token: "", type: "", error: e.toString());
     }
   }
 
@@ -86,6 +79,7 @@ Future<String> healthcheck() async {
       final response = await dio.get('http://localhost:8080/api/v1/health');
       return response.data;
     }catch(e){
+      
       log('HealthCheck request error: ${e.toString()}');
       return "ERROR";
     }

@@ -240,22 +240,10 @@ class _EventsHomePageState extends State<EventsHomePage> {
             return Row(
               children: [
                 SafeArea( 
+                  
                   child: Row( 
                     children: 
-                  [
-                    Text('Salir'),
-                    IconButton( 
-                      icon: Icon(Icons.logout_rounded),
-                      onPressed: () {
-                          appState.setToken("");
-                          Navigator.pushAndRemoveUntil(
-                            context,
-                            MaterialPageRoute(builder: (context) => Login()),
-                            (route) => false,
-                          );
-                      },
-                    ),
-                     NavigationRail(
+                  [ NavigationRail(
                     extended: constraints.maxWidth >= 600,
                     destinations: [
                 
@@ -290,8 +278,8 @@ class _EventsHomePageState extends State<EventsHomePage> {
                         selectedIndex = value;
                       });
                     },
-                  ), 
-   
+                  ), SizedBox(height:20),
+                     Text('Logout'),
                   ]),
                 ),
                 Expanded(child: mainArea),

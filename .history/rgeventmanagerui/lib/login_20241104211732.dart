@@ -196,7 +196,7 @@ class _LoginState extends State<Login> {
                                                 context: context,
                                                 builder: (BuildContext context) {
                                                   return AlertDialog(
-                                                    title: Text('Error de conexión'),
+                                                    title: Text('Error'),
                                                     content: Text('No se pudo establecer conexión con el servidor, reinicie el servicio o contacte a suporte'),
                                                     actions: <Widget>[
                                                       TextButton(

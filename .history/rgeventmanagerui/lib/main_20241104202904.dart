@@ -198,8 +198,7 @@ class _EventsHomePageState extends State<EventsHomePage> {
                 Expanded(child: mainArea),
                 SizedBox(height: 200),
                 SafeArea(
-                  child: 
-                  BottomNavigationBar(
+                  child: BottomNavigationBar(
                     items: [
                       BottomNavigationBarItem(
                         icon: Icon(Icons.home),
@@ -239,23 +238,8 @@ class _EventsHomePageState extends State<EventsHomePage> {
           } else {
             return Row(
               children: [
-                SafeArea( 
-                  child: Row( 
-                    children: 
-                  [
-                    Text('Salir'),
-                    IconButton( 
-                      icon: Icon(Icons.logout_rounded),
-                      onPressed: () {
-                          appState.setToken("");
-                          Navigator.pushAndRemoveUntil(
-                            context,
-                            MaterialPageRoute(builder: (context) => Login()),
-                            (route) => false,
-                          );
-                      },
-                    ),
-                     NavigationRail(
+                SafeArea(
+                  child: NavigationRail(
                     extended: constraints.maxWidth >= 600,
                     destinations: [
                 
@@ -290,10 +274,17 @@ class _EventsHomePageState extends State<EventsHomePage> {
                         selectedIndex = value;
                       });
                     },
-                  ), 
-   
-                  ]),
+                  ),
                 ),
+                               Row( children:[
+                 SizedBox(height: 12),
+               Column(
+                 children: [
+                   Text('rg eventos'),
+                   SizedBox(height: 12),
+                 ]
+               ),
+               ],),
                 Expanded(child: mainArea),
               ],
             );

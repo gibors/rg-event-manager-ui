@@ -245,14 +245,10 @@ class _EventsHomePageState extends State<EventsHomePage> {
                   [
                     Text('Salir'),
                     IconButton( 
+                        padding: EdgeInsets.only(left: 16),
                       icon: Icon(Icons.logout_rounded),
                       onPressed: () {
-                          appState.setToken("");
-                          Navigator.pushAndRemoveUntil(
-                            context,
-                            MaterialPageRoute(builder: (context) => Login()),
-                            (route) => false,
-                          );
+                          
                       },
                     ),
                      NavigationRail(

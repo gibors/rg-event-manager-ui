@@ -191,25 +191,9 @@ class _LoginState extends State<Login> {
                                               return EventsHomePage();
                                             }));
                                           }else if(response.error == "DOWN"){
-
-                                              showDialog(
-                                                context: context,
-                                                builder: (BuildContext context) {
-                                                  return AlertDialog(
-                                                    title: Text('Error de conexión'),
-                                                    content: Text('No se pudo establecer conexión con el servidor, reinicie el servicio o contacte a suporte'),
-                                                    actions: <Widget>[
-                                                      TextButton(
-                                                        onPressed: () {
-                                                          Navigator.of(context).pop();
-                                                        },
-                                                        child: Text('Cerrar'),
-                                                      ),
-                                                    ],
-                                                  );
-                                                },
-                                              );
-                                            
+                                            showDialog(
+                                              
+                                            )
                                           } 
                                           else {
                                             

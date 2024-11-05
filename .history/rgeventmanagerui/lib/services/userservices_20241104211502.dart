@@ -32,7 +32,7 @@ class UserService {
     try {
       final dio = Dio();
       final response = await dio.get('http://localhost:8080/api/v1/health');
-      return AuthResponse(token: "", type: "", error: "OK");
+      return response.data;
     }catch(e){
       log('HealthCheck request error: ${e.toString()}');
             return AuthResponse(token: "", type: "", error: "DOWN");

@@ -240,58 +240,52 @@ class _EventsHomePageState extends State<EventsHomePage> {
             return Row(
               children: [
                 SafeArea( 
-                  child: Row( 
-                    children: 
-                  [
-                    Text('Salir'),
-                    IconButton( 
-                      icon: Icon(Icons.logout_rounded),
-                      onPressed: () {
-                          appState.setToken("");
-                          Navigator.pushAndRemoveUntil(
-                            context,
-                            MaterialPageRoute(builder: (context) => Login()),
-                            (route) => false,
-                          );
+                child: Row(
+                  children: [
+                    NavigationRail(
+                      extended: constraints.maxWidth >= 600,
+                      destinations: [
+                        NavigationRailDestination(
+                          icon: Icon(Icons.event),
+                          label: Text('Eventos'),
+                        ),
+                        NavigationRailDestination(
+                          icon: Icon(Icons.contacts),
+                          label: Text('Proveedores'),
+                        ),
+                        NavigationRailDestination(
+                          icon: Icon(Icons.person),
+                          label: Text('Empleados'),
+                        ),
+                        NavigationRailDestination(
+                          icon: Icon(Icons.account_balance),
+                          label: Text('Contabilidad'),
+                        ),
+                        NavigationRailDestination(
+                          icon: Icon(Icons.money_rounded),
+                          label: Text('Cotización'),
+                        ),
+                        NavigationRailDestination(
+                          icon: Icon(Icons.security),
+                          label: Text('Administrar Usuarios'),
+                        ),
+                      ],
+                      selectedIndex: selectedIndex,
+                      onDestinationSelected: (value) {
+                        setState(() {
+                          selectedIndex = value;
+                        });
                       },
                     ),
-                     NavigationRail(
-                    extended: constraints.maxWidth >= 600,
-                    destinations: [
+                    ElevatedButton(
+                      onPressed: () {
+                        // TODO: Implement logout functionality
+                      },
+                      child: Text('Logout'),
+                    ),
+                  ],
+                ),
                 
-                      NavigationRailDestination(
-                        icon: Icon(Icons.event),
-                        label: Text('Eventos'),
-                      ),
-                      NavigationRailDestination(
-                        icon: Icon(Icons.contacts),
-                        label: Text('Proveedores'),
-                      ),
-                       NavigationRailDestination(
-                        icon: Icon(Icons.person),
-                        label: Text('Empleados'),
-                      ),
-                      NavigationRailDestination(
-                        icon: Icon(Icons.account_balance),
-                        label: Text('Contabilidad'),
-                      ),
-                      NavigationRailDestination(
-                        icon: Icon(Icons.money_rounded),
-                        label: Text('Cotización'),
-                      ),
-                      NavigationRailDestination(
-                        icon: Icon(Icons.security),
-                        label: Text('Administrar Usuarios'),
-                      ),
-                    ],
-                    selectedIndex: selectedIndex,
-                    onDestinationSelected: (value) {
-                      setState(() {
-                        selectedIndex = value;
-                      });
-                    },
-                  ), 
-   
                   ]),
                 ),
                 Expanded(child: mainArea),

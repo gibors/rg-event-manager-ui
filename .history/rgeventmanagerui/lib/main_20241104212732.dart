@@ -243,18 +243,7 @@ class _EventsHomePageState extends State<EventsHomePage> {
                   child: Row( 
                     children: 
                   [
-                    Text('Salir'),
-                    IconButton( 
-                      icon: Icon(Icons.logout_rounded),
-                      onPressed: () {
-                          appState.setToken("");
-                          Navigator.pushAndRemoveUntil(
-                            context,
-                            MaterialPageRoute(builder: (context) => Login()),
-                            (route) => false,
-                          );
-                      },
-                    ),
+                    
                      NavigationRail(
                     extended: constraints.maxWidth >= 600,
                     destinations: [
