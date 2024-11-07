@@ -2,7 +2,6 @@ import 'dart:developer';
 
 import 'package:another_flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:pluto_grid/pluto_grid.dart';
 import 'package:provider/provider.dart';
 import 'package:rg_event_management_ui/main.dart';
@@ -17,8 +16,6 @@ class GraduationListPage extends StatefulWidget {
 }
 
 class _GraduationListPageState extends State<GraduationListPage> {
-    late PlutoGridStateManager plutoGridStateManager;
-
   List<PlutoColumn> columns = [
     PlutoColumn(
       title: 'Nombre',
@@ -136,7 +133,7 @@ class _GraduationListPageState extends State<GraduationListPage> {
     );
 
     await pluto_grid_export.Printing.sharePdf(
-      bytes: await plutoGridPdfExport.export(plutoGridStateManager),
+      bytes: await plutoGridPdfExport.export(stateManager),
       filename: plutoGridPdfExport.getFilename(),
     );
   }
@@ -181,10 +178,7 @@ class _GraduationListPageState extends State<GraduationListPage> {
                               style: Theme.of(context).textTheme.bodyLarge),
                           IconButton(
                             icon: Icon(Icons.picture_as_pdf),
-                            onPressed: () {
-                              log('exporting to pdf');
-                              exportToPdf();
-                            },
+                            onPressed: () {},
                           ),
                           SizedBox(width: 20),
                           Text('Descargar excel',
@@ -355,7 +349,6 @@ class _GraduationListPageState extends State<GraduationListPage> {
                               0,
                         },
                         onLoaded: (PlutoGridOnLoadedEvent event) {
-                          plutoGridStateManager = event.stateManager;
                           stateManagerProviders = event.stateManager;
                           event.stateManager.setShowColumnFilter(true);
                           event.stateManager.setSelecting(false);

@@ -167,7 +167,8 @@ class _EventsHomePageState extends State<EventsHomePage> {
       case 5:
         page = UserListPage();
       case 6:
-        page = EventsHomePage();
+        appState.setToken("");
+        page = Login();
 
       default:
         throw UnimplementedError('no widget for $selectedIndex');

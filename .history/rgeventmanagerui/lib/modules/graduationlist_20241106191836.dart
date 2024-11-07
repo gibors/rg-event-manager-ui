@@ -136,7 +136,7 @@ class _GraduationListPageState extends State<GraduationListPage> {
     );
 
     await pluto_grid_export.Printing.sharePdf(
-      bytes: await plutoGridPdfExport.export(plutoGridStateManager),
+      bytes: await plutoGridPdfExport.export(stateManager),
       filename: plutoGridPdfExport.getFilename(),
     );
   }
@@ -355,7 +355,7 @@ class _GraduationListPageState extends State<GraduationListPage> {
                               0,
                         },
                         onLoaded: (PlutoGridOnLoadedEvent event) {
-                          plutoGridStateManager = event.stateManager;
+                          stateManager = event.stateManager;
                           stateManagerProviders = event.stateManager;
                           event.stateManager.setShowColumnFilter(true);
                           event.stateManager.setSelecting(false);
