@@ -286,7 +286,8 @@ class _EventsHomePageState extends State<EventsHomePage> {
                                           appState.setToken("");
                                             Navigator.of(context).pushAndRemoveUntil(
                                               MaterialPageRoute(builder: (context) => Login()),
-                                              (Route<dynamic> route) => false,                                            
+                                              (Route<dynamic> route) => false,
+                                            
                                           );
                                         });
                                       },

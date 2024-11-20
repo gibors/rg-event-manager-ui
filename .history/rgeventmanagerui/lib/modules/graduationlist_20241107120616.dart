@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:another_flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:pluto_grid/pluto_grid.dart';
 import 'package:provider/provider.dart';
 import 'package:rg_event_management_ui/main.dart';
@@ -384,9 +385,7 @@ class _GraduationListPageState extends State<GraduationListPage> {
               )
             : snapshot.hasError
                 ? Text('Error: ${snapshot.error}')
-                : CircularProgressIndicator(
-                    
-                ),
+                : CircularProgressIndicator(),
       )),
     );
   }

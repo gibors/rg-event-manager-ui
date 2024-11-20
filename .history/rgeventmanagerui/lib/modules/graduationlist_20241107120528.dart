@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:another_flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:pluto_grid/pluto_grid.dart';
 import 'package:provider/provider.dart';
 import 'package:rg_event_management_ui/main.dart';
@@ -16,7 +17,7 @@ class GraduationListPage extends StatefulWidget {
 }
 
 class _GraduationListPageState extends State<GraduationListPage> {
-    // late PlutoGridStateManager plutoGridStateManager;
+    late PlutoGridStateManager plutoGridStateManager;
 
   List<PlutoColumn> columns = [
     PlutoColumn(
@@ -87,7 +88,7 @@ class _GraduationListPageState extends State<GraduationListPage> {
 
   List<PlutoRow> rows = [];
   List<PlutoRow> rowsEvents = [];
-  late PlutoGridStateManager stateManagerProviders;
+  // late PlutoGridStateManager stateManagerProviders;
   PlutoGridMode mode = PlutoGridMode.selectWithOneTap;
 
   final controller = ScrollController();
@@ -354,8 +355,8 @@ class _GraduationListPageState extends State<GraduationListPage> {
                               0,
                         },
                         onLoaded: (PlutoGridOnLoadedEvent event) {
-                          //plutoGridStateManager = event.stateManager;
-                           stateManagerProviders = event.stateManager;
+                          plutoGridStateManager = event.stateManager;
+                          // stateManagerProviders = event.stateManager;
                           event.stateManager.setShowColumnFilter(true);
                           event.stateManager.setSelecting(false);
                           event.stateManager
@@ -384,9 +385,7 @@ class _GraduationListPageState extends State<GraduationListPage> {
               )
             : snapshot.hasError
                 ? Text('Error: ${snapshot.error}')
-                : CircularProgressIndicator(
-                    
-                ),
+                : CircularProgressIndicator(),
       )),
     );
   }

@@ -372,11 +372,27 @@ class _GraduationListPageState extends State<GraduationListPage> {
                                     as PlutoFilterType;
                               }),
                         ),
-                        createFooter: (stateManager) {
-                          stateManager.setPageSize(15,
-                              notify: false); // default 40
-                          return PlutoPagination(stateManager);
-                        },
+                        createFooter: PlutoInfinityScrollRows(
+                        // Default is true.
+                        initialFetch: true,
+                        // Decide whether sorting will be handled by the server.
+                        // If false, handle sorting on the client side.
+                        // Default is true.
+                        fetchWithSorting: true,
+
+                        // Decide whether filtering is handled by the server.
+                        // If false, handle filtering on the client side.
+                        // Default is true.
+                        fetchWithFiltering: true,
+                        fetch: fetch,
+                        stateManager: s,
+                        
+                        ),
+                        // createFooter: (stateManager) {
+                          // stateManager.setPageSize(15,
+                              // notify: false); // default 40
+                          // return PlutoPagination(stateManager);
+                        // },
                       )),
                     ],
                   ),
@@ -385,7 +401,7 @@ class _GraduationListPageState extends State<GraduationListPage> {
             : snapshot.hasError
                 ? Text('Error: ${snapshot.error}')
                 : CircularProgressIndicator(
-                    
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
                 ),
       )),
     );

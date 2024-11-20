@@ -384,9 +384,7 @@ class _GraduationListPageState extends State<GraduationListPage> {
               )
             : snapshot.hasError
                 ? Text('Error: ${snapshot.error}')
-                : CircularProgressIndicator(
-                    
-                ),
+                : CircularProgressIndicator(),
       )),
     );
   }

@@ -385,7 +385,7 @@ class _GraduationListPageState extends State<GraduationListPage> {
             : snapshot.hasError
                 ? Text('Error: ${snapshot.error}')
                 : CircularProgressIndicator(
-                    
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
                 ),
       )),
     );

@@ -282,12 +282,7 @@ class _EventsHomePageState extends State<EventsHomePage> {
                                       onPressed: () {
                                         Navigator.of(context).pop();
                                         setState(() {
-                                          appState.setIndex(0);
-                                          appState.setToken("");
-                                            Navigator.of(context).pushAndRemoveUntil(
-                                              MaterialPageRoute(builder: (context) => Login()),
-                                              (Route<dynamic> route) => false,                                            
-                                          );
+                                          selectedIndex = value;
                                         });
                                       },
                                       child: Text('Sí'),
