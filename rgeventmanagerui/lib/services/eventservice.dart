@@ -1,6 +1,8 @@
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 import 'package:rg_event_management_ui/models/Event.dart';
 import 'package:rg_event_management_ui/models/Supplier.dart';
 import 'package:rg_event_management_ui/models/Student.dart';
@@ -9,11 +11,11 @@ class EventService {
   final Dio _dio;
 
 //shared-preferences
-  EventService() : _dio = Dio();
+  EventService() : _dio = createDio(baseUrl: 'https://localhost:8443/api/v1', trustSelfSigned: true);
 
   Future<List<Event>> getEvents(String token) async {
     try {
-      final response = await _dio.get('http://localhost:8080/api/v1/events',
+      final response = await _dio.get('https://localhost:8443/api/v1/events',
           options: Options(headers: {'Authorization': 'Bearer $token'}));
       final data = response.data as List<dynamic>;
       final events = data.map((event) => Event.fromJson(event)).toList();
@@ -27,7 +29,7 @@ class EventService {
 
   Future<Event> getEventById(int id, String token) async {
     try {
-      final response = await _dio.get('http://localhost:8080/api/v1/events/$id',
+      final response = await _dio.get('https://localhost:8443/api/v1/events/$id',
           options: Options(headers: {'Authorization': 'Bearer $token'}));
       final data = response.data;
       final event = Event.fromJson(data);
@@ -40,7 +42,7 @@ class EventService {
   Future<List<EventType>> getEventTypes(String token) async {
     try {
       final response = await _dio.get(
-          'http://localhost:8080/api/v1/events/types',
+          'https://localhost:8443/api/v1/events/types',
           options: Options(headers: {'Authorization': 'Bearer $token'}));
       final data = response.data as List<dynamic>;
       final eventTypes =
@@ -54,7 +56,7 @@ class EventService {
   Future<List<Location>> getLocations(String token) async {
     try {
       final response = await _dio.get(
-          'http://localhost:8080/api/v1/events/locations',
+          'https://localhost:8443/api/v1/events/locations',
           options: Options(headers: {'Authorization': 'Bearer $token'}));
       final data = response.data as List<dynamic>;
       final locations =
@@ -69,7 +71,7 @@ class EventService {
     try {
       var data = event.toJson();
       log('data: $data');
-      final response = await _dio.post('http://localhost:8080/api/v1/events',
+      final response = await _dio.post('https://localhost:8443/api/v1/events',
           data: data,
           options: Options(headers: {'Authorization': 'Bearer $token'}));
 
@@ -84,7 +86,7 @@ class EventService {
   Future<List<Student>> getStudentsByEvent(String token, int eventId) async {
     try {
       final response = await _dio.get(
-          'http://localhost:8080/api/v1/students/events/$eventId',
+          'https://localhost:8443/api/v1/students/events/$eventId',
           options: Options(headers: {'Authorization': 'Bearer $token'}));
       final data = response.data as List<dynamic>;
       final students =
@@ -99,7 +101,7 @@ class EventService {
     try {
       var data = student.toJson();
       log('data: $data');
-      final response = await _dio.post('http://localhost:8080/api/v1/students',
+      final response = await _dio.post('https://localhost:8443/api/v1/students',
           data: data,
           options: Options(headers: {'Authorization': 'Bearer $token'}));
 
@@ -113,7 +115,7 @@ class EventService {
   Future<List<Payment>> getPaymentsByEventId(String token, int eventId) async {
     try {
       final response = await _dio.get(
-          'http://localhost:8080/api/v1/payments/events/$eventId',
+          'https://localhost:8443/api/v1/payments/events/$eventId',
           options: Options(headers: {'Authorization': 'Bearer $token'}));
       final data = response.data as List<dynamic>;
       final payments =
@@ -128,7 +130,7 @@ class EventService {
     try {
       var data = payment.toJson();
       log('payment single: $data');
-      var response = await _dio.post('http://localhost:8080/api/v1/payments',
+      var response = await _dio.post('https://localhost:8443/api/v1/payments',
           data: data,
           options: Options(headers: {'Authorization': 'Bearer $token'}));
         var responsePayment = Payment.fromJson(response.data);
@@ -144,7 +146,7 @@ class EventService {
     try {
       Student? studentResponse;
       var folioRequest = await _dio.get(
-          'http://localhost:8080/api/v1/students/folio',
+          'https://localhost:8443/api/v1/students/folio',
           options: Options(headers: {'Authorization': 'Bearer $token'}));
 
       var folioData = folioRequest.data;
@@ -155,7 +157,7 @@ class EventService {
         
         log('student data : ${student.toJson()}');
         var requestStudent = await _dio.post(
-            'http://localhost:8080/api/v1/students',
+            'https://localhost:8443/api/v1/students',
             data: student.toJson(),
             options: Options(headers: {'Authorization': 'Bearer $token'}));
         studentResponse = Student.fromJson(requestStudent.data);
@@ -168,7 +170,7 @@ class EventService {
 
   Future<List<Supplier>> getAllProviders(String token) async {
     try {
-      final response = await _dio.get('http://localhost:8080/api/v1/suppliers',
+      final response = await _dio.get('https://localhost:8443/api/v1/suppliers',
           options: Options(headers: {'Authorization': 'Bearer $token'}));
       final data = response.data as List<dynamic>;
       final providers =
@@ -182,7 +184,7 @@ class EventService {
   Future<List<ServiceType>> getServices(String token) async {
     try {
       final response = await _dio.get(
-          'http://localhost:8080/api/v1/suppliers/service-types',
+          'https://localhost:8443/api/v1/suppliers/service-types',
           options: Options(headers: {'Authorization': 'Bearer $token'}));
       final data = response.data as List<dynamic>;
       final services =
@@ -197,7 +199,7 @@ class EventService {
     try {
       var data = provider.toJson();
       log('data: $data');
-      var result = await _dio.post('http://localhost:8080/api/v1/suppliers',
+      var result = await _dio.post('https://localhost:8443/api/v1/suppliers',
           data: data,
           options: Options(headers: {'Authorization': 'Bearer $token'}));
 
@@ -212,7 +214,7 @@ class EventService {
   Future<String> getNextFolioStudent(token) async {
     try {
       final response = await _dio.get(
-          'http://localhost:8080/api/v1/students/folio',
+          'https://localhost:8443/api/v1/students/folio',
           options: Options(headers: {'Authorization': 'Bearer $token'}));
       final data = response.data;
       var folio = data.toString();
@@ -221,4 +223,19 @@ class EventService {
       throw Exception('Failed to fetch next folio: $e');
     }
   }
+
+  static Dio createDio({required String baseUrl, bool trustSelfSigned = false}) {
+  // initialize dio
+  final dio = Dio()
+    ..options.baseUrl = baseUrl;
+
+  // allow self-signed certificate
+  (dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
+    final client = HttpClient();
+    client.badCertificateCallback = (cert, host, port) => trustSelfSigned;
+    return client;
+  };
+  
+  return dio;
+}
 }

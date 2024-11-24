@@ -9,7 +9,6 @@ import 'package:rg_event_management_ui/models/Student.dart';
 import 'package:rg_event_management_ui/modules/eventpayment.dart';
 import 'package:rg_event_management_ui/services/eventservice.dart';
 // import 'package:pluto_grid_export/pluto_grid_export.dart' as pluto_grid_export;
-
 class GraduationListPage extends StatefulWidget {
   @override
   _GraduationListPageState createState() => _GraduationListPageState();
@@ -118,26 +117,26 @@ class _GraduationListPageState extends State<GraduationListPage> {
   }
 
   //  void exportToPdf() async {
-    // final themeData = pluto_grid_export.ThemeData.withFont(
-      // base: pluto_grid_export.Font.ttf(
-        // await rootBundle.load('fonts/open_sans/OpenSans-Regular.ttf'),
-      // ),
-      // bold: pluto_grid_export.Font.ttf(
-        // await rootBundle.load('fonts/open_sans/OpenSans-Bold.ttf'),
-      // ),
-    // );
+  //   final themeData = pluto_grid_export.ThemeData.withFont(
+  //     base: pluto_grid_export.Font.ttf(
+  //       await rootBundle.load('fonts/open_sans/OpenSans-Regular.ttf'),
+  //     ),
+  //     bold: pluto_grid_export.Font.ttf(
+  //       await rootBundle.load('fonts/open_sans/OpenSans-Bold.ttf'),
+  //     ),
+  //   );
 
-    // var plutoGridPdfExport = pluto_grid_export.PlutoGridDefaultPdfExport(
-      // title: "Pluto Grid Sample pdf print",
-      // creator: "Pluto Grid Rocks!",
-      // format: pluto_grid_export.PdfPageFormat.a4.landscape,
-      // themeData: themeData,
-    // );
+  //   var plutoGridPdfExport = pluto_grid_export.PlutoGridDefaultPdfExport(
+  //     title: "Pluto Grid Sample pdf print",
+  //     creator: "Pluto Grid Rocks!",
+  //     format: pluto_grid_export.PdfPageFormat.a4.landscape,
+  //     themeData: themeData,
+  //   );
 
-    // await pluto_grid_export.Printing.sharePdf(
-      // bytes: await plutoGridPdfExport.export(plutoGridStateManager),
-      // filename: plutoGridPdfExport.getFilename(),
-    // );
+  //   await pluto_grid_export.Printing.sharePdf(
+  //     bytes: await plutoGridPdfExport.export(plutoGridStateManager),
+  //     filename: plutoGridPdfExport.getFilename(),
+  //   );
   // }
 
   @override
@@ -358,6 +357,7 @@ class _GraduationListPageState extends State<GraduationListPage> {
                            stateManagerProviders = event.stateManager;
                           event.stateManager.setShowColumnFilter(true);
                           event.stateManager.setSelecting(false);
+                          stateManagerProviders.setSelectingMode(PlutoGridSelectingMode.row);
                           event.stateManager
                               .setSelectingMode(PlutoGridSelectingMode.row);
                           event.stateManager.setEditing(false);
@@ -372,11 +372,9 @@ class _GraduationListPageState extends State<GraduationListPage> {
                                     as PlutoFilterType;
                               }),
                         ),
-                        createFooter: (stateManager) {
-                          stateManager.setPageSize(15,
-                              notify: false); // default 40
-                          return PlutoPagination(stateManager);
-                        },
+                        // createFooter: (stateManager) {
+                          
+                        // },
                       )),
                     ],
                   ),

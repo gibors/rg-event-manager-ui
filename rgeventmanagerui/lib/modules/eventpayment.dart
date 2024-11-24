@@ -84,19 +84,14 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
 
       if (packageTypes.isNotEmpty) {
         if (selectedStudent != null && selectedStudent.folio.isNotEmpty) {
-          // paymentDetails.add('adicional');
+          paymentDetails.add('adicional');
         } else {
           paymentDetails.add('paquete');
         }
-        // paymentDetails.add('souvenir');
-        // paymentDetails.add('pre-fiesta');
-        // paymentDetails.add('pulsera');
       } else {
         if (selectedStudent != null && selectedStudent.folio.isEmpty) {
           paymentDetails.add('platillo');
         }
-        // paymentDetails.add('souvenir');
-        // paymentDetails.add('pre-fiesta');
       }
 
       if (selectedStudent == null) {

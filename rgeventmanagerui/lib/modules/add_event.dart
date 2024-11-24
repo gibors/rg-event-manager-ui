@@ -52,6 +52,7 @@ class _AddEventPopup extends State<AddEventPopup> {
   TextEditingController souvenirCost = TextEditingController();
   TextEditingController school = TextEditingController();
   TextEditingController grado = TextEditingController();
+  TextEditingController carer = TextEditingController();
   TextEditingController numberChildren = TextEditingController();
   TextEditingController numberYoung = TextEditingController();
 
@@ -158,6 +159,7 @@ class _AddEventPopup extends State<AddEventPopup> {
         grado.text = selectedEvent!.grade ?? "";
         school.text = selectedEvent!.school ?? "";
         _textEditingGradoController.text = grado.text;
+        carer.text = selectedEvent!.carer ?? "";          
 
         prePartyCost.text = selectedEvent!.pricing.prePartyCost.toString();
         braceletCost.text = selectedEvent!.pricing.braceletCost.toString();
@@ -286,6 +288,9 @@ class _AddEventPopup extends State<AddEventPopup> {
       school: selectedEventType != null && selectedEventType!.id == 3
           ? school.text
           : null,
+          carer: selectedEventType != null && selectedEventType!.id == 3
+          ? carer.text
+          : null,
       // not sending these fields
       createdDate: DateTime.now(),
       updatedDate: DateTime.now(),
@@ -359,7 +364,7 @@ class _AddEventPopup extends State<AddEventPopup> {
     contactIds.add(contactId);
 
     setState(() {
-      if (contactFields.length < 4) {
+      // if (contactFields.length < 4) {
         contactFields.add(
           Column(children: [
             SizedBox(height: 22.0),
@@ -441,7 +446,7 @@ class _AddEventPopup extends State<AddEventPopup> {
             ),
           ]),
         );
-      }
+      
     });
   }
 
@@ -858,6 +863,18 @@ class _AddEventPopup extends State<AddEventPopup> {
                           },
                         ),
                       ),
+                      SizedBox(width: 16.0),
+                      Expanded(flex: 2, child: 
+                      TextFormField(
+                        controller: carer,
+                        decoration: InputDecoration(
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                            ),
+                            labelText: 'Carrera:'),
+                        keyboardType: TextInputType.text,
+                      ),
+                      ),
                     ],
                   ),
                 ),
@@ -939,8 +956,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                 Row(
                   children: [
                     OutlinedButton(
-                      onPressed:
-                          contactFields.length < 4 ? addContactField : null,
+                      onPressed: addContactField ,
                       child: Text('Agregar contacto'),
                     ),
                   ],

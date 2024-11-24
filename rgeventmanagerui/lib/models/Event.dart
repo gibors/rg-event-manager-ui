@@ -10,6 +10,7 @@ class Event {
   final List<Contact> contacts;
   final String? grade;
   final String? school;
+  final String? carer;
   final DateTime createdDate;
   final DateTime eventDate;
   final DateTime updatedDate;
@@ -38,6 +39,7 @@ class Event {
     required this.status,
     required this.grade,
     required this.school,
+    required this.carer,
     required this.totalCost,
     required this.comments,
     required this.numberChildren,
@@ -64,6 +66,7 @@ class Event {
       status: json['status'] ?? '',
       grade: json['grade'],
       school: json['school'],
+      carer: json['carer'],
       totalCost: json['totalCost'] ?? 0,
       comments: json['comments'],
       numberChildren: json['numberChildren'] ?? 0,
@@ -83,6 +86,7 @@ class Event {
       'contacts': contacts.map((contact) => contact.toJson()).toList(),
       'grade': grade,
       'school': school,
+      'carer':carer,
       'totalCost': totalCost,
       'comments': comments,
       'numberChildren': numberChildren,
