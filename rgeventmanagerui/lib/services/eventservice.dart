@@ -146,7 +146,7 @@ class EventService {
     try {
       Student? studentResponse;
       var folioRequest = await _dio.get(
-          'https://localhost:8443/api/v1/students/folio',
+          'https://localhost:8443/api/v1/students/folio?eventId=${student.eventId}',
           options: Options(headers: {'Authorization': 'Bearer $token'}));
 
       var folioData = folioRequest.data;
