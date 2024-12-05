@@ -1,73 +1,83 @@
+import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
-import 'package:rg_event_management_ui/models/Event.dart';
+import 'package:rg_event_management_ui/models/Event.dart' as eventprefix;
 import 'package:rg_event_management_ui/models/Supplier.dart';
 import 'package:rg_event_management_ui/models/Student.dart';
+import 'package:universal_html/html.dart' as html;
 
 class EventService {
   final Dio _dio;
 
 //shared-preferences
-  EventService() : _dio = createDio(baseUrl: 'https://localhost:8443/api/v1', trustSelfSigned: true);
+  EventService()
+      : _dio = createDio(
+            baseUrl: 'https://localhost:8443/api/v1', trustSelfSigned: true);
 
-  Future<List<Event>> getEvents(String token) async {
+  Future<List<eventprefix.Event>> getEvents(String token) async {
     try {
       final response = await _dio.get('https://localhost:8443/api/v1/events',
           options: Options(headers: {'Authorization': 'Bearer $token'}));
       final data = response.data as List<dynamic>;
-      final events = data.map((event) => Event.fromJson(event)).toList();
+      final events =
+          data.map((event) => eventprefix.Event.fromJson(event)).toList();
       return events;
     } catch (e) {
       log('Dio get request error: ${e.toString()}');
-      
+
       throw Exception('Failed to fetch events: $e');
     }
   }
 
-  Future<Event> getEventById(int id, String token) async {
+  Future<eventprefix.Event> getEventById(int id, String token) async {
     try {
-      final response = await _dio.get('https://localhost:8443/api/v1/events/$id',
+      final response = await _dio.get(
+          'https://localhost:8443/api/v1/events/$id',
           options: Options(headers: {'Authorization': 'Bearer $token'}));
       final data = response.data;
-      final event = Event.fromJson(data);
+      final event = eventprefix.Event.fromJson(data);
       return event;
     } catch (e) {
       throw Exception('Failed to fetch event: $e');
     }
   }
 
-  Future<List<EventType>> getEventTypes(String token) async {
+  Future<List<eventprefix.EventType>> getEventTypes(String token) async {
     try {
       final response = await _dio.get(
           'https://localhost:8443/api/v1/events/types',
           options: Options(headers: {'Authorization': 'Bearer $token'}));
       final data = response.data as List<dynamic>;
-      final eventTypes =
-          data.map((eventType) => EventType.fromJson(eventType)).toList();
+      final eventTypes = data
+          .map((eventType) => eventprefix.EventType.fromJson(eventType))
+          .toList();
       return eventTypes;
     } catch (e) {
       throw Exception('Failed to fetch event types: $e');
     }
   }
 
-  Future<List<Location>> getLocations(String token) async {
+  Future<List<eventprefix.Location>> getLocations(String token) async {
     try {
       final response = await _dio.get(
           'https://localhost:8443/api/v1/events/locations',
           options: Options(headers: {'Authorization': 'Bearer $token'}));
       final data = response.data as List<dynamic>;
-      final locations =
-          data.map((location) => Location.fromJson(location)).toList();
+      final locations = data
+          .map((location) => eventprefix.Location.fromJson(location))
+          .toList();
       return locations;
     } catch (e) {
       throw Exception('Failed to fetch locations: $e');
     }
   }
 
-  Future<Event> createEvent(Event event, String token) async {
+  Future<eventprefix.Event> createEvent(
+      eventprefix.Event event, String token) async {
     try {
       var data = event.toJson();
       log('data: $data');
@@ -75,7 +85,7 @@ class EventService {
           data: data,
           options: Options(headers: {'Authorization': 'Bearer $token'}));
 
-      final eventResponse = Event.fromJson(response.data);
+      final eventResponse = eventprefix.Event.fromJson(response.data);
       return eventResponse;
     } catch (e) {
       log('Dio saving event, post request error: ${e.toString()}');
@@ -133,16 +143,16 @@ class EventService {
       var response = await _dio.post('https://localhost:8443/api/v1/payments',
           data: data,
           options: Options(headers: {'Authorization': 'Bearer $token'}));
-        var responsePayment = Payment.fromJson(response.data);
+      var responsePayment = Payment.fromJson(response.data);
 
-        return responsePayment;
-
+      return responsePayment;
     } catch (e) {
       throw Exception('Failed to create payment: $e');
     }
   }
 
-  Future<Student> saveStudentWithFolioData(Student student, String token) async {
+  Future<Student> saveStudentWithFolioData(
+      Student student, String token) async {
     try {
       Student? studentResponse;
       var folioRequest = await _dio.get(
@@ -154,7 +164,7 @@ class EventService {
 
       if (folioData != null) {
         student.setFolio(folioData.toString());
-        
+
         log('student data : ${student.toJson()}');
         var requestStudent = await _dio.post(
             'https://localhost:8443/api/v1/students',
@@ -224,18 +234,41 @@ class EventService {
     }
   }
 
-  static Dio createDio({required String baseUrl, bool trustSelfSigned = false}) {
-  // initialize dio
-  final dio = Dio()
-    ..options.baseUrl = baseUrl;
+  Future<void> DownloadGraduationListPDF(token, event, path) async {
+    try {
+      var current = Directory.current.path;
+      log('current path: $current');
+      var eventeventId = event.id;
+      var eventname = event.name.replaceAll(' ', '-');
+      
+      final response = (await _dio.download(
+          'https://localhost:8443/api/v1/students/export?eventId=$eventeventId&format=pdf',
+          '${path}/graduados-${eventname}.pdf',
+          options: Options(
+            headers: {
+              'Authorization': 'Bearer $token',
+              'responseType': ResponseType.bytes,              
+            },
+          )));
+      
+    } catch (e) {
+      log('Failed to fetch next folio: $e.toString()');
+      throw Exception('Failed to fetch next folio: $e');
+    }
+  }
 
-  // allow self-signed certificate
-  (dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
-    final client = HttpClient();
-    client.badCertificateCallback = (cert, host, port) => trustSelfSigned;
-    return client;
-  };
-  
-  return dio;
-}
+  static Dio createDio(
+      {required String baseUrl, bool trustSelfSigned = false}) {
+    // initialize dio
+    final dio = Dio()..options.baseUrl = baseUrl;
+
+    // allow self-signed certificate
+    (dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
+      final client = HttpClient();
+      client.badCertificateCallback = (cert, host, port) => trustSelfSigned;
+      return client;
+    };
+
+    return dio;
+  }
 }

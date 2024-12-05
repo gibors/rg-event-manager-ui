@@ -8,6 +8,8 @@ import 'package:rg_event_management_ui/main.dart';
 import 'package:rg_event_management_ui/models/Student.dart';
 import 'package:rg_event_management_ui/modules/eventpayment.dart';
 import 'package:rg_event_management_ui/services/eventservice.dart';
+import 'package:filepicker_windows/filepicker_windows.dart';
+
 // import 'package:pluto_grid_export/pluto_grid_export.dart' as pluto_grid_export;
 class GraduationListPage extends StatefulWidget {
   @override
@@ -15,7 +17,7 @@ class GraduationListPage extends StatefulWidget {
 }
 
 class _GraduationListPageState extends State<GraduationListPage> {
-    // late PlutoGridStateManager plutoGridStateManager;
+  // late PlutoGridStateManager plutoGridStateManager;
 
   List<PlutoColumn> columns = [
     PlutoColumn(
@@ -75,7 +77,9 @@ class _GraduationListPageState extends State<GraduationListPage> {
       field: 'folio',
       type: PlutoColumnType.text(),
     ),
-    PlutoColumn(title: 'Cantidad Adicional', field: 'additional_number',
+    PlutoColumn(
+        title: 'Cantidad Adicional',
+        field: 'additional_number',
         type: PlutoColumnType.text()),
     PlutoColumn(
       title: 'Pagado Adicional',
@@ -124,7 +128,9 @@ class _GraduationListPageState extends State<GraduationListPage> {
       backgroundColor: Colors.lightBlue[50],
       appBar: AppBar(
         title: Text(
-            appState.selectedEvent != null ? '${appState.selectedEvent!.eventType.description} ${appState.selectedEvent!.name}' : '',
+            appState.selectedEvent != null
+                ? '${appState.selectedEvent!.eventType.description} ${appState.selectedEvent!.name}'
+                : '',
             style: TextStyle(fontSize: 24.0, color: Colors.blue[900])),
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
@@ -152,22 +158,55 @@ class _GraduationListPageState extends State<GraduationListPage> {
                     children: [
                       Row(
                         children: [
-                          Text('Exportar a PDF',
+                          Text('Descargar PDF',
                               style: Theme.of(context).textTheme.bodyLarge),
                           IconButton(
                             icon: Icon(Icons.picture_as_pdf),
                             onPressed: () {
                               log('exporting to pdf');
                               // exportToPdf();
+                              final file = DirectoryPicker()
+                                ..title = 'Select a directory';
+
+                              final result = file.getDirectory();
+                              if (result != null) {
+                                print(result.path);
+                              }
+                              EventService()
+                                  .DownloadGraduationListPDF(appState.appToken,
+                                      appState.selectedEvent, result!.path)
+                                  .then(
+                                      (value) => {
+                                            Flushbar(
+                                              flushbarPosition:
+                                                  FlushbarPosition.TOP,
+                                              title: 'Éxito',
+                                              message:
+                                                  'Lista de graduación descargada correctamente',
+                                              duration: Duration(seconds: 3),
+                                              backgroundColor: Colors.green,
+                                            ).show(context)
+                                          },
+                                      onError: (e) => {
+                                            Flushbar(
+                                              flushbarPosition:
+                                                  FlushbarPosition.TOP,
+                                              title: 'Error',
+                                              message:
+                                                  'Error al descargar lista de graduación',
+                                              duration: Duration(seconds: 3),
+                                              backgroundColor: Colors.red,
+                                            ).show(context)
+                                          });
                             },
                           ),
-                          SizedBox(width: 20),
-                          Text('Descargar excel',
-                              style: Theme.of(context).textTheme.bodyLarge),
-                          IconButton(
-                            icon: Icon(Icons.download),
-                            onPressed: () {},
-                          ),
+                          // SizedBox(width: 20),
+                          // Text('Descargar excel',
+                          //     style: Theme.of(context).textTheme.bodyLarge),
+                          // IconButton(
+                          //   icon: Icon(Icons.download),
+                          //   onPressed: () {},
+                          // ),
                           SizedBox(width: 20),
                           Text('Agregar alumno',
                               style: Theme.of(context).textTheme.bodyLarge),
@@ -273,38 +312,45 @@ class _GraduationListPageState extends State<GraduationListPage> {
                                   'remaining': PlutoCell(
                                       value: e.totalCost -
                                           (e.payments.isNotEmpty
-                                              ? e.payments.where((element) => element.paymentDetail == 'platillo' || element.paymentDetail == 'paquete').toList()
+                                              ? e.payments
+                                                  .where((element) =>
+                                                      element.paymentDetail ==
+                                                          'platillo' ||
+                                                      element.paymentDetail ==
+                                                          'paquete')
+                                                  .toList()
                                                   .map((e) => e.amount)
                                                   .reduce((value, element) =>
                                                       value + element)
                                               : 0)),
                                   'student_status': PlutoCell(
                                       value: e.totalCost -
-                                                  (e.payments.isNotEmpty &&
-                                                          e.payments
+                                                      (e.payments.isNotEmpty &&
+                                                              e.payments
+                                                                  .where((element) =>
+                                                                      element.paymentDetail ==
+                                                                          'platillo' ||
+                                                                      element.paymentDetail ==
+                                                                          'paquete')
+                                                                  .isNotEmpty
+                                                          ? e.payments
                                                               .where((element) =>
-                                                                  element.paymentDetail == 'platillo' ||
+                                                                  element.paymentDetail ==
+                                                                      'platillo' ||
                                                                   element.paymentDetail ==
                                                                       'paquete')
-                                                              .isNotEmpty
-                                                      ? e.payments
-                                                          .where((element) =>
-                                                              element.paymentDetail ==
-                                                                  'platillo' ||
-                                                              element.paymentDetail ==
-                                                                  'paquete')
-                                                          .toList()
-                                                          .map((e) => e.amount)
-                                                          .reduce(
-                                                              (value, element) =>
-                                                                  value + element)
-                                                      : 0) <= 0 && e.folio.isNotEmpty
+                                                              .toList()
+                                                              .map((e) => e.amount)
+                                                              .reduce((value, element) => value + element)
+                                                          : 0) <=
+                                                  0 &&
+                                              e.folio.isNotEmpty
                                           ? 'Pagado'
-                                          : (e.totalCost == 0 ? 'Pendiente selección paquete/platillo': 'Pendiente')),
+                                          : (e.totalCost == 0 ? 'Pendiente selección paquete/platillo' : 'Pendiente')),
                                   'folio': PlutoCell(
                                       value: e.folio.isNotEmpty ? e.folio : ''),
-                                  'additional_number': PlutoCell(
-                                      value: e.additionalNumber),
+                                  'additional_number':
+                                      PlutoCell(value: e.additionalNumber),
                                   'additional_cost':
                                       PlutoCell(value: e.additionalQuantity),
                                 }))
@@ -329,10 +375,11 @@ class _GraduationListPageState extends State<GraduationListPage> {
                               0,
                         },
                         onLoaded: (PlutoGridOnLoadedEvent event) {
-                           stateManagerProviders = event.stateManager;
+                          stateManagerProviders = event.stateManager;
                           event.stateManager.setShowColumnFilter(true);
                           event.stateManager.setSelecting(false);
-                          stateManagerProviders.setSelectingMode(PlutoGridSelectingMode.row);
+                          stateManagerProviders
+                              .setSelectingMode(PlutoGridSelectingMode.row);
                           event.stateManager
                               .setSelectingMode(PlutoGridSelectingMode.row);
                           event.stateManager.setEditing(false);
@@ -354,9 +401,7 @@ class _GraduationListPageState extends State<GraduationListPage> {
               )
             : snapshot.hasError
                 ? Text('Error: ${snapshot.error}')
-                : CircularProgressIndicator(
-                    
-                ),
+                : CircularProgressIndicator(),
       )),
     );
   }
