@@ -49,7 +49,7 @@ class _LoginState extends State<Login> {
               color: AppColors.blueDarkColor,
               child: Center(
               child: Image(
-                image: AssetImage('assets/images/rg.png'),
+                image: AssetImage('assets/images/rg2.png'),
                 width: 600.0,
                 height: 600.0,
               ),

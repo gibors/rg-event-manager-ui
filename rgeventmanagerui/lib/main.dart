@@ -613,11 +613,11 @@ class _EventsPage extends State<EventsPage> {
                                   as PlutoFilterType;
                             }),
                       ),
-                      createFooter: (stateManager) {
-                        stateManager.setPageSize(15,
-                            notify: false); // default 40
-                        return PlutoPagination(stateManager);
-                      },
+                      // createFooter: (stateManager) {
+                      //   stateManager.setPageSize(15,
+                      //       notify: false); // default 40
+                      //   return PlutoPagination(stateManager);
+                      // },
                     )),
                   ],
                 ),

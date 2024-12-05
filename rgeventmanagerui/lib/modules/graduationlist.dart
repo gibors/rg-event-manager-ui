@@ -116,29 +116,6 @@ class _GraduationListPageState extends State<GraduationListPage> {
     });
   }
 
-  //  void exportToPdf() async {
-  //   final themeData = pluto_grid_export.ThemeData.withFont(
-  //     base: pluto_grid_export.Font.ttf(
-  //       await rootBundle.load('fonts/open_sans/OpenSans-Regular.ttf'),
-  //     ),
-  //     bold: pluto_grid_export.Font.ttf(
-  //       await rootBundle.load('fonts/open_sans/OpenSans-Bold.ttf'),
-  //     ),
-  //   );
-
-  //   var plutoGridPdfExport = pluto_grid_export.PlutoGridDefaultPdfExport(
-  //     title: "Pluto Grid Sample pdf print",
-  //     creator: "Pluto Grid Rocks!",
-  //     format: pluto_grid_export.PdfPageFormat.a4.landscape,
-  //     themeData: themeData,
-  //   );
-
-  //   await pluto_grid_export.Printing.sharePdf(
-  //     bytes: await plutoGridPdfExport.export(plutoGridStateManager),
-  //     filename: plutoGridPdfExport.getFilename(),
-  //   );
-  // }
-
   @override
   Widget build(BuildContext context) {
     var appState = context.watch<MyAppState>();
@@ -321,10 +298,9 @@ class _GraduationListPageState extends State<GraduationListPage> {
                                                           .reduce(
                                                               (value, element) =>
                                                                   value + element)
-                                                      : 0) <=
-                                              0
+                                                      : 0) <= 0 && e.folio.isNotEmpty
                                           ? 'Pagado'
-                                          : 'Pendiente'),
+                                          : (e.totalCost == 0 ? 'Pendiente selección paquete/platillo': 'Pendiente')),
                                   'folio': PlutoCell(
                                       value: e.folio.isNotEmpty ? e.folio : ''),
                                   'additional_number': PlutoCell(
@@ -353,7 +329,6 @@ class _GraduationListPageState extends State<GraduationListPage> {
                               0,
                         },
                         onLoaded: (PlutoGridOnLoadedEvent event) {
-                          //plutoGridStateManager = event.stateManager;
                            stateManagerProviders = event.stateManager;
                           event.stateManager.setShowColumnFilter(true);
                           event.stateManager.setSelecting(false);
@@ -372,9 +347,6 @@ class _GraduationListPageState extends State<GraduationListPage> {
                                     as PlutoFilterType;
                               }),
                         ),
-                        // createFooter: (stateManager) {
-                          
-                        // },
                       )),
                     ],
                   ),

@@ -33,3 +33,5 @@ flutter:
   assets:
     - assets/images/events.png
     - assets/images/rg.png
+    - assets/images/rg.jpg
+    - assets/images/rg2.png
