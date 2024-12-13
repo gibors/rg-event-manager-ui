@@ -234,23 +234,24 @@ class EventService {
     }
   }
 
-  Future<void> DownloadGraduationListPDF(token, event, path) async {
+  Future<String> DownloadGraduationListPDF(token, event, path) async {
     try {
       var current = Directory.current.path;
       log('current path: $current');
       var eventeventId = event.id;
       var eventname = event.name.replaceAll(' ', '-');
-      
+      var timestamp = DateTime.now().millisecondsSinceEpoch;
+      var pathToSave = '$path/lista-$eventname-$timestamp.pdf';
       final response = (await _dio.download(
           'https://localhost:8443/api/v1/students/export?eventId=$eventeventId&format=pdf',
-          '${path}/graduados-${eventname}.pdf',
+          pathToSave,
           options: Options(
             headers: {
               'Authorization': 'Bearer $token',
               'responseType': ResponseType.bytes,              
             },
           )));
-      
+      return pathToSave;
     } catch (e) {
       log('Failed to fetch next folio: $e.toString()');
       throw Exception('Failed to fetch next folio: $e');

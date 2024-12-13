@@ -37,8 +37,6 @@ class _LoginState extends State<Login> {
       ),
       body:
          SizedBox(
-          height: height,
-          width: width,
           child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.center,
@@ -46,10 +44,10 @@ class _LoginState extends State<Login> {
             Expanded(
             child: Container(
               height: height,
-              color: AppColors.blueDarkColor,
+              color: AppColors.purpleLightColor,
               child: Center(
               child: Image(
-                image: AssetImage('assets/images/rg2.png'),
+                image: AssetImage('assets/images/rglogogris.png'),
                 width: 600.0,
                 height: 600.0,
               ),

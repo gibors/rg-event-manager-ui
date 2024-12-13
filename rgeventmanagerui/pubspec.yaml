@@ -21,6 +21,7 @@ dependencies:
   another_flushbar: ^1.12.30
   universal_html: ^2.2.4
   filepicker_windows: ^2.1.4
+  window_manager: ^0.4.3
   # pluto_grid_export: ^1.0.4
 
 dev_dependencies:
@@ -37,3 +38,4 @@ flutter:
     - assets/images/rg.png
     - assets/images/rg.jpg
     - assets/images/rg2.png
+    - assets/images/rglogogris.png

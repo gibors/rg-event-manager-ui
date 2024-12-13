@@ -182,9 +182,9 @@ class _GraduationListPageState extends State<GraduationListPage> {
                                                   FlushbarPosition.TOP,
                                               title: 'Éxito',
                                               message:
-                                                  'Lista de graduación descargada correctamente',
-                                              duration: Duration(seconds: 3),
-                                              backgroundColor: Colors.green,
+                                                  'Lista de graduación descargada correctamente en  $value',
+                                              duration: Duration(seconds: 6),
+                                              backgroundColor: Colors.blue,
                                             ).show(context)
                                           },
                                       onError: (e) => {

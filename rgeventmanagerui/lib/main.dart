@@ -24,6 +24,7 @@ import 'package:rg_event_management_ui/modules/provider_list.dart';
 import 'package:rg_event_management_ui/modules/userlistpage.dart';
 import 'package:rg_event_management_ui/services/eventservice.dart';
 import 'package:rg_event_management_ui/modules/graduationlist.dart';
+import 'package:window_manager/window_manager.dart';
 
 class MyHttpOverrides extends HttpOverrides {
   @override
@@ -34,7 +35,16 @@ class MyHttpOverrides extends HttpOverrides {
 
 Future<void> main() async {
   HttpOverrides.global = MyHttpOverrides();
+  
   WidgetsFlutterBinding.ensureInitialized();
+
+ if (Platform.isWindows) {
+  
+    WindowManager.instance.setMinimumSize(const Size(1500, 1000));
+    WindowManager.instance.setMaximumSize(const Size(1400, 1000));
+  }
+
+
   runApp(MyApp());
 }
 class MyApp extends StatelessWidget {
