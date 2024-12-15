@@ -1,14 +1,11 @@
-import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:rg_event_management_ui/models/Event.dart' as eventprefix;
 import 'package:rg_event_management_ui/models/Supplier.dart';
 import 'package:rg_event_management_ui/models/Student.dart';
-import 'package:universal_html/html.dart' as html;
 
 class EventService {
   final Dio _dio;

@@ -38,17 +38,18 @@ class _GraduationListPageState extends State<GraduationListPage> {
     PlutoColumn(
       title: 'Total platillo/paquete',
       field: 'total_cost',
-      type: PlutoColumnType.text(),
+      type: PlutoColumnType.currency( symbol: '\$'),
     ),
     PlutoColumn(
       title: 'Pagado platillo/paquete',
       field: 'paid',
-      type: PlutoColumnType.text(),
+      type: PlutoColumnType.currency( symbol: '\$'
+      ),
     ),
     PlutoColumn(
       title: 'Restante',
       field: 'remaining',
-      type: PlutoColumnType.text(),
+      type: PlutoColumnType.currency( symbol: '\$'),
     ),
     PlutoColumn(
       title: 'Estado pago',
@@ -129,7 +130,7 @@ class _GraduationListPageState extends State<GraduationListPage> {
       appBar: AppBar(
         title: Text(
             appState.selectedEvent != null
-                ? '${appState.selectedEvent!.eventType.description} ${appState.selectedEvent!.name}'
+                ? '${appState.selectedEvent!.eventType.description}: ${appState.selectedEvent!.name}'
                 : '',
             style: TextStyle(fontSize: 24.0, color: Colors.blue[900])),
         leading: IconButton(
