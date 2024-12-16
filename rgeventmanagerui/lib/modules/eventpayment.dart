@@ -4,10 +4,12 @@ import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:rg_event_management_ui/formatters/ThousandsSeparatorInputFormatter.dart';
 import 'package:rg_event_management_ui/main.dart';
 import 'package:rg_event_management_ui/models/Student.dart';
 import 'package:rg_event_management_ui/modules/graduationlist.dart';
 import 'package:rg_event_management_ui/services/eventservice.dart';
+import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
 
 class EventPaymentPage extends StatefulWidget {
   @override
@@ -62,9 +64,16 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
     selectedStudent = appState.selectedStudent;
     selectedEvent = appState.selectedEvent;
     token = appState.appToken;
-
+    
     if (selectedEvent != null && selectedEvent!.eventType.id == 3) {
       isGraduation = true;
+      selectedStudent.paid = selectedStudent.payments.isNotEmpty
+        ? selectedStudent.payments
+            .where((e) =>
+                e.paymentDetail == 'platillo' || e.paymentDetail == 'paquete')
+            .map((e) => e.amount)
+            .reduce((a, b) => a + b) >= selectedStudent.totalCost
+        : false;
 
       if (selectedEvent.pricing!.paq10TICost > 0) {
         packageTypes.add('paq10ti');
@@ -81,19 +90,6 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
       if (selectedEvent.pricing!.paq10DoubleCost > 0) {
         packageTypes.add('paq20');
       }
-
-      if (packageTypes.isNotEmpty) {
-        if (selectedStudent != null && selectedStudent.folio.isNotEmpty) {
-          paymentDetails.add('adicional');
-        } else {
-          paymentDetails.add('paquete');
-        }
-      } else {
-        if (selectedStudent != null && packageTypes.isEmpty) {
-          paymentDetails.add('platillo');
-        }
-      }
-
       if (selectedStudent == null) {
         isNewStudent = true;
         isEditMode = true;
@@ -111,7 +107,29 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
         });
       });
     }
+    setPaymentDetails();
     super.initState();
+  }
+
+  setPaymentDetails() {
+    paymentDetails.clear();
+    if (isGraduation) {
+      if (packageTypes.isNotEmpty) {
+        if (selectedStudent != null &&
+            selectedStudent.folio.isNotEmpty &&
+            selectedEvent.pricing!.additionalCost > 0) {
+          paymentDetails.add('adicional');
+        } else {
+          paymentDetails.add('paquete');
+        }
+      } else {
+        if (selectedStudent != null && packageTypes.isEmpty && !selectedStudent.paid) {
+          paymentDetails.add('platillo');
+        }
+      }
+    } else {
+      paymentDetails.add(selectedEvent!.name);
+    }
   }
 
   setSelectedSouvenir(value) {
@@ -125,7 +143,6 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
     _studentName.text = selectedStudent!.name;
     _studentLastName.text = selectedStudent!.lastName;
     _packageType.text = selectedStudent!.packageType;
-    _additionalNumber.text = selectedStudent!.additionalNumber.toString();
     _comment.text = selectedStudent!.comments;
     paymentsHistory = selectedStudent!.payments;
     _dishNumber.text = selectedStudent!.dishCount.toString();
@@ -161,7 +178,7 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
   saveStudentData() {
     var student = BuildStudentObject();
 
-    if (packageTypes.isEmpty) {
+    if (packageTypes.isEmpty && student.folio.isEmpty) {
       EventService()
           .saveStudentWithFolioData(student, token)
           .then((studentResponse) {
@@ -172,6 +189,7 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
           isEditMode = false;
           isNewStudent = false;
           mapSelectedStudent();
+          setPaymentDetails();
           Flushbar(
             flushbarPosition: FlushbarPosition.TOP,
             title: 'Éxito',
@@ -193,6 +211,7 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
           isEditMode = false;
           isNewStudent = false;
           mapSelectedStudent();
+          setPaymentDetails();
           Flushbar(
             flushbarPosition: FlushbarPosition.TOP,
             title: 'Éxito',
@@ -243,7 +262,6 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
 
   addPayment() {
     if (isGraduation) {
-
       var payments = selectedStudent!.payments
           .where((e) =>
               e.paymentDetail == 'platillo' || e.paymentDetail == 'paquete')
@@ -254,7 +272,9 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
 
       var isAlreadyPaid = selectedStudent!.totalCost - totalPaid == 0;
 
-      if(isAlreadyPaid && (_paymentDetail.text == 'platillo' || _paymentDetail.text == 'paquete')) {
+      if (isAlreadyPaid &&
+          (_paymentDetail.text == 'platillo' ||
+              _paymentDetail.text == 'paquete')) {
         Flushbar(
           flushbarPosition: FlushbarPosition.TOP,
           title: 'Error',
@@ -263,17 +283,16 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
           backgroundColor: Colors.red,
         ).show(context);
         return;
-      } 
+      }
 
-
-      var paymentAmount =
-          double.parse(_paymentAmount.text.isEmpty ? "0" : _paymentAmount.text);
+      var paymentAmount = double.parse(_paymentAmount.text.isEmpty
+          ? "0"
+          : _paymentAmount.text.replaceAll(',', ''));
 
       switch (_paymentDetail.text) {
         case 'adicional':
-          paymentAmount = selectedEvent!.pricing.additionalCost;
-          _paymentAmount.text =
-              selectedEvent!.pricing.additionalCost.toString();
+          paymentAmount = selectedEvent!.pricing.additionalCost *
+              double.tryParse(_additionalNumber.text)!;
 
         case 'pre-fiesta':
           paymentAmount = selectedEvent!.pricing.prePartyCost;
@@ -287,14 +306,14 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
       // package or dish payment validation
       if (_paymentDetail.text == 'platillo' ||
           _paymentDetail.text == 'paquete') {
-        var totalAmount = totalPaid + double.parse(_paymentAmount.text);
+        var totalAmount = totalPaid + paymentAmount;
         if (selectedStudent.folio.isEmpty &&
             (totalAmount > selectedStudent!.totalCost)) {
           Flushbar(
             flushbarPosition: FlushbarPosition.TOP,
             title: 'Error',
             message:
-                'El pago excede el costo total del paquete/platillo, solo puedes cobrar  \$${double.parse(_paymentAmount.text) - (totalAmount - selectedStudent!.totalCost)} y despues agregar pagos adicionales u otro servicio',
+                'El pago excede el costo total del paquete/platillo, solo puedes cobrar  \$${double.parse(_paymentAmount.text.replaceAll(',', '')) - (totalAmount - selectedStudent!.totalCost)} y despues agregar pagos adicionales u otro servicio',
             duration: Duration(seconds: 10),
             backgroundColor: Colors.red,
           ).show(context);
@@ -311,9 +330,8 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
                           e.paymentDetail == 'paquete')
                       .map((e) => e.amount)
                       .reduce((a, b) => a + b) +
-                  double.parse(
-                      _paymentAmount.text.isEmpty ? '0' : _paymentAmount.text)
-          : (selectedStudent!.totalCost <= double.parse(_paymentAmount.text));
+                  paymentAmount
+          : (selectedStudent!.totalCost <= paymentAmount);
 
       var payment = Payment(
           id: -1,
@@ -326,7 +344,7 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
           paymentDetail: _paymentDetail.text,
           iva: iva);
 
-      if (!isPaid || (_paymentDetail.text == 'platillo')) {
+      if (!isPaid) {
         EventService().createPayment(payment, token).then((value) {
           log('payment added $value');
           setState(() {
@@ -349,6 +367,31 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
             backgroundColor: Colors.red,
           ).show(context);
           return;
+        });
+      } else if (_paymentDetail.text != 'platillo' ||
+          _paymentDetail.text != 'paquete') {
+        selectedStudent.payments.add(payment);
+        var student = BuildStudentObject();
+        EventService().saveStudent(student, token).then((studentResponse) {
+          if (studentResponse.id != -1) {
+            setState(() {
+              selectedStudent = studentResponse;
+            });
+            isEditMode = false;
+            isNewStudent = false;
+            mapSelectedStudent();
+            Flushbar(
+              flushbarPosition: FlushbarPosition.TOP,
+              title: 'Éxito',
+              message: 'Pago de ${_paymentDetail.text} agregado correctamente',
+              duration: Duration(seconds: 3),
+              backgroundColor: Colors.green,
+            ).show(context);
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Error al guardar el alumno')));
+            return;
+          }
         });
       }
 
@@ -404,6 +447,47 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
                   ).show(context),
                 });
       }
+    } else {
+      var payment = Payment(
+          id: -1,
+          amount: double.parse(_paymentAmount.text.isEmpty
+              ? "0"
+              : _paymentAmount.text.replaceAll(',', '')),
+          paymentMethod: _paymentMethodController.text,
+          paymentDate: DateTime.now(),
+          studentId: -1,
+          eventId: selectedEvent!.id,
+          addedBy: '',
+          paymentDetail: selectedEvent!.name,
+          iva: 0);
+
+      EventService().createPayment(payment, token).then((value) {
+        log('payment added $value');
+        setState(() {
+          paymentsHistory.add(value);
+        });
+        Flushbar(
+          flushbarPosition: FlushbarPosition.TOP,
+          title: 'Éxito',
+          message: 'Pago agregado correctamente',
+          duration: Duration(seconds: 3),
+          backgroundColor: Colors.green,
+        ).show(context);
+      }).catchError((error) {
+        Flushbar(
+          flushbarPosition: FlushbarPosition.TOP,
+          title: 'Error',
+          message:
+              'Error al agregar el pago, intente de nuevo o contacte a soporte',
+          duration: Duration(seconds: 3),
+          backgroundColor: Colors.red,
+        ).show(context);
+        return;
+      });
+
+      _paymentAmount.clear();
+      _paymentMethodController.clear();
+      _paymentDetail.clear();
     }
   }
 
@@ -701,14 +785,14 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
                               Expanded(
                                 flex: 1,
                                 child: Text(
-                                    'Total pagado: \$${isGraduation ? (selectedStudent != null && selectedStudent!.payments.isNotEmpty ? selectedStudent.payments.map((e) => e.amount).reduce((a, b) => a + b) : 0) : (paymentsHistory.isNotEmpty ? paymentsHistory.map((e) => e.amount).reduce((a, b) => a + b) : 0)}',
+                                    'Total pagado: \$${isGraduation ? (selectedStudent != null && selectedStudent!.payments.isNotEmpty ? selectedStudent.payments.where((e) => e.paymentDetail == 'platillo' || e.paymentDetail == 'paquete').map((e) => e.amount).reduce((a, b) => a + b) : 0) : (paymentsHistory.isNotEmpty ? paymentsHistory.where((e) => e.paymentDetail == selectedEvent!.name).map((e) => e.amount).reduce((a, b) => a + b) : 0)}',
                                     style: TextStyle(
                                         fontSize: 14.0, color: Colors.black)),
                               ),
                               SizedBox(width: 25),
                               Expanded(
                                 child: Text(
-                                    'Restante: \$${isGraduation ? (selectedStudent != null && selectedStudent.payments.isNotEmpty ? selectedStudent!.totalCost - selectedStudent.payments.map((e) => e.amount).reduce((a, b) => a + b) : 0) : (selectedEvent!.totalCost - (paymentsHistory.isNotEmpty ? paymentsHistory.map((e) => e.amount).reduce((a, b) => a + b) : 0))}'),
+                                    'Restante: \$${isGraduation ? (selectedStudent != null && selectedStudent.payments.isNotEmpty ? selectedStudent!.totalCost - selectedStudent.payments.where((e) => e.paymentDetail == 'platillo' || e.paymentDetail == 'paquete').map((e) => e.amount).reduce((a, b) => a + b) : 0) : (selectedEvent!.totalCost - (paymentsHistory.isNotEmpty ? paymentsHistory.where((e) => e.paymentDetail == selectedEvent!.name).map((e) => e.amount).reduce((a, b) => a + b) : 0))}'),
                               ),
                               SizedBox(width: 20),
                               Expanded(
@@ -721,9 +805,12 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
                               Visibility(
                                   visible: isGraduation &&
                                       selectedStudent != null &&
-                                      selectedStudent.folio.isEmpty &&
+                                      selectedStudent.folio.isNotEmpty &&
                                       packageTypes.isEmpty,
-                                  child: Text('Folio: ${selectedStudent.folio}',
+                                  child: Text(
+                                      selectedStudent != null
+                                          ? 'Folio: ${selectedStudent!.folio}'
+                                          : '',
                                       textAlign: TextAlign.right,
                                       style: TextStyle(
                                           fontSize: 20.0, color: Colors.blue))),
@@ -825,9 +912,9 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
                                 Expanded(
                                     child: TextFormField(
                                   controller: _paymentAmount,
+                                  keyboardType: TextInputType.number,
                                   inputFormatters: [
-                                    FilteringTextInputFormatter.allow(
-                                        RegExp(r'^\d+\.?\d{0,2}'))
+                                    ThousandsSeparatorInputFormatter(),
                                   ],
                                   decoration: InputDecoration(
                                       labelText: 'Monto del pago',
@@ -972,6 +1059,27 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
                                           labelText: 'Personas adicionales',
                                           border: OutlineInputBorder(),
                                         ),
+                                        onChanged: (value) => {
+                                          if (value.isNotEmpty)
+                                            {
+                                              log("value: " + value),
+                                              log("additional cost: " +
+                                                  selectedEvent
+                                                      .pricing!.additionalCost
+                                                      .toString()),
+                                              _paymentAmount.text = (double
+                                                          .tryParse(value)! *
+                                                      (selectedEvent.pricing!
+                                                                  .additionalCost ==
+                                                              0
+                                                          ? 0
+                                                          : selectedEvent
+                                                              .pricing!
+                                                              .additionalCost!))
+                                                  .toString(),
+                                              log(_paymentAmount.text)
+                                            }
+                                        },
                                       ),
                                     )),
                               ],
@@ -990,12 +1098,12 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
                                 ),
                                 onPressed: () async {
                                   if (_formKey.currentState!.validate()) {
-                                    if ((selectedStudent.folio.isEmpty &&
+                                    if (((selectedStudent == null) || (selectedStudent.folio.isEmpty &&
                                             packageTypes.isNotEmpty &&
                                             _paymentDetail.text == 'paquete') ||
                                         (packageTypes.isEmpty &&
                                             _paymentDetail.text == 'platillo' &&
-                                            !selectedStudent!.paid)) {
+                                            !selectedStudent!.paid))) {
                                       if (_paymentMethodController.text
                                               .trim() ==
                                           paymentMethods[2].trim()) {
@@ -1006,7 +1114,7 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
                                                 title: Text(
                                                     'Confirmar pago por transferencia'),
                                                 content: Text(
-                                                    '¿Recuerde que la cantidad ingresada por transferencia ${_paymentAmount.text} se le cobrará el 16% qué es un total de ${double.tryParse(_paymentAmount.text)! * 1.16} ?'),
+                                                    '¿Recuerde que la cantidad ingresada por transferencia ${_paymentAmount.text} se le cobrará el 16% qué es un total de ${double.tryParse(_paymentAmount.text.replaceAll(',', ''))! * 1.16} ?'),
                                                 actions: [
                                                   TextButton(
                                                       onPressed: () {

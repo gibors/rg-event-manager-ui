@@ -4,6 +4,7 @@ import 'package:another_flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:rg_event_management_ui/formatters/ThousandsSeparatorInputFormatter.dart';
 import 'package:rg_event_management_ui/main.dart';
 import 'package:rg_event_management_ui/models/Event.dart';
 import 'package:rg_event_management_ui/modules/eventpayment.dart';
@@ -256,31 +257,31 @@ class _AddEventPopup extends State<AddEventPopup> {
       pricing: Pricing(
         id: selectedEvent?.pricing.id ?? -1,
         additionalCost: double.parse(
-            additionalCost.text.isEmpty ? "0" : additionalCost.text),
-        dishCost: double.parse(eventCost.text.isEmpty ? "0" : eventCost.text),
+            additionalCost.text.isEmpty ? "0" : additionalCost.text.replaceAll(',', '')),
+        dishCost: double.parse(eventCost.text.isEmpty ? "0" : eventCost.text.replaceAll(',', '')),
         paq10TICost: double.parse(
-            eventCostPackage10.text.isEmpty ? "0" : eventCostPackage10.text),
+            eventCostPackage10.text.isEmpty ? "0" : eventCostPackage10.text.replaceAll(',', '')),
         paq10SPCost: double.parse(eventCostPackage10NoPre.text.isEmpty
             ? "0"
-            : eventCostPackage10NoPre.text),
+            : eventCostPackage10NoPre.text.replaceAll(',', '')),
         paq5TIPCost: double.parse(eventCostPackageHalf.text.isEmpty
             ? "0"
-            : eventCostPackageHalf.text),
+            : eventCostPackageHalf.text.replaceAll(',', '')),
         paq5SPCost: double.parse(eventCostPackageHalfNoPre.text.isEmpty
             ? "0"
-            : eventCostPackageHalfNoPre.text),
+            : eventCostPackageHalfNoPre.text.replaceAll(',', '')),
         paq10DoubleCost: double.parse(eventCostPackageDouble.text.isEmpty
             ? "0"
-            : eventCostPackageDouble.text),
+            : eventCostPackageDouble.text.replaceAll(',', '')),
         prePartyCost:
-            double.parse(prePartyCost.text.isEmpty ? "0" : prePartyCost.text),
+            double.parse(prePartyCost.text.isEmpty ? "0" : prePartyCost.text.replaceAll(',', '')),
         braceletCost:
-            double.parse(braceletCost.text.isEmpty ? "0" : braceletCost.text),
+            double.parse(braceletCost.text.isEmpty ? "0" : braceletCost.text.replaceAll(',', '')),
         childrenCost:
-            double.parse(childrenCost.text.isEmpty ? "0" : childrenCost.text),
-        youngCost: double.parse(youngCost.text.isEmpty ? "0" : youngCost.text),
+            double.parse(childrenCost.text.isEmpty ? "0" : childrenCost.text.replaceAll(',', '')),
+        youngCost: double.parse(youngCost.text.isEmpty ? "0" : youngCost.text.replaceAll(',', '')),
         souvenirCost:
-            double.parse(souvenirCost.text.isEmpty ? "0" : souvenirCost.text),
+            double.parse(souvenirCost.text.isEmpty ? "0" : souvenirCost.text.replaceAll(',', '')),
       ),
       grade: selectedEventType != null && selectedEventType!.id == 3
           ? grado.text
@@ -976,8 +977,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                       child: TextFormField(
                         controller: eventCost,
                         inputFormatters: [
-                          FilteringTextInputFormatter.allow(
-                              RegExp(r'^\d+\.?\d{0,2}'))
+                          ThousandsSeparatorInputFormatter()
                         ],
                         decoration: InputDecoration(
                             border: OutlineInputBorder(
@@ -1002,8 +1002,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                         child: TextFormField(
                           controller: additionalCost,
                           inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                                RegExp(r'^\d+\.?\d{0,2}'))
+                            ThousandsSeparatorInputFormatter(),
                           ],
                           decoration: InputDecoration(
                               border: OutlineInputBorder(
@@ -1021,8 +1020,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                         child: TextFormField(
                           controller: childrenCost,
                           inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                                RegExp(r'^\d+\.?\d{0,2}'))
+                            ThousandsSeparatorInputFormatter(),
                           ],
                           decoration: InputDecoration(
                               border: OutlineInputBorder(
@@ -1041,8 +1039,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                         child: TextFormField(
                           controller: prePartyCost,
                           inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                                RegExp(r'^\d+\.?\d{0,2}'))
+                            ThousandsSeparatorInputFormatter(),
                           ],
                           decoration: InputDecoration(
                               border: OutlineInputBorder(
@@ -1061,8 +1058,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                         child: TextFormField(
                           controller: souvenirCost,
                           inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                                RegExp(r'^\d+\.?\d{0,2}'))
+                            ThousandsSeparatorInputFormatter(),
                           ],
                           decoration: InputDecoration(
                               border: OutlineInputBorder(
@@ -1080,8 +1076,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                         child: TextFormField(
                           controller: youngCost,
                           inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                                RegExp(r'^\d+\.?\d{0,2}'))
+                            ThousandsSeparatorInputFormatter(),
                           ],
                           decoration: InputDecoration(
                               border: OutlineInputBorder(
@@ -1100,8 +1095,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                         child: TextFormField(
                           controller: braceletCost,
                           inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                                RegExp(r'^\d+\.?\d{0,2}'))
+                            ThousandsSeparatorInputFormatter(),
                           ],
                           decoration: InputDecoration(
                               border: OutlineInputBorder(
@@ -1129,8 +1123,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                         child: TextFormField(
                           controller: eventCostPackage10,
                           inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                                RegExp(r'^\d+\.?\d{0,2}'))
+                            ThousandsSeparatorInputFormatter(),
                           ],
                           decoration: InputDecoration(
                               border: OutlineInputBorder(
@@ -1144,8 +1137,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                       Expanded(
                         child: TextFormField(
                           inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                                RegExp(r'^\d+\.?\d{0,2}'))
+                            ThousandsSeparatorInputFormatter(),
                           ],
                           controller: eventCostPackage10NoPre,
                           decoration: InputDecoration(
@@ -1161,8 +1153,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                         child: TextFormField(
                           controller: eventCostPackageHalf,
                           inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                                RegExp(r'^\d+\.?\d{0,2}'))
+                            ThousandsSeparatorInputFormatter(),
                           ],
                           decoration: InputDecoration(
                               border: OutlineInputBorder(
@@ -1177,8 +1168,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                         child: TextFormField(
                           controller: eventCostPackageHalfNoPre,
                           inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                                RegExp(r'^\d+\.?\d{0,2}'))
+                            ThousandsSeparatorInputFormatter(),
                           ],
                           decoration: InputDecoration(
                               border: OutlineInputBorder(
@@ -1193,8 +1183,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                         child: TextFormField(
                           controller: eventCostPackageDouble,
                           inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                                RegExp(r'^\d+\.?\d{0,2}'))
+                            ThousandsSeparatorInputFormatter(),
                           ],
                           decoration: InputDecoration(
                               border: OutlineInputBorder(
