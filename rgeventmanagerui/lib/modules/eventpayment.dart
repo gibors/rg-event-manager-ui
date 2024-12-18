@@ -9,7 +9,6 @@ import 'package:rg_event_management_ui/main.dart';
 import 'package:rg_event_management_ui/models/Student.dart';
 import 'package:rg_event_management_ui/modules/graduationlist.dart';
 import 'package:rg_event_management_ui/services/eventservice.dart';
-import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
 
 class EventPaymentPage extends StatefulWidget {
   @override
@@ -67,13 +66,15 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
     
     if (selectedEvent != null && selectedEvent!.eventType.id == 3) {
       isGraduation = true;
-      selectedStudent.paid = selectedStudent.payments.isNotEmpty
+      if(selectedStudent != null){
+      selectedStudent.paid = selectedStudent != null && selectedStudent.payments!.isNotEmpty
         ? selectedStudent.payments
             .where((e) =>
                 e.paymentDetail == 'platillo' || e.paymentDetail == 'paquete')
             .map((e) => e.amount)
             .reduce((a, b) => a + b) >= selectedStudent.totalCost
         : false;
+      }
 
       if (selectedEvent.pricing!.paq10TICost > 0) {
         packageTypes.add('paq10ti');
@@ -329,8 +330,7 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
                           e.paymentDetail == 'platillo' ||
                           e.paymentDetail == 'paquete')
                       .map((e) => e.amount)
-                      .reduce((a, b) => a + b) +
-                  paymentAmount
+                      .reduce((a, b) => a + b) + paymentAmount
           : (selectedStudent!.totalCost <= paymentAmount);
 
       var payment = Payment(
@@ -368,8 +368,9 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
           ).show(context);
           return;
         });
-      } else if (_paymentDetail.text != 'platillo' ||
+      } else if (_paymentDetail.text != 'platillo' &&
           _paymentDetail.text != 'paquete') {
+            // payment other services
         selectedStudent.payments.add(payment);
         var student = BuildStudentObject();
         EventService().saveStudent(student, token).then((studentResponse) {
@@ -409,7 +410,7 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
                     {
                       setState(() {
                         selectedStudent = value;
-                        paymentsHistory.add(payment);
+                        mapSelectedStudent();
                         if (packageTypes.isNotEmpty) {
                           paymentDetails.remove('paquete');
                         } else {
@@ -448,6 +449,8 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
                 });
       }
     } else {
+
+      // payments for other events 
       var payment = Payment(
           id: -1,
           amount: double.parse(_paymentAmount.text.isEmpty
@@ -1062,11 +1065,9 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
                                         onChanged: (value) => {
                                           if (value.isNotEmpty)
                                             {
-                                              log("value: " + value),
-                                              log("additional cost: " +
-                                                  selectedEvent
-                                                      .pricing!.additionalCost
-                                                      .toString()),
+                                              log("value: $value"),
+                                              log("additional cost: ${selectedEvent
+                                                      .pricing!.additionalCost}"),
                                               _paymentAmount.text = (double
                                                           .tryParse(value)! *
                                                       (selectedEvent.pricing!
