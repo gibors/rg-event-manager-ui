@@ -15,10 +15,6 @@ class EventPaymentPage extends StatefulWidget {
   _EventPaymentPageState createState() => _EventPaymentPageState();
 }
 
-enum RequireSouvenir { YES, NO }
-
-enum RequirePreParty { YES, NO }
-
 class _EventPaymentPageState extends State<EventPaymentPage> {
   bool isEditMode = false;
   bool isGraduation = false;
@@ -26,11 +22,8 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
   var token = "";
   var selectedStudent;
   var selectedEvent;
+  bool showAdditionalNumberInput = false;
   var appState;
-
-  RequireSouvenir? _requireSouvenir = RequireSouvenir.NO;
-  int souvenirSelected = 0;
-  RequirePreParty? _requirePreParty = RequirePreParty.NO;
 
   final _formKey = GlobalKey<FormState>();
   final GlobalKey _packageTypeKey = GlobalKey();
@@ -56,6 +49,9 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
 
   List<String> paymentMethods = ['Efectivo', 'Tarjeta', 'Transferencia'];
   List<String> paymentDetails = [];
+
+  bool addSouvenir = false;
+  bool addPreParty = false;
 
   @override
   void initState() {
@@ -133,11 +129,6 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
     }
   }
 
-  setSelectedSouvenir(value) {
-    setState(() {
-      souvenirSelected = value;
-    });
-  }
 
   mapSelectedStudent() {
     _telephone.text = selectedStudent!.phone;
@@ -449,7 +440,16 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
                 });
       }
     } else {
-
+      var ispaid = selectedEvent.totalCost <=
+          (paymentsHistory.isNotEmpty
+              ? paymentsHistory
+                  .where((e) => e.paymentDetail == selectedEvent.name)
+                  .map((e) => e.amount)
+                  .reduce((a, b) => a + b)
+              : 0) +
+              double.parse(_paymentAmount.text.isEmpty
+                  ? "0"
+                  : _paymentAmount.text.replaceAll(',', ''));
       // payments for other events 
       var payment = Payment(
           id: -1,
@@ -692,31 +692,29 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
                             ),
                             SizedBox(height: 22),
                             Row(
-                              children: <Widget>[
-                                Text('Agregar souvenir: '),
+                              children: [
+                                Text('souvenir'),
                                 SizedBox(width: 10),
-                                Text('Si'),
-                                Radio(
-                                  value: 1,
-                                  groupValue: souvenirSelected,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      setSelectedSouvenir(value);
-                                    });
-                                  },
-                                ),
+                              Checkbox(
+                                value: addSouvenir,
+                                onChanged: (value) {
+                                  setState(() {
+                                    addSouvenir = value!;
+                                  });
+                                },
+                              ),
+                              SizedBox(width: 20),
+                               Text('Pre fiesta'),
                                 SizedBox(width: 10),
-                                Text('No'),
-                                Radio(
-                                  value: 2,
-                                  groupValue: souvenirSelected,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      setSelectedSouvenir(value);
-                                    });
-                                  },
-                                ),
-                              ],
+                              Checkbox(
+                                value: addPreParty,
+                                onChanged: (value) {
+                                  setState(() {
+                                    addPreParty = value!;
+                                  });
+                                },
+                              ),
+                                      ],
                             ),
                             SizedBox(height: 30),
                             Row(
@@ -998,7 +996,15 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
                                       });
                                     },
                                     onSelected: (String selection) {
+                                      log('selected payment detail $selection');
                                       _paymentDetail.text = selection;
+                                      if(_paymentDetail.text == 'adicional'){
+                                        log('show additional number input');
+                                        showAdditionalNumberInput = true;
+                                        log('show additional input: ' + showAdditionalNumberInput.toString());
+                                      } else {
+                                        showAdditionalNumberInput = false;
+                                      }
                                     },
                                     fieldViewBuilder: (BuildContext context,
                                         TextEditingController
@@ -1039,22 +1045,16 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
                                 ),
                                 SizedBox(width: 20),
                                 Visibility(
-                                    visible: selectedStudent != null &&
-                                        packageTypes.isNotEmpty &&
-                                        selectedStudent.folio.isNotEmpty,
+                                    visible: selectedStudent != null && showAdditionalNumberInput,
                                     child: Expanded(
                                       child: TextFormField(
                                         inputFormatters: [
                                           FilteringTextInputFormatter.digitsOnly
                                         ],
                                         validator: (value) => selectedStudent !=
-                                                    null &&
-                                                selectedStudent
-                                                    .folio.isNotEmpty &&
-                                                _paymentDetail.text ==
-                                                    'adicional' &&
-                                                value != null &&
-                                                value.isEmpty
+                                                    null  &&
+                                                showAdditionalNumberInput && (value != null &&
+                                                value.isEmpty)
                                             ? 'El número de personas es requerido'
                                             : null,
                                         controller: _additionalNumber,

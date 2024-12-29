@@ -19,7 +19,7 @@ import 'package:rg_event_management_ui/modules/add_event.dart';
 import 'package:rg_event_management_ui/models/Event.dart';
 import 'package:rg_event_management_ui/modules/budgetpage.dart';
 import 'package:rg_event_management_ui/modules/employees_list.dart';
-import 'package:rg_event_management_ui/modules/eventpayment.dart';
+import 'package:rg_event_management_ui/modules/graduationpayment.dart';
 import 'package:rg_event_management_ui/modules/provider_list.dart';
 import 'package:rg_event_management_ui/modules/userlistpage.dart';
 import 'package:rg_event_management_ui/services/eventservice.dart';
@@ -516,7 +516,7 @@ class _EventsPage extends State<EventsPage> {
                                               appState.selectedEvent!.eventType
                                                       .id ==
                                                   3
-                                          ? 'Administrar Graduados'
+                                          ? 'Adminisuados'
                                           : 'Administrar Pago',
                                       style: Theme.of(context)
                                           .textTheme

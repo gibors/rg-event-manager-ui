@@ -7,7 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:rg_event_management_ui/formatters/ThousandsSeparatorInputFormatter.dart';
 import 'package:rg_event_management_ui/main.dart';
 import 'package:rg_event_management_ui/models/Event.dart';
-import 'package:rg_event_management_ui/modules/eventpayment.dart';
+import 'package:rg_event_management_ui/modules/graduationpayment.dart';
 import 'package:rg_event_management_ui/services/eventservice.dart';
 import 'package:rg_event_management_ui/modules/graduationlist.dart';
 

@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:another_flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
@@ -6,7 +7,7 @@ import 'package:pluto_grid/pluto_grid.dart';
 import 'package:provider/provider.dart';
 import 'package:rg_event_management_ui/main.dart';
 import 'package:rg_event_management_ui/models/Student.dart';
-import 'package:rg_event_management_ui/modules/eventpayment.dart';
+import 'package:rg_event_management_ui/modules/graduationpayment.dart';
 import 'package:rg_event_management_ui/services/eventservice.dart';
 import 'package:filepicker_windows/filepicker_windows.dart';
 
@@ -38,18 +39,17 @@ class _GraduationListPageState extends State<GraduationListPage> {
     PlutoColumn(
       title: 'Total platillo/paquete',
       field: 'total_cost',
-      type: PlutoColumnType.currency( symbol: '\$'),
+      type: PlutoColumnType.currency(symbol: '\$'),
     ),
     PlutoColumn(
       title: 'Pagado platillo/paquete',
       field: 'paid',
-      type: PlutoColumnType.currency( symbol: '\$'
-      ),
+      type: PlutoColumnType.currency(symbol: '\$'),
     ),
     PlutoColumn(
       title: 'Restante',
       field: 'remaining',
-      type: PlutoColumnType.currency( symbol: '\$'),
+      type: PlutoColumnType.currency(symbol: '\$'),
     ),
     PlutoColumn(
       title: 'Estado pago',
@@ -166,16 +166,22 @@ class _GraduationListPageState extends State<GraduationListPage> {
                             onPressed: () {
                               log('exporting to pdf');
                               // exportToPdf();
-                              final file = DirectoryPicker()
-                                ..title = 'Select a directory';
+                              var path = Directory.current.path;
+                              try {
+                                final file = DirectoryPicker()
+                                  ..title = 'Select a directory';
 
-                              final result = file.getDirectory();
-                              if (result != null) {
-                                print(result.path);
+                                final result = file.getDirectory();
+                                if (result != null) {
+                                  print(result.path);
+                                  path = result.path;
+                                }
+                              } catch (e) {
+                                log("error selecting directory:  ${e.toString()}");
                               }
                               EventService()
                                   .DownloadGraduationListPDF(appState.appToken,
-                                      appState.selectedEvent, result!.path)
+                                      appState.selectedEvent, path)
                                   .then(
                                       (value) => {
                                             Flushbar(
