@@ -14,6 +14,8 @@ class Student {
   String folio;
   final int dishCount;
   final int additionalNumber;
+  final bool hasPreParty;
+  final bool hasSouvenir;
   bool paid = false;
 
   void setFolio(String folio) {
@@ -36,6 +38,8 @@ class Student {
     required this.folio,
     required this.dishCount,
     required this.additionalNumber,
+    required this.hasPreParty,
+    required this.hasSouvenir,
   });
 
   factory Student.fromJson(Map<String, dynamic> json) {
@@ -57,6 +61,8 @@ class Student {
       folio: json['folio'] ?? '',
       dishCount: json['dishCount'] ?? 0,
       additionalNumber: json['additionalNumber'] ?? 0,
+      hasPreParty: json['hasPreParty'] ?? false,
+      hasSouvenir: json['hasSouvenir'] ?? false,
     );
   }
 
@@ -76,6 +82,8 @@ class Student {
         'folio': folio,
         'dishCount': dishCount,
         'additionalNumber': additionalNumber,
+        'hasPreParty': hasPreParty,
+        'hasSouvenir': hasSouvenir,
       };
 }
 

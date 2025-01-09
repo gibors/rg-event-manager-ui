@@ -1,4 +1,6 @@
 
+import 'package:rg_event_management_ui/models/AdditionalService.dart';
+
 class Event {
   final int id;
   final String name;
@@ -21,7 +23,9 @@ class Event {
   final String? comments;
   final int numberChildren;
   final int numberYoung;
-
+  final List<AdditionalService> additionalServices;
+  double totalAdditional;
+  
   Event({
     required this.id,
     required this.name,
@@ -44,7 +48,13 @@ class Event {
     required this.comments,
     required this.numberChildren,
     required this.numberYoung,
+    required this.additionalServices,
+    required this.totalAdditional,
   });
+
+  void SetTotalAdditional(double totalAdditional) {
+    this.totalAdditional = totalAdditional;
+  }
 
   factory Event.fromJson(Map<String, dynamic> json) {
     return Event(
@@ -71,6 +81,10 @@ class Event {
       comments: json['comments'],
       numberChildren: json['numberChildren'] ?? 0,
       numberYoung: json['numberYoung'] ?? 0,
+      additionalServices: (json['additionalServices'] as List)
+          .map((service) => AdditionalService.fromJson(service))
+          .toList(),
+      totalAdditional: json['totalAdditional'] ?? 0,
     );
   }
 
@@ -91,6 +105,8 @@ class Event {
       'comments': comments,
       'numberChildren': numberChildren,
       'numberYoung': numberYoung,
+      'additionalServices': additionalServices.map((service) => service.toJson()).toList(),
+      'totalAdditional': totalAdditional,
     };
   }
 }

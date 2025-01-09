@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
 import 'package:another_flushbar/flushbar.dart';
+import 'package:flutter/foundation.dart';
 // ignore: depend_on_referenced_packages
 import 'package:intl/intl.dart';
 import 'package:english_words/english_words.dart';
@@ -10,6 +11,7 @@ import 'package:pluto_grid/pluto_grid.dart';
 import 'package:provider/provider.dart';
 import 'package:rg_event_management_ui/app_colors.dart';
 import 'package:rg_event_management_ui/login.dart';
+import 'package:rg_event_management_ui/models/AdditionalService.dart';
 import 'package:rg_event_management_ui/models/Employee.dart';
 import 'package:rg_event_management_ui/models/Student.dart';
 import 'package:rg_event_management_ui/models/Supplier.dart';
@@ -17,13 +19,16 @@ import 'package:rg_event_management_ui/models/User.dart';
 import 'package:rg_event_management_ui/modules/accountability.dart';
 import 'package:rg_event_management_ui/modules/add_event.dart';
 import 'package:rg_event_management_ui/models/Event.dart';
+import 'package:rg_event_management_ui/modules/additional_services.dart';
 import 'package:rg_event_management_ui/modules/budgetpage.dart';
 import 'package:rg_event_management_ui/modules/employees_list.dart';
+import 'package:rg_event_management_ui/modules/eventspayment.dart';
 import 'package:rg_event_management_ui/modules/graduationpayment.dart';
 import 'package:rg_event_management_ui/modules/provider_list.dart';
 import 'package:rg_event_management_ui/modules/userlistpage.dart';
 import 'package:rg_event_management_ui/services/eventservice.dart';
 import 'package:rg_event_management_ui/modules/graduationlist.dart';
+import 'package:rg_event_management_ui/services/userservices.dart';
 // import 'package:window_manager/window_manager.dart';
 
 class MyHttpOverrides extends HttpOverrides {
@@ -65,8 +70,8 @@ class MyApp extends StatelessWidget {
             return Scaffold(
               body: Center(
                 child: SizedBox(
-                  width: 980, // Set the desired width for the app
-                  height: 700,
+                  // width: 980, // Set the desired width for the app
+                  // height: 700,
                   child: Login(),
                 ),
               ),
@@ -163,7 +168,19 @@ class _EventsHomePageState extends State<EventsHomePage> {
 
     selectedIndex = appState.selectedIndex ?? 0;
     super.initState();
+    
+    if (appState.appToken.isNotEmpty) {
+
+     UserService().isValidToken(appState.appToken).then((value) {
+      if (!value) {
+        Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => Login()),
+            (Route<dynamic> route) => false);
+      }
+    });
+    }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -461,13 +478,13 @@ class _EventsPage extends State<EventsPage> {
                           icon: Icon(Icons.picture_as_pdf),
                           onPressed: () {},
                         ),
-                        SizedBox(width: 20),
-                        Text('Descargar excel',
-                            style: Theme.of(context).textTheme.bodyLarge),
-                        IconButton(
-                          icon: Icon(Icons.download),
-                          onPressed: () {},
-                        ),
+                        // SizedBox(width: 20),
+                        // Text('Descargar excel',
+                        //     style: Theme.of(context).textTheme.bodyLarge),
+                        // IconButton(
+                        //   icon: Icon(Icons.download),
+                        //   onPressed: () {},
+                        // ),
                         SizedBox(width: 20),
                         Text('Agregar evento',
                             style: Theme.of(context).textTheme.bodyLarge),
@@ -509,14 +526,48 @@ class _EventsPage extends State<EventsPage> {
                                         ).show(context);
                                       }
                                     },
+                                  ), 
+                                  SizedBox(width: 20),
+                                  Visibility(
+                                    visible: appState.selectedEvent != null &&  appState.selectedEvent!.eventType.id != 3,
+                                    child: 
+                                    Text('Servicios adicionales',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge),
                                   ),
+                                  Visibility( visible: appState.selectedEvent != null &&  appState.selectedEvent!.eventType.id != 3,
+                                    child: 
+                                    IconButton(onPressed: 
+                                      () {
+                                        if (appState.selectedEvent != null) {
+                                          Navigator.of(context).push(
+                                              MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      AdditionalServices()));
+                                        } else {
+                                          Flushbar(
+                                            flushbarPosition:
+                                                FlushbarPosition.TOP,
+                                            title: 'Error',
+                                            message:
+                                                'Selecciona un evento para agregar servicios adicionales',
+                                            duration: Duration(seconds: 3),
+                                            backgroundColor: Colors.red,
+                                          ).show(context);
+                                        }
+                                      },
+                                      icon: Icon(Icons.room_service_sharp),
+                                    ),
+                                  )
+                                 ,
                                   SizedBox(width: 20),
                                   Text(
                                       appState.selectedEvent != null &&
                                               appState.selectedEvent!.eventType
                                                       .id ==
                                                   3
-                                          ? 'Adminisuados'
+                                          ? 'Administrar graduados'
                                           : 'Administrar Pago',
                                       style: Theme.of(context)
                                           .textTheme
@@ -586,9 +637,9 @@ class _EventsPage extends State<EventsPage> {
                                     PlutoCell(value: e.location.capacity),
                                 'event_total': PlutoCell(
                                     value:
-                                        e.totalCost > 0 && e.eventType.id != 3
-                                            ? e.totalCost.toString()
-                                            : ''),
+                                        e.totalCost + e.totalAdditional > 0 && e.eventType.id != 3
+                                            ? (e.totalCost + e.totalAdditional).toString()
+                                            : '-'),
                                 'event_status': PlutoCell(
                                     value: e.eventDate.isAfter(DateTime.now())
                                         ? 'En progreso'

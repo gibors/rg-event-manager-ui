@@ -222,7 +222,7 @@ class _GraduationListPageState extends State<GraduationListPage> {
                             onPressed: () {
                               appState.clearSelectedStudent();
                               Navigator.of(context).push(MaterialPageRoute(
-                                  builder: (context) => EventPaymentPage()));
+                                  builder: (context) => GraduationPaymentPage()));
                             },
                           ),
                           SizedBox(width: 20),
@@ -242,7 +242,7 @@ class _GraduationListPageState extends State<GraduationListPage> {
                                           Navigator.of(context).push(
                                               MaterialPageRoute(
                                                   builder: (context) =>
-                                                      EventPaymentPage()));
+                                                      GraduationPaymentPage()));
                                         } else {
                                           Flushbar(
                                             flushbarPosition:

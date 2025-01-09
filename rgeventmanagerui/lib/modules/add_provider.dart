@@ -16,15 +16,17 @@ class AddProviderPage extends StatefulWidget {
 }
 
 class _AddProviderPage extends State<AddProviderPage> {
-
   final _formKey = GlobalKey<FormState>();
   var token = "";
+   String emailPattern = r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
+
   Supplier? selectedSupplier;
   static String _displayStringServicesForOption(ServiceType option) =>
       option.name;
   final _autocompleteServiceTypeKey = GlobalKey();
   final _focusServiceTypeNode = FocusNode();
   final _textEditingServiceTypeController = TextEditingController();
+  final _textEditingOtherServiceTypeController = TextEditingController();
   final _textEditingSupplierNameController = TextEditingController();
   final _textEditingSupplierLastNameController = TextEditingController();
   final _textEditingSupplierEmailController = TextEditingController();
@@ -46,13 +48,14 @@ class _AddProviderPage extends State<AddProviderPage> {
   void initState() {
     var appState = context.read<MyAppState>();
     token = appState.appToken;
-    if(appState.selectedProvider != null) {
+    if (appState.selectedProvider != null) {
       selectedSupplier = appState.selectedProvider;
       mapSupplierObjectToForm();
     }
+    services.add(ServiceType(id: 0, name: 'Otro', description: ''));
     EventService().getServices(token).then((value) {
       setState(() {
-        services = value;
+        services.addAll(value);
       });
     });
     super.initState();
@@ -67,7 +70,8 @@ class _AddProviderPage extends State<AddProviderPage> {
       _textEditingSupplierBankAccountController.text =
           selectedSupplier!.accountNumber;
 
-      _textEditingServiceTypeController.text = selectedSupplier!.serviceType.name;
+      _textEditingServiceTypeController.text =
+          selectedSupplier!.serviceType.name;
       selectedServiceType = selectedSupplier!.serviceType;
 
       if (selectedSupplier!.location != null) {
@@ -96,7 +100,9 @@ class _AddProviderPage extends State<AddProviderPage> {
           id: selectedSupplier != null ? selectedSupplier!.location!.id : -1,
           locationType: "1",
           address: Address(
-              id: selectedSupplier != null  ? selectedSupplier!.location!.address.id : -1,
+              id: selectedSupplier != null
+                  ? selectedSupplier!.location!.address.id
+                  : -1,
               street: _textEditingLocationStreetController.text,
               number: _textEditingLocationNumberController.text,
               city: _textEditingLocationCityController.text,
@@ -106,7 +112,7 @@ class _AddProviderPage extends State<AddProviderPage> {
           capacity: int.parse(_textEditingSalonCapacityController.text));
     }
     selectedSupplier = Supplier(
-        id: selectedSupplier != null ?  selectedSupplier!.id : -1,
+        id: selectedSupplier != null ? selectedSupplier!.id : -1,
         name: _textEditingSupplierNameController.text,
         description: '',
         cost: 0,
@@ -120,19 +126,47 @@ class _AddProviderPage extends State<AddProviderPage> {
   }
 
   saveSupplier() {
+    if (_textEditingOtherServiceTypeController.text.isNotEmpty) {
+      var serviceType = ServiceType(
+          id: -1,
+          name: _textEditingOtherServiceTypeController.text,
+          description: '');
+      EventService().createService(serviceType, token).then((value) {
+        selectedServiceType = value;
+        saveSelectedSupplier();
+      }, onError: (error) {
+        log('Error saving service type: $error');
+        Flushbar(
+          backgroundColor: AppColors.redColor,
+          flushbarPosition: FlushbarPosition.TOP,
+          title: 'Error',
+          message: 'Hubo un error al guardar el tipo de servicio nuevo',
+          duration: Duration(seconds: 3),
+        ).show(context);
+      });
+    } else {
+      saveSelectedSupplier();
+    }
+  }
+
+  void saveSelectedSupplier() {
     mapFormToObject();
-    EventService().createorSaveProvider(selectedSupplier!, token).then((value) {
-      selectedSupplier = value;
-     Flushbar(
-      flushbarPosition: FlushbarPosition.TOP,
+    EventService().createOrSaveProvider(selectedSupplier!, token).then((value) {
+      setState(() {
+        selectedSupplier = value;
+      });
+      Flushbar(
+        backgroundColor: AppColors.pinkColor,
+        flushbarPosition: FlushbarPosition.TOP,
         title: 'Proveedor guardado',
         message: 'El proveedor ha sido guardado exitosamente',
         duration: Duration(seconds: 3),
       ).show(context);
-          
+      mapSupplierObjectToForm();
     }, onError: (error) {
       log('Error saving provider: $error');
       Flushbar(
+        backgroundColor: AppColors.redColor,
         flushbarPosition: FlushbarPosition.TOP,
         title: 'Error',
         message: 'Hubo un error al guardar el proveedor',
@@ -146,20 +180,20 @@ class _AddProviderPage extends State<AddProviderPage> {
     var appState = context.watch<MyAppState>();
     return Scaffold(
       appBar: AppBar(
-        leading: 
-          IconButton(
-            icon: Icon(Icons.arrow_back, color: AppColors.pinkColor),
-            onPressed: () {
-              setState(() {
-                appState.setIndex(1);
-              });
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => EventsHomePage()),
-              );
-            },
-          ),
-        title: Text(selectedSupplier != null ? 'Editar proveedor' : 'Agregar proveedor',
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: AppColors.pinkColor),
+          onPressed: () {
+            setState(() {
+              appState.setIndex(1);
+            });
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => EventsHomePage()),
+            );
+          },
+        ),
+        title: Text(
+            selectedSupplier != null ? 'Editar proveedor' : 'Agregar proveedor',
             style: TextStyle(fontSize: 24.0, color: AppColors.pinkColor)),
       ),
       body: SingleChildScrollView(
@@ -182,10 +216,6 @@ class _AddProviderPage extends State<AddProviderPage> {
                           Expanded(
                               child: TextFormField(
                             controller: _textEditingSupplierNameController,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.allow(
-                                  RegExp(r'[a-z A-Z]'))
-                            ],
                             validator: (value) => value == null || value.isEmpty
                                 ? 'Ingresa el nombre del proveedor'
                                 : null,
@@ -197,10 +227,6 @@ class _AddProviderPage extends State<AddProviderPage> {
                           Expanded(
                               child: TextFormField(
                             controller: _textEditingSupplierLastNameController,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.allow(
-                                  RegExp(r'[a-z A-Z]'))
-                            ],
                             validator: (value) => value == null || value.isEmpty
                                 ? 'Ingresa los apellidos del proveedor'
                                 : null,
@@ -253,7 +279,7 @@ class _AddProviderPage extends State<AddProviderPage> {
                                 VoidCallback onFieldSubmitted,
                               ) {
                                 return TextFormField(
-                                enabled: selectedSupplier == null,
+                                  enabled: selectedSupplier == null,
                                   controller: fieldTextEditingController,
                                   focusNode: fieldFocusNode,
                                   decoration: const InputDecoration(
@@ -273,6 +299,19 @@ class _AddProviderPage extends State<AddProviderPage> {
                               },
                             ),
                           ),
+                          SizedBox(width: 20),
+                          Visibility(
+                              visible: selectedServiceType != null &&
+                                  selectedServiceType!.id == 0,
+                              child: Expanded(
+                                  child: TextFormField(
+                                    enabled: selectedSupplier == null,
+                                controller:
+                                    _textEditingOtherServiceTypeController,
+                                decoration: InputDecoration(
+                                    labelText: 'Nombre del servicio',
+                                    border: OutlineInputBorder()),
+                              )))
                         ],
                       ),
                       SizedBox(height: 20),
@@ -285,6 +324,9 @@ class _AddProviderPage extends State<AddProviderPage> {
                               FilteringTextInputFormatter.allow(
                                   RegExp(r'[a-zA-Z0-9@.]'))
                             ],
+                            validator: (value) => value !=null && value.isNotEmpty && !RegExp(emailPattern).hasMatch(value)
+                                ? 'Ingresa un correo electrónico válido'
+                                : null,
                             decoration: InputDecoration(
                                 labelText: 'Correo electrónico',
                                 border: OutlineInputBorder()),
@@ -293,9 +335,16 @@ class _AddProviderPage extends State<AddProviderPage> {
                           Expanded(
                               child: TextFormField(
                             controller: _textEditingSupplierPhoneController,
+                            validator: (value) {
+                              if (value != null && value.isNotEmpty && value.length != 10) {
+                                return 'El teléfono debe contener 10 dígitos';
+                              }
+                              return null;
+                            },
                             inputFormatters: [
                               FilteringTextInputFormatter.allow(
-                                  RegExp(r'[0-9]'))
+                                  RegExp(r'[0-9]')),
+                              LengthLimitingTextInputFormatter(10)
                             ],
                             decoration: InputDecoration(
                                 labelText: 'Teléfono',
@@ -319,115 +368,121 @@ class _AddProviderPage extends State<AddProviderPage> {
                       ),
                       SizedBox(height: 33),
                       Visibility(
-                          visible: selectedServiceType != null && selectedServiceType!.id == 5,
+                          visible: selectedServiceType != null &&
+                              selectedServiceType!.id == 5,
                           child: Column(children: [
-                        Row(
-                          children: [
-                            Text('Ubicación',
-                                style: TextStyle(
-                                    fontSize: 20.0, color: Colors.brown)),
-                          ],
-                        ),
-                        SizedBox(height: 20),
-                        Row(
-                          children: [
-                            Expanded(
-                                flex: 2,
-                                child: TextFormField(
+                            Row(
+                              children: [
+                                Text('Ubicación',
+                                    style: TextStyle(
+                                        fontSize: 20.0, color: Colors.brown)),
+                              ],
+                            ),
+                            SizedBox(height: 20),
+                            Row(
+                              children: [
+                                Expanded(
+                                    flex: 2,
+                                    child: TextFormField(
+                                      controller:
+                                          _textEditingLocationStreetController,
+                                      decoration: InputDecoration(
+                                          labelText: 'Calle',
+                                          border: OutlineInputBorder()),
+                                    )),
+                                SizedBox(width: 20),
+                                Expanded(
+                                    child: TextFormField(
                                   controller:
-                                      _textEditingLocationStreetController,
+                                      _textEditingLocationNumberController,
                                   decoration: InputDecoration(
-                                      labelText: 'Calle',
+                                      labelText: 'Número',
                                       border: OutlineInputBorder()),
                                 )),
-                            SizedBox(width: 20),
-                            Expanded(
-                                child: TextFormField(
-                              controller: _textEditingLocationNumberController,
-                              decoration: InputDecoration(
-                                  labelText: 'Número',
-                                  border: OutlineInputBorder()),
-                            )),
-                          ],
-                        ),
-                        SizedBox(height: 20),
-                        Row(
-                          children: [
-                            Expanded(
-                                child: TextFormField(
-                              controller: _textEditingLocationCityController,
-                              decoration: InputDecoration(
-                                  labelText: 'Ciudad',
-                                  border: OutlineInputBorder()),
-                            )),
-                            SizedBox(width: 20),
-                            Expanded(
-                                child: TextFormField(
-                              controller: _textEditingLocationStateController,
-                              decoration: InputDecoration(
-                                  labelText: 'Estado',
-                                  border: OutlineInputBorder()),
-                            )),
-                            SizedBox(width: 20),
-                            Expanded(
-                              child: TextFormField(
-                                controller:
-                                    _textEditingLocationPostalCodeController,
-                                decoration: InputDecoration(
-                                    labelText: 'Código postal',
-                                    border: OutlineInputBorder()),
-                              ),
-                            )
-                          ],
-                        ),
-                        SizedBox(height: 33),
-                        Row(
-                          children: [
-                            Text('Información del salón',
-                                style: TextStyle(
-                                    fontSize: 20.0, color: Colors.brown)),
-                          ],
-                        ),
-                        SizedBox(height: 20),
-                        Row(
-                          children: [
-                            Expanded(
-                                child: TextFormField(
-                              controller: _textEditingSalonNameController,
-                              validator: (value) {
-                                if (selectedServiceType!.id == 5 && (value == null || value.isEmpty)) {
-                                  return 'Ingresa el nombre del salón';
-                                }
-                                return null;
-                              },
-                              decoration: InputDecoration(
-                                  labelText: 'Nombre del salón',
-                                  
-                                  border: OutlineInputBorder()),
-                            )),
-                            SizedBox(width: 20),
-                            Expanded(
-                                child: TextFormField(
-                              controller: _textEditingSalonCapacityController,
-                              validator: (value) {
-                                if (selectedServiceType!.id == 5 && (value == null || value.isEmpty)) {
-                                  return 'Ingresa la capacidad del salón';
-                                }
-                                return null;
-                              },
-                              inputFormatters: [
-                                FilteringTextInputFormatter.allow(
-                                    RegExp(r'[0-9]'))
                               ],
-                              decoration: InputDecoration(
-                                  labelText: 'Capacidad',
-                                  border: OutlineInputBorder()),
-                            )),
-                            SizedBox(width: 20),
-                            Expanded(child: Text(''))
-                          ],
-                        ),
-                      ])),
+                            ),
+                            SizedBox(height: 20),
+                            Row(
+                              children: [
+                                Expanded(
+                                    child: TextFormField(
+                                  controller:
+                                      _textEditingLocationCityController,
+                                  decoration: InputDecoration(
+                                      labelText: 'Ciudad',
+                                      border: OutlineInputBorder()),
+                                )),
+                                SizedBox(width: 20),
+                                Expanded(
+                                    child: TextFormField(
+                                  controller:
+                                      _textEditingLocationStateController,
+                                  decoration: InputDecoration(
+                                      labelText: 'Estado',
+                                      border: OutlineInputBorder()),
+                                )),
+                                SizedBox(width: 20),
+                                Expanded(
+                                  child: TextFormField(
+                                    controller:
+                                        _textEditingLocationPostalCodeController,
+                                    decoration: InputDecoration(
+                                        labelText: 'Código postal',
+                                        border: OutlineInputBorder()),
+                                  ),
+                                )
+                              ],
+                            ),
+                            SizedBox(height: 33),
+                            Row(
+                              children: [
+                                Text('Información del salón',
+                                    style: TextStyle(
+                                        fontSize: 20.0, color: Colors.brown)),
+                              ],
+                            ),
+                            SizedBox(height: 20),
+                            Row(
+                              children: [
+                                Expanded(
+                                    child: TextFormField(
+                                  controller: _textEditingSalonNameController,
+                                  validator: (value) {
+                                    if (selectedServiceType!.id == 5 &&
+                                        (value == null || value.isEmpty)) {
+                                      return 'Ingresa el nombre del salón';
+                                    }
+                                    return null;
+                                  },
+                                  decoration: InputDecoration(
+                                      labelText: 'Nombre del salón',
+                                      border: OutlineInputBorder()),
+                                )),
+                                SizedBox(width: 20),
+                                Expanded(
+                                    child: TextFormField(
+                                  controller:
+                                      _textEditingSalonCapacityController,
+                                  validator: (value) {
+                                    if (selectedServiceType!.id == 5 &&
+                                        (value == null || value.isEmpty)) {
+                                      return 'Ingresa la capacidad del salón';
+                                    }
+                                    return null;
+                                  },
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.allow(
+                                        RegExp(r'[0-9]'))
+                                  ],
+                                  decoration: InputDecoration(
+                                      labelText: 'Capacidad',
+                                      border: OutlineInputBorder()),
+                                )),
+                                SizedBox(width: 20),
+                                Expanded(child: Text(''))
+                              ],
+                            ),
+                          ])),
                       SizedBox(height: 33),
                       Row(
                         children: [
@@ -445,7 +500,7 @@ class _AddProviderPage extends State<AddProviderPage> {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                         content: Text('Procesando datos')));
-                                        saveSupplier();
+                                saveSupplier();
                               }
                             },
                             child: Text('Guardar'),
@@ -491,7 +546,6 @@ class _AddProviderPage extends State<AddProviderPage> {
                                   );
                                 },
                               );
-                             
                             },
                             child: Text('Cancelar'),
                           ),

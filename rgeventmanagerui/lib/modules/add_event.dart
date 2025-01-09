@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:rg_event_management_ui/formatters/ThousandsSeparatorInputFormatter.dart';
 import 'package:rg_event_management_ui/main.dart';
 import 'package:rg_event_management_ui/models/Event.dart';
+import 'package:rg_event_management_ui/modules/additional_services.dart';
 import 'package:rg_event_management_ui/modules/graduationpayment.dart';
 import 'package:rg_event_management_ui/services/eventservice.dart';
 import 'package:rg_event_management_ui/modules/graduationlist.dart';
@@ -300,9 +301,11 @@ class _AddEventPopup extends State<AddEventPopup> {
       status: 'active',
       folio: 0,
       totalCost: calculateCost(),
+      additionalServices: selectedEvent?.additionalServices ?? [],
+      totalAdditional: selectedEvent?.totalAdditional ?? 0,
     );
 
-    EventService().createEvent(event, token).then((value) {
+    EventService().createOrUpdateEvent(event, token).then((value) {
       log('Event created id ${value.id}');
 
       setState(() {
@@ -392,7 +395,10 @@ class _AddEventPopup extends State<AddEventPopup> {
                 Expanded(
                   child: TextFormField(
                     controller: contactPhone,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(10),
+                    ],
                     decoration: InputDecoration(
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10.0),
@@ -1252,7 +1258,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                           } else {
                             Navigator.of(context).pushReplacement(
                               MaterialPageRoute(
-                                builder: (context) => EventPaymentPage(),
+                                builder: (context) => GraduationPaymentPage(),
                               ),
                             );
                           }
@@ -1278,23 +1284,13 @@ class _AddEventPopup extends State<AddEventPopup> {
                         selectedEventType!.id != 3,
                     child: ElevatedButton(
                       onPressed: () {
-                        showAboutDialog(
-                            context: this.context,
-                            applicationIcon: Icon(Icons.info),
-                            applicationName: 'Administrar servicios',
-                            applicationVersion: '1.0.0',
-                            applicationLegalese: 'Administrar servicios',
-                            children: [
-                              Text('Administrar servicios esta en progreso..')
-                            ]);
-
-                        // appState.selectedEvent = selectedEvent;
-                        // appState.setToken(token);
-                        // Navigator.of(context).push(
-                        // MaterialPageRoute(
-                        // builder: (context) => AdditionalServices(),
-                        // ),
-                        // );
+                        appState.selectedEvent = selectedEvent;
+                        appState.setToken(token);
+                        Navigator.of(context).push(
+                        MaterialPageRoute(
+                        builder: (context) => AdditionalServices(),
+                        ),
+                        );
                       },
                       style: ButtonStyle(
                         backgroundColor: WidgetStateProperty.all<Color>(

@@ -36,6 +36,7 @@ class UserService {
       }
     } catch (e) {
       log('Dio post request error: ${e.toString()}');
+
     try {
       final response = await _dio.get('https://localhost:8443/api/v1/health');
       return AuthResponse(token: "", type: "", error: "OK");
@@ -45,6 +46,21 @@ class UserService {
     }
     }
   }
+
+  Future<bool> isValidToken(token) async {
+    try {
+      _dio.options.headers['content-Type'] = 'application/json';
+      final response = await _dio.get('https://localhost:8443/api/v1/health',
+          options: Options(headers: {"authorization": "Bearer $token"}));
+      return response.statusCode == 200;
+    } catch (e) {
+      if (e.toString().contains("401")) {
+        log('Dio get request error Token expired: ${e.toString()}');
+        return false;
+      }
+      return false;
+    }
+  } 
 
   Future<List<User>> getUsers(token) async {
     try {
