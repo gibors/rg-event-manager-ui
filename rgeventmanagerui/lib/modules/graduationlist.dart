@@ -24,6 +24,7 @@ class _GraduationListPageState extends State<GraduationListPage> {
     PlutoColumn(
       title: 'Nombre',
       field: 'student_name',
+      width: 200,
       type: PlutoColumnType.text(),
     ),
     PlutoColumn(
@@ -32,28 +33,31 @@ class _GraduationListPageState extends State<GraduationListPage> {
       type: PlutoColumnType.text(),
     ),
     PlutoColumn(
-      title: 'paquete/platillo',
+      title: 'paq/platillo',
       field: 'package',
+      width: 120,
       type: PlutoColumnType.text(),
     ),
     PlutoColumn(
-      title: 'Total platillo/paquete',
+      title: 'Total platillo/paq',
       field: 'total_cost',
       type: PlutoColumnType.currency(symbol: '\$'),
     ),
     PlutoColumn(
-      title: 'Pagado platillo/paquete',
+      title: 'Pagado platillo/paq',
       field: 'paid',
       type: PlutoColumnType.currency(symbol: '\$'),
     ),
     PlutoColumn(
       title: 'Restante',
       field: 'remaining',
+      width: 160,
       type: PlutoColumnType.currency(symbol: '\$'),
     ),
     PlutoColumn(
       title: 'Estado pago',
       field: 'student_status',
+      width: 160,
       type: PlutoColumnType.select(<String>['Pendiente', 'Pagado']),
       renderer: (rendererContext) {
         Color textColor = Colors.black;
@@ -76,11 +80,13 @@ class _GraduationListPageState extends State<GraduationListPage> {
     PlutoColumn(
       title: 'Folio',
       field: 'folio',
+      width: 120,
       type: PlutoColumnType.text(),
     ),
     PlutoColumn(
-        title: 'Cantidad Adicional',
+        title: 'Adicionales',
         field: 'additional_number',
+        width: 120,
         type: PlutoColumnType.text()),
     PlutoColumn(
       title: 'Pagado Adicional',
@@ -207,13 +213,6 @@ class _GraduationListPageState extends State<GraduationListPage> {
                                           });
                             },
                           ),
-                          // SizedBox(width: 20),
-                          // Text('Descargar excel',
-                          //     style: Theme.of(context).textTheme.bodyLarge),
-                          // IconButton(
-                          //   icon: Icon(Icons.download),
-                          //   onPressed: () {},
-                          // ),
                           SizedBox(width: 20),
                           Text('Agregar alumno',
                               style: Theme.of(context).textTheme.bodyLarge),
@@ -265,20 +264,13 @@ class _GraduationListPageState extends State<GraduationListPage> {
                       Row(
                         children: [
                           Text('Total de alumnos: ${snapshot.data!.length}',
-                              style: Theme.of(context).textTheme.bodyMedium),
+                              style: TextStyle(
+                                  fontSize: 20.0, color: Colors.blue[900], fontWeight: FontWeight.bold)),
                           SizedBox(width: 30),
                           Text(
                               'Alumno seleccionado: ${appState.selectedStudent != null ? ('${appState.selectedStudent!.name} ${appState.selectedStudent!.lastName}') : 'Ninguno'}',
-                              style: Theme.of(context).textTheme.bodyMedium),
-                          SizedBox(width: 30),
-                          IconButton(
-                            icon: Icon(Icons.refresh),
-                            onPressed: () {
-                              setState(() {
-                                appState.clearSelectedStudent();
-                              });
-                            },
-                          ),
+                              style: TextStyle(
+                                  fontSize: 20.0, color: Colors.blue[900], fontWeight: FontWeight.bold)),
                         ],
                       ),
                       SizedBox(height: 20),
@@ -357,7 +349,7 @@ class _GraduationListPageState extends State<GraduationListPage> {
                                   'folio': PlutoCell(
                                       value: e.folio.isNotEmpty ? e.folio : ''),
                                   'additional_number':
-                                      PlutoCell(value: e.additionalNumber),
+                                      PlutoCell(value: e.packageType.isNotEmpty ? e.additionalNumber: 'NA'),
                                   'additional_cost':
                                       PlutoCell(value: e.additionalQuantity),
                                 }))

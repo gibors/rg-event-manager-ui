@@ -43,15 +43,9 @@ Future<void> main() async {
   
   WidgetsFlutterBinding.ensureInitialized();
 
-//  if (Platform.isWindows) {
-  
-//     WindowManager.instance.setMinimumSize(const Size(1500, 1000));
-//     WindowManager.instance.setMaximumSize(const Size(1400, 1000));
-//   }
-
-
   runApp(MyApp());
 }
+
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 

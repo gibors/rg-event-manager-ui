@@ -197,26 +197,26 @@ class _AddEventPopup extends State<AddEventPopup> {
     var contacts = <Contact>[];
 
     if (selectedEventType != null && selectedEventType!.id == 3) {
-      if (double.tryParse(eventCost.text.isEmpty ? "0" : eventCost.text)! > 0 &&
+      if (double.tryParse(eventCost.text.isEmpty ? "0" : eventCost.text.replaceAll(",",""))! > 0 &&
           (double.tryParse(eventCostPackage10.text.isEmpty
                       ? "0"
-                      : eventCostPackage10.text)! >
+                      : eventCostPackage10.text.replaceAll(",",""))! >
                   0 ||
               double.tryParse(eventCostPackage10NoPre.text.isEmpty
                       ? "0"
-                      : eventCostPackage10NoPre.text)! >
+                      : eventCostPackage10NoPre.text.replaceAll(",",""))! >
                   0 ||
               double.tryParse(eventCostPackageHalf.text.isEmpty
                       ? "0"
-                      : eventCostPackageHalf.text)! >
+                      : eventCostPackageHalf.text.replaceAll(",",""))! >
                   0 ||
               double.tryParse(eventCostPackageHalfNoPre.text.isEmpty
                       ? "0"
-                      : eventCostPackageHalfNoPre.text)! >
+                      : eventCostPackageHalfNoPre.text.replaceAll(",",""))! >
                   0 ||
               double.tryParse(eventCostPackageDouble.text.isEmpty
                       ? "0"
-                      : eventCostPackageDouble.text)! >
+                      : eventCostPackageDouble.text.replaceAll(",",""))! >
                   0)) {
         Flushbar(
           flushbarPosition: FlushbarPosition.TOP,
