@@ -17,13 +17,14 @@ class GraduationPaymentPage extends StatefulWidget {
 }
 
 class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
+  static const String ADDITIONAL = 'adicional';
   bool isEditMode = false;
   bool isGraduation = false;
   bool isNewStudent = false;
   var token = "";
   var selectedStudent;
   var selectedEvent;
-  bool showAdditionalNumberInput = false;
+  bool showAQuantityNumberInput = false;
   var appState;
 
   final _formKey = GlobalKey<FormState>();
@@ -37,7 +38,7 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
   var _packageType = TextEditingController();
   var _dishNumber = TextEditingController();
   var _paymentMethodController = TextEditingController();
-  var _additionalNumber = TextEditingController();
+  var _quantityNumber = TextEditingController();
   var _telephone = TextEditingController();
   var _comment = TextEditingController();
   var _paymentAmount = TextEditingController();
@@ -49,11 +50,18 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
 
   List<String> packageTypes = [];
 
-  List<String> paymentMethods = ['Efectivo', 'Tarjeta', 'Transferencia'];
+  List<String> paymentMethods = [
+    'Efectivo',
+    'Tarjeta',
+    'Transferencia',
+    'Retiro sin tarjeta',
+    'Pago en escuela'
+  ];
   List<String> paymentDetails = [];
 
   bool addSouvenir = false;
   bool addPreParty = false;
+  bool addBracelet = false;
 
   @override
   void initState() {
@@ -114,13 +122,15 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
   }
 
   setAdditionalNumber() {
-    if (_paymentDetail.text == 'adicional') {
+    if (_paymentDetail.text.isNotEmpty &&
+        _paymentDetail.text != 'platillo' &&
+        _paymentDetail.text != 'paquete') {
       setState(() {
-        showAdditionalNumberInput = true;
+        showAQuantityNumberInput = true;
       });
     } else {
       setState(() {
-        showAdditionalNumberInput = false;
+        showAQuantityNumberInput = false;
       });
     }
   }
@@ -131,7 +141,7 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
       if (selectedStudent != null &&
           selectedStudent.folio.isNotEmpty &&
           selectedEvent.pricing!.additionalCost > 0) {
-        paymentDetails.add('adicional');
+        paymentDetails.add(ADDITIONAL);
       } else {
         paymentDetails.add('paquete');
       }
@@ -142,11 +152,15 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
         paymentDetails.add('platillo');
       }
     }
+
     if (selectedStudent != null && selectedStudent.hasPreParty) {
       paymentDetails.add('pre-fiesta');
     }
     if (selectedStudent != null && selectedStudent.hasSouvenir) {
       paymentDetails.add('souvenir');
+    }
+    if (selectedStudent != null && selectedStudent.hasBracelet) {
+      paymentDetails.add('pulsera');
     }
   }
 
@@ -160,6 +174,7 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
     _dishNumber.text = selectedStudent!.dishCount.toString();
     addSouvenir = selectedStudent!.hasSouvenir;
     addPreParty = selectedStudent!.hasPreParty;
+    addBracelet = selectedStudent!.hasBracelet;
   }
 
   double calculateCost(packageType) {
@@ -269,249 +284,349 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
           : 0,
       hasPreParty: addPreParty,
       hasSouvenir: addSouvenir,
+      hasBracelet: addBracelet,
     );
     return student;
   }
 
   addPayment() {
-    var paymentAmount = double.parse(_paymentAmount.text.isEmpty
-        ? "0"
-        : _paymentAmount.text.replaceAll(',', ''));
+    try {
+      var paymentAmount = double.parse(_paymentAmount.text.isEmpty
+          ? "0"
+          : _paymentAmount.text.replaceAll(',', ''));
 
-    var paymentsDishOrPackage = selectedStudent!.payments
-        .where((e) =>
-            e.paymentDetail == 'platillo' || e.paymentDetail == 'paquete')
-        .toList();
+      var paymentsDishOrPackage = selectedStudent!.payments
+          .where((e) =>
+              e.paymentDetail == 'platillo' || e.paymentDetail == 'paquete')
+          .toList();
 
-    var totalPaid = paymentsDishOrPackage.isNotEmpty
-        ? paymentsDishOrPackage.map((e) => e.amount).reduce((a, b) => a + b)
-        : 0;
+      var totalPaid = paymentsDishOrPackage.isNotEmpty
+          ? paymentsDishOrPackage.map((e) => e.amount).reduce((a, b) => a + b)
+          : 0;
 
-    var isAlreadyPaidDishOrPackage =
-        selectedStudent!.totalCost - totalPaid == 0;
+      var isAlreadyPaidDishOrPackage =
+          selectedStudent!.totalCost - totalPaid == 0;
 
-    // check if the student has already paid the total cost
-    var isPayingWithCurrentPayment = paymentsDishOrPackage.isNotEmpty
-        ? selectedStudent!.totalCost <=
-            paymentsDishOrPackage.map((e) => e.amount).reduce((a, b) => a + b) +
-                paymentAmount
-        : (selectedStudent!.totalCost <= paymentAmount);
+      // check if the student has already paid the total cost
+      var isPayingWithCurrentPayment = paymentsDishOrPackage.isNotEmpty
+          ? selectedStudent!.totalCost <=
+              paymentsDishOrPackage
+                      .map((e) => e.amount)
+                      .reduce((a, b) => a + b) +
+                  paymentAmount
+          : (selectedStudent!.totalCost <= paymentAmount);
 
-    // This is just to make sure that the student has already paid the total cost
-    if (isAlreadyPaidDishOrPackage &&
-        (_paymentDetail.text == 'platillo' ||
-            _paymentDetail.text == 'paquete')) {
-      Flushbar(
-        flushbarPosition: FlushbarPosition.TOP,
-        title: 'Error',
-        message:
-            'El alumno ya ha pagado el total de su paquete/platillo revisa si se puede pagar otro servicio desde el evento',
-        duration: Duration(seconds: 6),
-        backgroundColor: Colors.red,
-      ).show(context);
-      return;
-    }
-
-    var reminding = 0.0;
-    if (isAlreadyPaidDishOrPackage) {
-      reminding = selectedStudent!.additionalQuantity -
-          (selectedStudent!.payments.isNotEmpty &&
-                  selectedStudent!.payments
-                      .where((e) => e.paymentDetail == 'adicional')
-                      .isNotEmpty
-              ? selectedStudent!.payments
-                  .where((e) => e.paymentDetail == 'adicional')
-                  .map((e) => e.amount)
-                  .reduce((a, b) => a + b)
-              : 0.0);
-    }
-
-    // if we have reminding amount to pay for additional services
-    if (isAlreadyPaidDishOrPackage &&
-        reminding > 0 &&
-        _paymentDetail.text == 'adicional' &&
-        paymentAmount != reminding) {
-      Flushbar(
-        flushbarPosition: FlushbarPosition.TOP,
-        title: 'Error',
-        message:
-            'Hay un saldo pendiente de adicionales de \$${reminding} por pagar antes de agregar otro adicional',
-        duration: Duration(seconds: 6),
-        backgroundColor: Colors.red,
-      ).show(context);
-      return;
-    }
-
-    var additionalNumber = _additionalNumber.text.isEmpty
-        ? 0
-        : int.tryParse(_additionalNumber.text);
-
-    switch (_paymentDetail.text) {
-      case 'adicional':
-        if (reminding > 0) {
-          additionalNumber = 0;
-        }
-        break;
-      case 'pre-fiesta':
-        paymentAmount = selectedEvent!.pricing.prePartyCost;
-        break;
-      case 'souvenir':
-        paymentAmount = selectedEvent!.pricing.souvenirCost;
-    }
-
-    double iva = 0;
-    if (_paymentMethodController.text.trim() == paymentMethods[2].trim()) {
-      iva = double.parse((paymentAmount * 0.16).toStringAsFixed(2));
-    }
-
-    // package or dish payment validation
-    if (_paymentDetail.text == 'platillo' || _paymentDetail.text == 'paquete') {
-      var totalAmount = totalPaid + paymentAmount;
-      if ((totalAmount > selectedStudent!.totalCost)) {
+      // This is just to make sure that the student has already paid the total cost
+      if (isAlreadyPaidDishOrPackage &&
+          (_paymentDetail.text == 'platillo' ||
+              _paymentDetail.text == 'paquete')) {
         Flushbar(
           flushbarPosition: FlushbarPosition.TOP,
           title: 'Error',
           message:
-              'El pago excede el costo total del paquete/platillo, solo puedes cobrar  \$${double.parse(_paymentAmount.text.replaceAll(',', '')) - (totalAmount - selectedStudent!.totalCost)} y despues agregar pagos adicionales u otro servicio',
-          duration: Duration(seconds: 10),
+              'El alumno ya ha pagado el total de su paquete/platillo revisa si se puede pagar otro servicio desde el evento',
+          duration: Duration(seconds: 6),
           backgroundColor: Colors.red,
         ).show(context);
         return;
       }
-    }
 
-    var payment = Payment(
-        id: -1,
-        amount: paymentAmount,
-        paymentMethod: _paymentMethodController.text,
-        paymentDate: DateTime.now(),
-        studentId: selectedStudent != null ? selectedStudent!.id : -1,
-        eventId: selectedEvent!.id,
-        addedBy: '',
-        paymentDetail: _paymentDetail.text,
-        iva: iva);
+      var reminding = 0.0;
+      if (isAlreadyPaidDishOrPackage) {
+        reminding = selectedStudent!.additionalQuantity -
+            (selectedStudent!.payments.isNotEmpty &&
+                    selectedStudent!.payments
+                        .where((e) => e.paymentDetail == ADDITIONAL)
+                        .isNotEmpty
+                ? selectedStudent!.payments
+                    .where((e) => e.paymentDetail == ADDITIONAL)
+                    .map((e) => e.amount)
+                    .reduce((a, b) => a + b)
+                : 0.0);
+      }
 
-    if (!isPayingWithCurrentPayment || _paymentDetail.text == 'platillo') {
-      EventService().createPayment(payment, token).then((value) {
-        log('payment added $value');
-        setState(() {
-          selectedStudent.payments.add(value);
-          if (isPayingWithCurrentPayment) {
-            selectedStudent!.paid = true;
-            setPaymentDetails();
+      // if we have reminding amount to pay for additional services
+      if (isAlreadyPaidDishOrPackage &&
+          reminding > 0 &&
+          _paymentDetail.text == ADDITIONAL &&
+          paymentAmount != reminding) {
+        Flushbar(
+          flushbarPosition: FlushbarPosition.TOP,
+          title: 'Error',
+          message:
+              'Hay un saldo pendiente de adicionales de \$${reminding} por pagar antes de agregar otro adicional',
+          duration: Duration(seconds: 6),
+          backgroundColor: Colors.red,
+        ).show(context);
+        return;
+      }
+
+      var quantityNumber =
+          _quantityNumber.text.isEmpty ? 0 : int.tryParse(_quantityNumber.text);
+
+      switch (_paymentDetail.text) {
+        case ADDITIONAL:
+          if (reminding > 0) {
+            quantityNumber = 0;
           }
-        });
-        Flushbar(
-          flushbarPosition: FlushbarPosition.TOP,
-          title: 'Éxito',
-          message: 'Pago agregado correctamente',
-          duration: Duration(seconds: 3),
-          backgroundColor: Colors.green,
-        ).show(context);
-      }).catchError((error) {
-        Flushbar(
-          flushbarPosition: FlushbarPosition.TOP,
-          title: 'Error',
-          message:
-              'Error al agregar el pago, intente de nuevo o contacte a soporte',
-          duration: Duration(seconds: 3),
-          backgroundColor: Colors.red,
-        ).show(context);
-        return;
-      });
-    } else if (_paymentDetail.text != 'platillo' &&
-        _paymentDetail.text != 'paquete') {
-      // payment other types
-      selectedStudent.payments.add(payment);
-      var additionalPaymentCost = 0.0;
-      if (_paymentDetail.text == 'adicional') {
-        double additionalNum = additionalNumber != null
-            ? double.parse(additionalNumber.toString())
-            : 0.0;
-        additionalPaymentCost =
-            additionalNum * selectedEvent!.pricing.additionalCost;
+          break;
+        case 'pre-fiesta':
+          paymentAmount = selectedEvent!.pricing.prePartyCost * quantityNumber!;
+          break;
+        case 'souvenir':
+          paymentAmount = selectedEvent!.pricing.souvenirCost * quantityNumber!;
+          break;
+        case 'pulsera':
+          paymentAmount = selectedEvent!.pricing.braceletCost * quantityNumber!;
+          break;
+        default:
+          break;
       }
 
-      var student =
-          BuildStudentObject(additionalNumber!, additionalPaymentCost);
+      double iva = 0;
+      if (_paymentMethodController.text.trim() == paymentMethods[2].trim()) {
+        iva = double.parse((paymentAmount * 0.16).toStringAsFixed(2));
+      }
 
-      EventService().saveStudent(student, token).then((studentResponse) {
-        if (studentResponse.id != -1) {
+      // package or dish payment validation
+      if (_paymentDetail.text == 'platillo' ||
+          _paymentDetail.text == 'paquete') {
+        var totalAmount = totalPaid + paymentAmount;
+        if ((totalAmount > selectedStudent!.totalCost)) {
+          Flushbar(
+            flushbarPosition: FlushbarPosition.TOP,
+            title: 'Error',
+            message:
+                'El pago excede el costo total del paquete/platillo, solo puedes cobrar  \$${double.parse(_paymentAmount.text.replaceAll(',', '')) - (totalAmount - selectedStudent!.totalCost)} y despues agregar pagos adicionales u otro servicio',
+            duration: Duration(seconds: 10),
+            backgroundColor: Colors.red,
+          ).show(context);
+          return;
+        }
+      }
+
+      var payment = Payment(
+          id: -1,
+          amount: paymentAmount,
+          paymentMethod: _paymentMethodController.text,
+          paymentDate: DateTime.now(),
+          studentId: selectedStudent != null ? selectedStudent!.id : -1,
+          eventId: selectedEvent!.id,
+          addedBy: '',
+          paymentDetail: _paymentDetail.text,
+          iva: iva,
+          quantity: quantityNumber);
+
+      if (!isPayingWithCurrentPayment || _paymentDetail.text == 'platillo') {
+        EventService().createPayment(payment, token).then((value) {
+          log('payment added $value');
           setState(() {
-            selectedStudent = studentResponse;
+            selectedStudent.payments.add(value);
+            if (isPayingWithCurrentPayment) {
+              selectedStudent!.paid = true;
+              setPaymentDetails();
+            }
           });
-          isEditMode = false;
-          isNewStudent = false;
-          mapSelectedStudent();
           Flushbar(
             flushbarPosition: FlushbarPosition.TOP,
             title: 'Éxito',
-            message: 'Pago de ${_paymentDetail.text} agregado correctamente',
+            message: 'Pago agregado correctamente',
             duration: Duration(seconds: 3),
             backgroundColor: Colors.green,
           ).show(context);
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Error al guardar el alumno')));
+        }).catchError((error) {
+          Flushbar(
+            flushbarPosition: FlushbarPosition.TOP,
+            title: 'Error',
+            message:
+                'Error al agregar el pago, intente de nuevo o contacte a soporte',
+            duration: Duration(seconds: 3),
+            backgroundColor: Colors.red,
+          ).show(context);
           return;
+        });
+      } else if (_paymentDetail.text != 'platillo' &&
+          _paymentDetail.text != 'paquete') {
+        // payment other types
+        var additionalPaymentCost = 0.0;
+
+        if (_paymentDetail.text == ADDITIONAL) {
+          double additionalNum = quantityNumber != null
+              ? double.parse(quantityNumber.toString())
+              : 0.0;
+          additionalPaymentCost =
+              additionalNum * selectedEvent!.pricing.additionalCost;
+        } else {
+          quantityNumber = 0;
         }
-      });
+
+        selectedStudent.payments.add(payment);
+
+        var student =
+            BuildStudentObject(quantityNumber!, additionalPaymentCost);
+
+        EventService().saveStudent(student, token).then((studentResponse) {
+          if (studentResponse.id != -1) {
+            setState(() {
+              selectedStudent = studentResponse;
+            });
+            isEditMode = false;
+            isNewStudent = false;
+            mapSelectedStudent();
+            Flushbar(
+              flushbarPosition: FlushbarPosition.TOP,
+              title: 'Éxito',
+              message: 'Pago de ${_paymentDetail.text} agregado correctamente',
+              duration: Duration(seconds: 3),
+              backgroundColor: Colors.green,
+            ).show(context);
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Error al guardar el alumno')));
+            return;
+          }
+        });
+      }
+
+      _paymentAmount.clear();
+      _paymentMethodController.clear();
+      _paymentDetail.clear();
+      _quantityNumber.clear();
+      setAdditionalNumber();
+
+      if (isPayingWithCurrentPayment && selectedStudent.folio.isEmpty) {
+        selectedStudent.payments.add(payment);
+        EventService()
+            .saveStudentWithFolioData(selectedStudent, token)
+            .then((value) => {
+                  if (value.folio.isNotEmpty)
+                    {
+                      setState(() {
+                        selectedStudent = value;
+                        mapSelectedStudent();
+                        setPaymentDetails();
+                        if (packageTypes.isNotEmpty) {
+                          paymentDetails.remove('paquete');
+                        } else {
+                          paymentDetails.remove('platillo');
+                        }
+                      }),
+                      Flushbar(
+                        flushbarPosition: FlushbarPosition.TOP,
+                        title: 'Éxito',
+                        message: 'Pago agregado correctamente y folio generado',
+                        duration: Duration(seconds: 3),
+                        backgroundColor: Colors.green,
+                      ).show(context),
+                    }
+                  else
+                    log('error on creating folio and saving payment '),
+                  Flushbar(
+                    flushbarPosition: FlushbarPosition.TOP,
+                    title: 'Error',
+                    message:
+                        'Error al agregar el pago, intente de nuevo o contacte a soporte',
+                    duration: Duration(seconds: 3),
+                    backgroundColor: Colors.red,
+                  )
+                })
+            .catchError((error) => {
+                  log('error agregando pago $error'),
+                  Flushbar(
+                    flushbarPosition: FlushbarPosition.TOP,
+                    title: 'Error',
+                    message:
+                        'Error al agregar el pago, intente de nuevo o contacte a soporte',
+                    duration: Duration(seconds: 3),
+                    backgroundColor: Colors.red,
+                  ).show(context),
+                });
+      }
+    } catch (e) {
+      log('error on add payment $e');
+      Flushbar(
+        flushbarPosition: FlushbarPosition.TOP,
+        title: 'Error',
+        message:
+            'Error al agregar el pago, intente de nuevo o contacte a soporte, error $e.toString()',
+        duration: Duration(seconds: 3),
+        backgroundColor: Colors.red,
+      ).show(context);
+    }
+  }
+
+  void onQuantityChange(String value) {
+    log("OnQuantityChange: $value");
+    switch (_paymentDetail.text) {
+      case ADDITIONAL:
+        _paymentAmount.text = (double.tryParse(value)! *
+                (selectedEvent.pricing!.additionalCost == 0
+                    ? 0
+                    : selectedEvent.pricing!.additionalCost!))
+            .toString();
+        break;
+      case 'pre-fiesta':
+        _paymentAmount.text =
+            (double.tryParse(value)! * selectedEvent.pricing!.prePartyCost)
+                .toString();
+        break;
+      case 'souvenir':
+        _paymentAmount.text =
+            (double.tryParse(value)! * selectedEvent.pricing!.souvenirCost)
+                .toString();
+        break;
+      case 'pulsera':
+        _paymentAmount.text =
+            (double.tryParse(value)! * selectedEvent.pricing!.braceletCost)
+                .toString();
+      default:
+        _paymentAmount.text = 0.0.toString();
+        break;
     }
 
-    _paymentAmount.clear();
-    _paymentMethodController.clear();
-    _paymentDetail.clear();
-    _additionalNumber.clear();
-    setAdditionalNumber();
+    log(_paymentAmount.text);
+  }
 
-    if (isPayingWithCurrentPayment && selectedStudent.folio.isEmpty) {
-      selectedStudent.payments.add(payment);
-      EventService()
-          .saveStudentWithFolioData(selectedStudent, token)
-          .then((value) => {
-                if (value.folio.isNotEmpty)
-                  {
-                    setState(() {
-                      selectedStudent = value;
-                      mapSelectedStudent();
-                      setPaymentDetails();
-                      if (packageTypes.isNotEmpty) {
-                        paymentDetails.remove('paquete');
-                      } else {
-                        paymentDetails.remove('platillo');
-                      }
-                    }),
-                    Flushbar(
-                      flushbarPosition: FlushbarPosition.TOP,
-                      title: 'Éxito',
-                      message: 'Pago agregado correctamente y folio generado',
-                      duration: Duration(seconds: 3),
-                      backgroundColor: Colors.green,
-                    ).show(context),
-                  }
-                else
-                  log('error on creating folio and saving payment '),
-                Flushbar(
-                  flushbarPosition: FlushbarPosition.TOP,
-                  title: 'Error',
-                  message:
-                      'Error al agregar el pago, intente de nuevo o contacte a soporte',
-                  duration: Duration(seconds: 3),
-                  backgroundColor: Colors.red,
-                )
-              })
-          .catchError((error) => {
-                log('error agregando pago $error'),
-                Flushbar(
-                  flushbarPosition: FlushbarPosition.TOP,
-                  title: 'Error',
-                  message:
-                      'Error al agregar el pago, intente de nuevo o contacte a soporte',
-                  duration: Duration(seconds: 3),
-                  backgroundColor: Colors.red,
-                ).show(context),
-              });
-    }
+  void deletePayment(Payment payment) {
+    log('delete payment');
+    EventService()
+        .deletePayment(payment.id, token)
+        .then((value) => {
+              if (value)
+                {
+                  setState(() {
+                    paymentsHistory.remove(payment);
+                  }),
+                  Flushbar(
+                    flushbarPosition: FlushbarPosition.TOP,
+                    title: 'Éxito',
+                    message: 'Pago eliminado correctamente',
+                    duration: Duration(seconds: 3),
+                    backgroundColor: Colors.green,
+                  ).show(context)
+                }
+              else
+                {
+                  Flushbar(
+                    flushbarPosition: FlushbarPosition.TOP,
+                    title: 'Error',
+                    message:
+                        'Error al eliminar el pago, intente de nuevo o contacte a soporte',
+                    duration: Duration(seconds: 3),
+                    backgroundColor: Colors.red,
+                  ).show(context)
+                }
+            })
+        .catchError((error) => {
+              Flushbar(
+                flushbarPosition: FlushbarPosition.TOP,
+                title: 'Error',
+                message:
+                    'Error al eliminar el pago, intente de nuevo o contacte a soporte',
+                duration: Duration(seconds: 3),
+                backgroundColor: Colors.red,
+              ).show(context)
+            });
   }
 
   @override
@@ -521,32 +636,32 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
             leading: IconButton(
               icon: Icon(Icons.arrow_back, color: Colors.black),
               onPressed: () => {
-                if (isGraduation)
-                  {
-                    setState(() {
-                      appState.clearSelectedStudent();
-                    }),
-                    Navigator.of(context)
-                        .pushReplacement(
-                          MaterialPageRoute(
-                            builder: (context) => GraduationListPage(),
+                showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: Text('¿Estás seguro de salir?'),
+                        content:
+                            Text('Si sales se perderán los cambios realizados'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            child: Text('Cancelar'),
                           ),
-                        )
-                        .then((_) {})
-                  }
-                else
-                  {
-                    setState(() {
-                      appState.clearSelectedEvent();
-                    }),
-                    Navigator.of(context)
-                        .pushReplacement(
-                          MaterialPageRoute(
-                            builder: (context) => EventsHomePage(),
+                          TextButton(
+                            onPressed: () => {
+                              appState.clearSelectedStudent(),
+                              Navigator.of(context).pushReplacement(
+                                MaterialPageRoute(
+                                  builder: (context) => GraduationListPage(),
+                                ),
+                              )
+                            },
+                            child: Text('Salir'),
                           ),
-                        )
-                        .then((_) {})
-                  }
+                        ],
+                      );
+                    }),
               },
             ),
             title: Text(
@@ -754,6 +869,25 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                                             : null;
                                       },
                                     )),
+                                SizedBox(width: 20),
+                                Visibility(
+                                    visible: selectedEvent != null &&
+                                        selectedEvent.pricing!.braceletCost > 0,
+                                    child: Text('Pulsera')),
+                                SizedBox(width: 10),
+                                Visibility(
+                                    visible: selectedEvent != null &&
+                                        selectedEvent.pricing!.braceletCost > 0,
+                                    child: Checkbox(
+                                      value: addBracelet,
+                                      onChanged: (value) {
+                                        isEditMode
+                                            ? setState(() {
+                                                addBracelet = value!;
+                                              })
+                                            : null;
+                                      },
+                                    )),
                               ],
                             ),
                             SizedBox(height: 30),
@@ -778,7 +912,20 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                                                 content: Text(
                                                     'La longitud del telefono debe ser de 10 digitos')));
                                       } else {
-                                        saveStudentData();
+                                        try {
+                                          saveStudentData();
+                                        } catch (e) {
+                                          log('error on save student data $e');
+                                          Flushbar(
+                                            flushbarPosition:
+                                                FlushbarPosition.TOP,
+                                            title: 'Error',
+                                            message:
+                                                'Error al guardar el alumno, error: ${e.toString()}',
+                                            duration: Duration(seconds: 3),
+                                            backgroundColor: Colors.red,
+                                          ).show(context);
+                                        }
                                       }
                                     },
                                     child: Text('Guardar alumno'),
@@ -822,9 +969,10 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                                       fontSize: 20.0, color: Colors.blue)),
                               SizedBox(width: 20),
                               Visibility(
-                                visible: selectedStudent != null && (
-                                    selectedStudent.folio.isNotEmpty &&
-                                    packageTypes.isNotEmpty || selectedStudent!.paid),
+                                visible: selectedStudent != null &&
+                                    (selectedStudent.folio.isNotEmpty &&
+                                            packageTypes.isNotEmpty ||
+                                        selectedStudent!.paid),
                                 child: Expanded(
                                     child: Text('PAGADO',
                                         style: TextStyle(
@@ -875,7 +1023,7 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                                 // Expanded(child:  Text('')),
                                 Expanded(
                                   child: Text(
-                                      'Total abonado adicionales: \$${(selectedStudent != null && selectedStudent!.payments.isNotEmpty && selectedStudent!.payments.where((e) => e.paymentDetail == 'adicional').isNotEmpty ? selectedStudent.payments.where((e) => e.paymentDetail == 'adicional').map((e) => e.amount)?.reduce((a, b) => a + b) : 0)}',
+                                      'Total abonado adicionales: \$${(selectedStudent != null && selectedStudent!.payments.isNotEmpty && selectedStudent!.payments.where((e) => e.paymentDetail == ADDITIONAL).isNotEmpty ? selectedStudent.payments.where((e) => e.paymentDetail == ADDITIONAL).map((e) => e.amount)?.reduce((a, b) => a + b) : 0)}',
                                       style: TextStyle(
                                           fontSize: 14.0,
                                           color: Colors.black,
@@ -884,7 +1032,7 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                                 SizedBox(width: 25),
                                 Expanded(
                                   child: Text(
-                                      'Restante: \$${(selectedStudent != null && selectedStudent.payments.isNotEmpty && selectedStudent!.payments.where((e) => e.paymentDetail == 'adicional').isNotEmpty ? selectedStudent!.additionalQuantity - selectedStudent.payments.where((e) => e.paymentDetail == 'adicional').map((e) => e.amount)?.reduce((a, b) => a + b) : 0)}',
+                                      'Restante: \$${(selectedStudent != null && selectedStudent.payments.isNotEmpty && selectedStudent!.payments.where((e) => e.paymentDetail == ADDITIONAL).isNotEmpty ? selectedStudent!.additionalQuantity - selectedStudent.payments.where((e) => e.paymentDetail == ADDITIONAL).map((e) => e.amount)?.reduce((a, b) => a + b) : 0)}',
                                       style: TextStyle(
                                           fontSize: 14.0,
                                           color: Colors.black,
@@ -948,15 +1096,14 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                                               SizedBox(width: 20),
                                               Expanded(
                                                 child: TextFormField(
-                                                  controller:
-                                                      TextEditingController(
-                                                          text: DateFormat(
-                                                                  'dd/MM/yyyy')
-                                                              .format(payment
-                                                                  .paymentDate)),
+                                                  controller: TextEditingController(
+                                                      text: DateFormat(
+                                                              'dd/MM/yyyy HH:mm')
+                                                          .format(payment
+                                                              .paymentDate)),
                                                   decoration: InputDecoration(
                                                       labelText:
-                                                          'Fecha de pago',
+                                                          'Fechay hora de pago',
                                                       border:
                                                           OutlineInputBorder()),
                                                   readOnly: true,
@@ -965,9 +1112,14 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                                               SizedBox(width: 20),
                                               Expanded(
                                                 child: TextFormField(
-                                                  controller:
-                                                      TextEditingController(
-                                                          text: payment
+                                                  controller: TextEditingController(
+                                                      text: payment.quantity > 0
+                                                          ? payment
+                                                                  .paymentDetail +
+                                                              " cant: " +
+                                                              payment.quantity
+                                                                  .toString()
+                                                          : payment
                                                               .paymentDetail),
                                                   decoration: InputDecoration(
                                                       labelText:
@@ -978,6 +1130,43 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                                                 ),
                                               ),
                                               SizedBox(width: 20),
+                                              // Expanded(
+                                              //   child: IconButton(
+                                              //     icon: Icon(Icons.delete),
+                                              //     onPressed: () => {
+                                              //       showDialog(
+                                              //           context: context,
+                                              //           builder: (BuildContext
+                                              //               context) {
+                                              //             return AlertDialog(
+                                              //               title: Text(
+                                              //                   '¿Estás seguro de eliminar el pago?'),
+                                              //               content: Text(
+                                              //                   'El pago se eliminará permanentemente'),
+                                              //               actions: [
+                                              //                 TextButton(
+                                              //                   onPressed: () =>
+                                              //                       Navigator.of(
+                                              //                               context)
+                                              //                           .pop(),
+                                              //                   child: Text(
+                                              //                       'Cancelar'),
+                                              //                 ),
+                                              //                 TextButton(
+                                              //                   onPressed: () =>
+                                              //                       {
+                                              //                     deletePayment(
+                                              //                         payment)
+                                              //                   },
+                                              //                   child: Text(
+                                              //                       'Eliminar'),
+                                              //                 ),
+                                              //               ],
+                                              //             );
+                                              //           }),
+                                              //     },
+                                              //   ),
+                                              // ),
                                             ],
                                           ),
                                         ]))
@@ -992,7 +1181,7 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                         child: Column(children: [
                           Row(
                             children: [
-                              Text('Pagos',
+                              Text('Pago: ',
                                   style: TextStyle(
                                       fontSize: 20.0, color: Colors.blue)),
                             ],
@@ -1003,6 +1192,7 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                               children: [
                                 Expanded(
                                     child: TextFormField(
+                                  readOnly: false,
                                   controller: _paymentAmount,
                                   keyboardType: TextInputType.number,
                                   inputFormatters: [
@@ -1012,7 +1202,7 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                                       labelText: 'Monto del pago',
                                       border: OutlineInputBorder()),
                                   validator: (value) =>
-                                      _paymentDetail.text != 'adicional' &&
+                                      _paymentDetail.text != ADDITIONAL &&
                                               value != null &&
                                               value.isEmpty
                                           ? 'El monto del pago es requerido'
@@ -1130,7 +1320,7 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                                 ),
                                 SizedBox(width: 20),
                                 Visibility(
-                                    visible: showAdditionalNumberInput,
+                                    visible: showAQuantityNumberInput,
                                     child: Expanded(
                                       child: TextFormField(
                                         inputFormatters: [
@@ -1138,32 +1328,21 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                                         ],
                                         validator: (value) => selectedStudent !=
                                                     null &&
-                                                showAdditionalNumberInput &&
+                                                showAQuantityNumberInput &&
                                                 (value != null && value.isEmpty)
                                             ? 'El número de personas es requerido'
                                             : null,
-                                        controller: _additionalNumber,
+                                        controller: _quantityNumber,
                                         decoration: InputDecoration(
-                                          labelText: 'Personas adicionales',
+                                          labelText:
+                                              _paymentDetail.text == ADDITIONAL
+                                                  ? 'Personas adicionales'
+                                                  : 'cantidad',
                                           border: OutlineInputBorder(),
                                         ),
                                         onChanged: (value) => {
                                           if (value.isNotEmpty)
-                                            {
-                                              log("value: $value"),
-                                              log("additional cost: ${selectedEvent.pricing!.additionalCost}"),
-                                              _paymentAmount.text = (double
-                                                          .tryParse(value)! *
-                                                      (selectedEvent.pricing!
-                                                                  .additionalCost ==
-                                                              0
-                                                          ? 0
-                                                          : selectedEvent
-                                                              .pricing!
-                                                              .additionalCost!))
-                                                  .toString(),
-                                              log(_paymentAmount.text)
-                                            }
+                                            {onQuantityChange(value)}
                                         },
                                       ),
                                     )),
@@ -1246,7 +1425,8 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                                       }
                                     } else if (_formKey.currentState!
                                             .validate() &&
-                                        _paymentDetail.text == 'adicional' &&
+                                        (_paymentDetail.text != 'platillo' &&
+                                            _paymentDetail.text != 'paquete') &&
                                         selectedStudent!.folio.isNotEmpty) {
                                       showDialog(
                                           context: context,
@@ -1254,7 +1434,7 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                                             return AlertDialog(
                                               title: Text('Confirmar pago'),
                                               content: Text(
-                                                  '¿Está seguro de agregar el pago adicional de ${double.parse(_paymentAmount.text.replaceAll(",", ""))} ?'),
+                                                  '¿Está seguro de agregar el pago de ${_paymentDetail.text} ${double.parse(_paymentAmount.text.replaceAll(",", ""))} ?'),
                                               actions: [
                                                 TextButton(
                                                     onPressed: () {
@@ -1287,6 +1467,7 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                                 child: Text('Agregar Pago'),
                               ),
                               SizedBox(width: 20),
+                              SizedBox(height: 200),
                             ],
                           )
                         ]),

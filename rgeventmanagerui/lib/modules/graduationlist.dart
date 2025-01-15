@@ -165,7 +165,56 @@ class _GraduationListPageState extends State<GraduationListPage> {
                     children: [
                       Row(
                         children: [
-                          Text('Descargar PDF',
+                          Text('Descargar PDF para alumnos',
+                              style: Theme.of(context).textTheme.bodyLarge),
+                          IconButton(
+                            icon: Icon(Icons.picture_as_pdf),
+                            onPressed: () {
+                              log('exporting to pdf');
+                              // exportToPdf();
+                              var path = Directory.current.path;
+                              try {
+                                final file = DirectoryPicker()
+                                  ..title = 'Select a directory';
+
+                                final result = file.getDirectory();
+                                if (result != null) {
+                                  print(result.path);
+                                  path = result.path;
+                                }
+                              } catch (e) {
+                                log("error selecting directory:  ${e.toString()}");
+                              }
+                              EventService()
+                                  .DownloadGraduationListPDF(appState.appToken,
+                                      appState.selectedEvent, path)
+                                  .then(
+                                      (value) => {
+                                            Flushbar(
+                                              flushbarPosition:
+                                                  FlushbarPosition.TOP,
+                                              title: 'Éxito',
+                                              message:
+                                                  'Lista de graduación descargada correctamente en  $value',
+                                              duration: Duration(seconds: 6),
+                                              backgroundColor: Colors.blue,
+                                            ).show(context)
+                                          },
+                                      onError: (e) => {
+                                            Flushbar(
+                                              flushbarPosition:
+                                                  FlushbarPosition.TOP,
+                                              title: 'Error',
+                                              message:
+                                                  'Error al descargar lista de graduación',
+                                              duration: Duration(seconds: 3),
+                                              backgroundColor: Colors.red,
+                                            ).show(context)
+                                          });
+                            },
+                          ),
+                          SizedBox(width: 20),
+                          Text('Descargar PDF interno',
                               style: Theme.of(context).textTheme.bodyLarge),
                           IconButton(
                             icon: Icon(Icons.picture_as_pdf),
@@ -381,9 +430,11 @@ class _GraduationListPageState extends State<GraduationListPage> {
                               .setSelectingMode(PlutoGridSelectingMode.row);
                           event.stateManager
                               .setSelectingMode(PlutoGridSelectingMode.row);
+                              event.stateManager.setSortOnlyEvent(true);
                           event.stateManager.setEditing(false);
                         },
                         configuration: PlutoGridConfiguration(
+                          
                           columnFilter: PlutoGridColumnFilterConfig(
                               filters: const [
                                 ContainsClass(),

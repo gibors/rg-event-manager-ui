@@ -110,7 +110,8 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
           eventId: selectedEvent!.id,
           addedBy: '',
           paymentDetail: selectedEvent!.name,
-          iva: 0);
+          iva: 0,
+          quantity: 0);
 
       EventService().createPayment(payment, token).then((value) {
         log('payment added $value');

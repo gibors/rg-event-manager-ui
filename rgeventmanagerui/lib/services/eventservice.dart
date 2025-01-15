@@ -150,6 +150,17 @@ class EventService {
     }
   }
 
+  Future<bool> deletePayment(int paymentId, String token) async {
+    try {
+      var response = await _dio.delete(
+          'https://localhost:8443/api/v1/payments/$paymentId',
+          options: Options(headers: {'Authorization': 'Bearer $token'}));
+      return response.statusCode == 200;
+    } catch (e) {
+      throw Exception('Failed to delete payment: $e');
+    }
+  }
+
   Future<Student> saveStudentWithFolioData(
       Student student, String token) async {
     try {

@@ -16,6 +16,7 @@ class Student {
   final int additionalNumber;
   final bool hasPreParty;
   final bool hasSouvenir;
+  final bool hasBracelet;
   bool paid = false;
 
   void setFolio(String folio) {
@@ -40,6 +41,7 @@ class Student {
     required this.additionalNumber,
     required this.hasPreParty,
     required this.hasSouvenir,
+    required this.hasBracelet,
   });
 
   factory Student.fromJson(Map<String, dynamic> json) {
@@ -63,6 +65,7 @@ class Student {
       additionalNumber: json['additionalNumber'] ?? 0,
       hasPreParty: json['hasPreParty'] ?? false,
       hasSouvenir: json['hasSouvenir'] ?? false,
+      hasBracelet: json['hasBracelet'] ?? false,
     );
   }
 
@@ -84,6 +87,7 @@ class Student {
         'additionalNumber': additionalNumber,
         'hasPreParty': hasPreParty,
         'hasSouvenir': hasSouvenir,
+        'hasBracelet': hasBracelet,
       };
 }
 
@@ -97,6 +101,7 @@ class Payment {
   final String addedBy;
   final String paymentDetail;
   final double iva;
+  final quantity;
 
   Payment({
     required this.id,
@@ -108,6 +113,7 @@ class Payment {
     required this.addedBy,
     required this.paymentDetail,
     required this.iva,
+    required this.quantity,
   });
 
   void setStudent(int id) {
@@ -125,6 +131,7 @@ class Payment {
       addedBy: json['addedBy'] ?? '',
       paymentDetail: json['paymentDetail'] ?? '',
       iva: json['iva'],
+      quantity: json['quantity'],
     );
   }
 
@@ -138,5 +145,6 @@ class Payment {
         'addedBy': addedBy,
         'paymentDetail': paymentDetail,
         'iva': iva,
+        'quantity': quantity,
       };
 }
