@@ -17,7 +17,7 @@ class _AdditionalServices extends State<AdditionalServices> {
   var appState;
   final _formKey = GlobalKey<FormState>();
   var token = "";
-  var selectedEvent = null;
+  var selectedEvent;
   bool isEditMode = false;
   List<ServiceType> services = [];
   Map<int, List<Supplier>> suppliersMap = {};
@@ -38,7 +38,7 @@ class _AdditionalServices extends State<AdditionalServices> {
   static String _displayStringServicesForOption(ServiceType option) =>
       option.name;
   static String _displayStringSuppliersForOption(Supplier option) =>
-      option.name + " " + option.lastName;
+      "${option.name} ${option.lastName}";
 
   @override
   void initState() {
@@ -123,17 +123,15 @@ class _AdditionalServices extends State<AdditionalServices> {
 
     
     EventService().createOrUpdateEvent(selectedEvent, token).then((value) {
-      if (value != null) {
-        Flushbar(
-          showProgressIndicator: true,
-          flushbarPosition: FlushbarPosition.TOP,
-          backgroundColor: Colors.green,
-          title: "Servicios Adicionales",
-          message: "Servicios adicionales guardados correctamente",
-          duration: Duration(seconds: 3),
-        )..show(context);
-      }
-    });
+      Flushbar(
+        showProgressIndicator: true,
+        flushbarPosition: FlushbarPosition.TOP,
+        backgroundColor: Colors.green,
+        title: "Servicios Adicionales",
+        message: "Servicios adicionales guardados correctamente",
+        duration: Duration(seconds: 3),
+      )..show(context);
+        });
 
    
   }
@@ -163,7 +161,7 @@ class _AdditionalServices extends State<AdditionalServices> {
         selectedSupplier = additionalService.supplier;
       }
       
-      supplierEditorController.text = selectedSupplier != null? selectedSupplier!.name + " " + additionalService.supplier!.lastName : "";
+      supplierEditorController.text = selectedSupplier != null? "${selectedSupplier!.name} ${additionalService.supplier!.lastName}" : "";
       customerCostController.text = additionalService.cost.toString();
       supplierCostController.text = additionalService.supplierCost.toString();
 
@@ -287,7 +285,7 @@ class _AdditionalServices extends State<AdditionalServices> {
                 onSelected: (Supplier option) {
                   setState(() {
                     selectedAdditionalServiceSuppliers[index] = option;
-                    additionalServiceSupplierControllers[index].text = option.name.toString() + " " + option.lastName.toString();
+                    additionalServiceSupplierControllers[index].text = "${option.name} ${option.lastName}";
                   });
                 },
                 fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) => 
@@ -341,7 +339,7 @@ class _AdditionalServices extends State<AdditionalServices> {
               IconButton(
                 icon: Icon(Icons.delete),
                 style: ButtonStyle(
-                  foregroundColor: MaterialStateProperty.all(Colors.red),
+                  foregroundColor: WidgetStateProperty.all(Colors.red),
                 ),
                 onPressed: () {
                   showDialog(
@@ -422,11 +420,11 @@ class _AdditionalServices extends State<AdditionalServices> {
                 Expanded(
                   child: ElevatedButton(
                     style: ButtonStyle(
-                      foregroundColor: MaterialStateProperty.all(Colors.white),
-                      textStyle: MaterialStateProperty.all(
+                      foregroundColor: WidgetStateProperty.all(Colors.white),
+                      textStyle: WidgetStateProperty.all(
                         TextStyle(fontSize: 20),
                       ),
-                      backgroundColor: MaterialStateProperty.all(Colors.blue),
+                      backgroundColor: WidgetStateProperty.all(Colors.blue),
                     ),
                     onPressed: () {
                       addAdditionalServiceWidget();
@@ -438,12 +436,12 @@ class _AdditionalServices extends State<AdditionalServices> {
                 Expanded(
                   child: ElevatedButton(
                     style: ButtonStyle(
-                      foregroundColor: MaterialStateProperty.all(Colors.white),
-                      textStyle: MaterialStateProperty.all(
+                      foregroundColor: WidgetStateProperty.all(Colors.white),
+                      textStyle: WidgetStateProperty.all(
                         TextStyle(fontSize: 20),
 
                       ),
-                      backgroundColor: MaterialStateProperty.all(Colors.blue),
+                      backgroundColor: WidgetStateProperty.all(Colors.blue),
                     ),
                     onPressed: () {
                       // Save Additional Services

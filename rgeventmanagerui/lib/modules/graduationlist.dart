@@ -187,7 +187,7 @@ class _GraduationListPageState extends State<GraduationListPage> {
                               }
                               EventService()
                                   .DownloadGraduationListPDF(appState.appToken,
-                                      appState.selectedEvent, path)
+                                      appState.selectedEvent, path, false)
                                   .then(
                                       (value) => {
                                             Flushbar(
@@ -236,7 +236,7 @@ class _GraduationListPageState extends State<GraduationListPage> {
                               }
                               EventService()
                                   .DownloadGraduationListPDF(appState.appToken,
-                                      appState.selectedEvent, path)
+                                      appState.selectedEvent, path, true)
                                   .then(
                                       (value) => {
                                             Flushbar(

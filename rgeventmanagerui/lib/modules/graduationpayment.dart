@@ -354,7 +354,7 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
           flushbarPosition: FlushbarPosition.TOP,
           title: 'Error',
           message:
-              'Hay un saldo pendiente de adicionales de \$${reminding} por pagar antes de agregar otro adicional',
+              'Hay un saldo pendiente de adicionales de \$$reminding por pagar antes de agregar otro adicional',
           duration: Duration(seconds: 6),
           backgroundColor: Colors.red,
         ).show(context);
@@ -369,16 +369,12 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
           if (reminding > 0) {
             quantityNumber = 0;
           }
-          break;
         case 'pre-fiesta':
           paymentAmount = selectedEvent!.pricing.prePartyCost * quantityNumber!;
-          break;
         case 'souvenir':
           paymentAmount = selectedEvent!.pricing.souvenirCost * quantityNumber!;
-          break;
         case 'pulsera':
           paymentAmount = selectedEvent!.pricing.braceletCost * quantityNumber!;
-          break;
         default:
           break;
       }
@@ -564,17 +560,14 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                     ? 0
                     : selectedEvent.pricing!.additionalCost!))
             .toString();
-        break;
       case 'pre-fiesta':
         _paymentAmount.text =
             (double.tryParse(value)! * selectedEvent.pricing!.prePartyCost)
                 .toString();
-        break;
       case 'souvenir':
         _paymentAmount.text =
             (double.tryParse(value)! * selectedEvent.pricing!.souvenirCost)
                 .toString();
-        break;
       case 'pulsera':
         _paymentAmount.text =
             (double.tryParse(value)! * selectedEvent.pricing!.braceletCost)
@@ -1103,7 +1096,7 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                                                               .paymentDate)),
                                                   decoration: InputDecoration(
                                                       labelText:
-                                                          'Fechay hora de pago',
+                                                          'Fecha y hora de pago',
                                                       border:
                                                           OutlineInputBorder()),
                                                   readOnly: true,
@@ -1114,11 +1107,8 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                                                 child: TextFormField(
                                                   controller: TextEditingController(
                                                       text: payment.quantity > 0
-                                                          ? payment
-                                                                  .paymentDetail +
-                                                              " cant: " +
-                                                              payment.quantity
-                                                                  .toString()
+                                                          ? "${payment
+                                                                  .paymentDetail} cant: ${payment.quantity}"
                                                           : payment
                                                               .paymentDetail),
                                                   decoration: InputDecoration(

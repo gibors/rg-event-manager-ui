@@ -203,7 +203,7 @@ class EventService {
 
     Future<List<Supplier>> getProvidersByService(String token, serviceId) async {
     try {
-      final response = await _dio.get('https://localhost:8443/api/v1/suppliers/service-type/${serviceId}',
+      final response = await _dio.get('https://localhost:8443/api/v1/suppliers/service-type/$serviceId',
           options: Options(headers: {'Authorization': 'Bearer $token'}));
       final data = response.data as List<dynamic>;
       final providers =
@@ -302,7 +302,7 @@ class EventService {
     }
   }
 
-  Future<String> DownloadGraduationListPDF(token, event, path) async {
+  Future<String> DownloadGraduationListPDF(token, event, path, isInternal) async {
     try {
       var current = Directory.current.path;
       log('current path: $current');
@@ -310,8 +310,9 @@ class EventService {
       var eventname = event.name.replaceAll(' ', '-');
       var timestamp = DateTime.now().millisecondsSinceEpoch;
       var pathToSave = '$path/lista-$eventname-$timestamp.pdf';
+      var export = isInternal ? 'export-internal' : 'export';
       final response = (await _dio.download(
-          'https://localhost:8443/api/v1/students/export?eventId=$eventeventId&format=pdf',
+          'https://localhost:8443/api/v1/students/${export}?eventId=$eventeventId&format=pdf',
           pathToSave,
           options: Options(
             headers: {
