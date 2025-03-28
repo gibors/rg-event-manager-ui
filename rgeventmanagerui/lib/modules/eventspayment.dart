@@ -208,19 +208,6 @@ class _EventPaymentPageState extends State<EventPaymentPage> {
                                     style: TextStyle(
                                         fontSize: 14.0, color: Colors.black)),
                               ),
-                              // SizedBox(width: 20),
-                              // Visibility(
-                              //     visible: isGraduation &&
-                              //         selectedStudent != null &&
-                              //         selectedStudent.folio.isNotEmpty &&
-                              //         packageTypes.isEmpty,
-                              //     child: Text(
-                              //         selectedStudent != null
-                              //             ? 'Folio: ${selectedStudent!.folio}'
-                              //             : '',
-                              //         textAlign: TextAlign.right,
-                              //         style: TextStyle(
-                              //             fontSize: 20.0, color: Colors.blue))),
                             ],
                           ),
                           SizedBox(height: 20),

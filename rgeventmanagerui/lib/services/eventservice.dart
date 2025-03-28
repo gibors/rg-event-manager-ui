@@ -108,7 +108,7 @@ class EventService {
 
   Future<Student> saveStudent(Student student, String token) async {
     try {
-      var data = student.toJson();
+      var data = student.toJson();  
       log('data: $data');
       final response = await _dio.post('https://localhost:8443/api/v1/students',
           data: data,
@@ -158,6 +158,17 @@ class EventService {
       return response.statusCode == 200;
     } catch (e) {
       throw Exception('Failed to delete payment: $e');
+    }
+  }
+
+  Future<bool> deleteStudent(int studentId, String token) async {
+    try {
+      var response = await _dio.delete(
+          'https://localhost:8443/api/v1/students/$studentId',
+          options: Options(headers: {'Authorization': 'Bearer $token'}));
+      return response.statusCode == 200;
+    } catch (e) {
+      throw Exception('Failed to delete student: $e');
     }
   }
 
@@ -312,7 +323,7 @@ class EventService {
       var pathToSave = '$path/lista-$eventname-$timestamp.pdf';
       var export = isInternal ? 'export-internal' : 'export';
       final response = (await _dio.download(
-          'https://localhost:8443/api/v1/students/${export}?eventId=$eventeventId&format=pdf',
+          'https://localhost:8443/api/v1/students/$export?eventId=$eventeventId&format=pdf',
           pathToSave,
           options: Options(
             headers: {
@@ -321,6 +332,31 @@ class EventService {
             },
           )));
       return pathToSave;
+    } catch (e) {
+      log('Failed to fetch next folio: $e.toString()');
+      throw Exception('Failed to fetch next folio: $e');
+    }
+  }
+
+  Future<String> DownloadEventList(token, List<int> eventIds, path) async {
+    try {
+      var current = Directory.current.path;
+      log('current path: $current');
+      var timestamp = DateTime.now().millisecondsSinceEpoch;
+      var pathToSave = '$path/lista-eventos-$timestamp.pdf';
+      var downloadAll = eventIds.isEmpty;
+      final response = (await _dio.download(
+          'https://localhost:8443/api/v1/events/export-pdf',
+          pathToSave,
+          data: {'eventIds': eventIds, 'exportAllEvents': downloadAll},
+          options: Options(
+            headers: {
+              'Authorization': 'Bearer $token',
+              'responseType': ResponseType.bytes,              
+            },
+          )));
+      return pathToSave;
+      
     } catch (e) {
       log('Failed to fetch next folio: $e.toString()');
       throw Exception('Failed to fetch next folio: $e');

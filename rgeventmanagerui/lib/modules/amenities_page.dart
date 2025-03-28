@@ -1,4 +1,4 @@
-
+ 
 import 'package:another_flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -8,12 +8,12 @@ import 'package:rg_event_management_ui/models/AdditionalService.dart';
 import 'package:rg_event_management_ui/models/Supplier.dart';
 import 'package:rg_event_management_ui/services/eventservice.dart';
 
-class AdditionalServices extends StatefulWidget {
+class AmenitiesPage extends StatefulWidget {
   @override
-  _AdditionalServices createState() => _AdditionalServices();
+  _amenitiesPage createState() => _amenitiesPage();
 }
 
-class _AdditionalServices extends State<AdditionalServices> {
+class _amenitiesPage extends State<AmenitiesPage> {
   var appState;
   final _formKey = GlobalKey<FormState>();
   var token = "";
@@ -384,7 +384,7 @@ class _AdditionalServices extends State<AdditionalServices> {
     var appState = context.read<MyAppState>();
     return Scaffold(
       appBar: AppBar(
-        title: Text("Servicios Adicionales"),
+        title: Text("Administrar cortesías"),
       ),
       body: SingleChildScrollView(
         child: Column(

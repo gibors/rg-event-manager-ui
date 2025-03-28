@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:rg_event_management_ui/formatters/ThousandsSeparatorInputFormatter.dart';
 import 'package:rg_event_management_ui/main.dart';
 import 'package:rg_event_management_ui/models/Student.dart';
+import 'package:rg_event_management_ui/modules/amenities_page.dart';
 import 'package:rg_event_management_ui/modules/graduationlist.dart';
 import 'package:rg_event_management_ui/services/eventservice.dart';
 import 'package:intl/intl.dart';
@@ -62,6 +63,7 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
   bool addSouvenir = false;
   bool addPreParty = false;
   bool addBracelet = false;
+  bool isComity = false;
 
   @override
   void initState() {
@@ -73,16 +75,20 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
     if (selectedEvent != null && selectedEvent!.eventType.id == 3) {
       isGraduation = true;
       if (selectedStudent != null) {
-        selectedStudent.paid =
-            selectedStudent != null && selectedStudent.payments!.isNotEmpty
-                ? selectedStudent.payments
-                        .where((e) =>
-                            e.paymentDetail == 'platillo' ||
-                            e.paymentDetail == 'paquete')
-                        .map((e) => e.amount)
-                        .reduce((a, b) => a + b) >=
-                    selectedStudent.totalCost
-                : false;
+        selectedStudent.paid = selectedStudent != null &&
+                selectedStudent.payments!
+                    .where((e) =>
+                        e.paymentDetail == 'platillo' ||
+                        e.paymentDetail == 'paquete')
+                    .isNotEmpty
+            ? selectedStudent.payments
+                    .where((e) =>
+                        e.paymentDetail == 'platillo' ||
+                        e.paymentDetail == 'paquete')
+                    .map((e) => e.amount)
+                    .reduce((a, b) => a + b) >=
+                selectedStudent.totalCost
+            : false;
       }
 
       if (selectedEvent.pricing!.paq10TICost > 0) {
@@ -175,6 +181,7 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
     addSouvenir = selectedStudent!.hasSouvenir;
     addPreParty = selectedStudent!.hasPreParty;
     addBracelet = selectedStudent!.hasBracelet;
+    isComity = selectedStudent!.committee;
   }
 
   double calculateCost(packageType) {
@@ -285,6 +292,9 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
       hasPreParty: addPreParty,
       hasSouvenir: addSouvenir,
       hasBracelet: addBracelet,
+      paid: selectedStudent != null ? selectedStudent!.paid : false,
+      cancelled: selectedStudent != null ? selectedStudent!.cancelled : false,
+      committee: isComity,
     );
     return student;
   }
@@ -317,6 +327,18 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
           : (selectedStudent!.totalCost <= paymentAmount);
 
       // This is just to make sure that the student has already paid the total cost
+      if((_paymentDetail.text == 'platillo' || _paymentDetail.text =='paquete') && selectedStudent.totalCost == 0)
+      {
+        Flushbar(
+          flushbarPosition: FlushbarPosition.TOP,
+          title: 'Error',
+          message:
+          'El alumno no tiene paquete/platillos asignado, por favor asigna paquete/platillos antes de agregar un pago',
+          duration: Duration(seconds: 6),
+          backgroundColor: Colors.red,
+        ).show(context);
+        return;
+      }
       if (isAlreadyPaidDishOrPackage &&
           (_paymentDetail.text == 'platillo' ||
               _paymentDetail.text == 'paquete')) {
@@ -332,7 +354,7 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
       }
 
       var reminding = 0.0;
-      if (isAlreadyPaidDishOrPackage) {
+      if (isAlreadyPaidDishOrPackage ) {
         reminding = selectedStudent!.additionalQuantity -
             (selectedStudent!.payments.isNotEmpty &&
                     selectedStudent!.payments
@@ -412,6 +434,12 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
           paymentDetail: _paymentDetail.text,
           iva: iva,
           quantity: quantityNumber);
+
+      if(isPayingWithCurrentPayment || isAlreadyPaidDishOrPackage){
+        setState(() {
+          selectedStudent!.paid = true;
+        });
+      }
 
       if (!isPayingWithCurrentPayment || _paymentDetail.text == 'platillo') {
         EventService().createPayment(payment, token).then((value) {
@@ -582,10 +610,28 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
 
   void deletePayment(Payment payment) {
     log('delete payment');
+
+    selectedStudent.payments.remove(payment);
+
+    if(payment.paymentDetail == ADDITIONAL) {
+
+      selectedStudent!.additionalNumber -= payment.quantity;
+      selectedStudent!.additionalQuantity -= payment.amount;
+
+      if(selectedStudent.additionalQuantity < 0) {
+        log('(Alert) -- additional quantity is less than 0 for student ${selectedStudent.id}');
+        selectedStudent.additionalQuantity = 0;
+      }
+      if(selectedStudent.additionalNumber < 0) {
+        log('(Alert) -- additional additionalNumber is less than 0 for student ${selectedStudent.id}');
+        selectedStudent.additionalNumber = 0;
+      }
+    }
+
     EventService()
-        .deletePayment(payment.id, token)
+        .saveStudent(selectedStudent, token)
         .then((value) => {
-              if (value)
+              if (value.id != -1)
                 {
                   setState(() {
                     paymentsHistory.remove(payment);
@@ -593,7 +639,7 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                   Flushbar(
                     flushbarPosition: FlushbarPosition.TOP,
                     title: 'Éxito',
-                    message: 'Pago eliminado correctamente',
+                    message: 'Pago del estudiante eliminado correctamente',
                     duration: Duration(seconds: 3),
                     backgroundColor: Colors.green,
                   ).show(context)
@@ -881,6 +927,18 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                                             : null;
                                       },
                                     )),
+                                SizedBox(width: 10),
+                                Text('Es Alumno de cómite'),
+                                Checkbox(
+                                  value: isComity,
+                                  onChanged: (value) {
+                                    isEditMode
+                                        ? setState(() {
+                                            isComity = value!;
+                                          })
+                                        : null;
+                                  },
+                                )
                               ],
                             ),
                             SizedBox(height: 30),
@@ -946,6 +1004,54 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                                           ? 'Cancelar'
                                           : 'Editar alumno'),
                                     )),
+                                SizedBox(width: 20),
+                                ButtonTheme(
+                                  minWidth: 100.0,
+                                  height: 50.0,
+                                  child: ElevatedButton(
+                                    style: ButtonStyle(
+                                      backgroundColor:
+                                          WidgetStateProperty.all(Colors.blue),
+                                      foregroundColor:
+                                          WidgetStateProperty.all(Colors.white),
+                                    ),
+                                    onPressed: () {
+                                      showDialog(
+                                          context: context,
+                                          builder: (BuildContext context) {
+                                            return AlertDialog(
+                                              title: Text(
+                                                  '¿Estás seguro que desea agregar cortesias?'),
+                                              content: Text(
+                                                  'Si sales se perderán los cambios realizados'),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.of(context)
+                                                          .pop(),
+                                                  child: Text('Cancelar'),
+                                                ),
+                                                TextButton(
+                                                  onPressed: () => {
+                                                    appState
+                                                        .clearSelectedStudent(),
+                                                    Navigator.of(context)
+                                                        .pushReplacement(
+                                                      MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            AmenitiesPage(),
+                                                      ),
+                                                    )
+                                                  },
+                                                  child: Text('Aceptar'),
+                                                ),
+                                              ],
+                                            );
+                                          });
+                                    },
+                                    child: Text('Agregar cortesias'),
+                                  ),
+                                ),
                               ],
                             ),
                           ],
@@ -976,19 +1082,19 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                               Expanded(
                                 // flex: 1,
                                 child: Text(
-                                    'Total pagado: \$${isGraduation ? (selectedStudent != null && selectedStudent!.payments.isNotEmpty ? selectedStudent.payments.where((e) => e.paymentDetail == 'platillo' || e.paymentDetail == 'paquete').map((e) => e.amount).reduce((a, b) => a + b) : 0) : (paymentsHistory.isNotEmpty ? paymentsHistory.where((e) => e.paymentDetail == selectedEvent!.name).map((e) => e.amount).reduce((a, b) => a + b) : 0)}',
+                                    'Total pagado: \$${(selectedStudent != null && selectedStudent!.payments.where((e) => e.paymentDetail == 'platillo' || e.paymentDetail == 'paquete').isNotEmpty ? selectedStudent.payments.where((e) => e.paymentDetail == 'platillo' || e.paymentDetail == 'paquete').map((e) => e.amount).reduce((a, b) => a + b) : 0)}',
                                     style: TextStyle(
                                         fontSize: 14.0, color: Colors.black)),
                               ),
                               SizedBox(width: 25),
                               Expanded(
                                 child: Text(
-                                    'Restante: \$${isGraduation ? (selectedStudent != null && selectedStudent.payments.isNotEmpty ? selectedStudent!.totalCost - selectedStudent.payments.where((e) => e.paymentDetail == 'platillo' || e.paymentDetail == 'paquete').map((e) => e.amount).reduce((a, b) => a + b) : 0) : (selectedEvent!.totalCost - (paymentsHistory.isNotEmpty ? paymentsHistory.where((e) => e.paymentDetail == selectedEvent!.name).map((e) => e.amount).reduce((a, b) => a + b) : 0))}'),
+                                    'Restante: \$${(selectedStudent != null && selectedStudent.payments.where((e) => e.paymentDetail == 'platillo' || e.paymentDetail == 'paquete').isNotEmpty ? selectedStudent!.totalCost - selectedStudent.payments.where((e) => e.paymentDetail == 'platillo' || e.paymentDetail == 'paquete').map((e) => e.amount).reduce((a, b) => a + b) : 0)}'),
                               ),
                               SizedBox(width: 20),
                               Expanded(
                                 child: Text(
-                                    'Total: \$${isGraduation ? (selectedStudent != null ? selectedStudent!.totalCost : 0) : (selectedEvent!.totalCost)}',
+                                    'Total: \$${(selectedStudent != null ? selectedStudent!.totalCost : 0)}',
                                     style: TextStyle(
                                         fontSize: 14.0, color: Colors.black)),
                               ),
@@ -1107,8 +1213,7 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                                                 child: TextFormField(
                                                   controller: TextEditingController(
                                                       text: payment.quantity > 0
-                                                          ? "${payment
-                                                                  .paymentDetail} cant: ${payment.quantity}"
+                                                          ? "${payment.paymentDetail} cant: ${payment.quantity}"
                                                           : payment
                                                               .paymentDetail),
                                                   decoration: InputDecoration(
@@ -1120,43 +1225,46 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                                                 ),
                                               ),
                                               SizedBox(width: 20),
-                                              // Expanded(
-                                              //   child: IconButton(
-                                              //     icon: Icon(Icons.delete),
-                                              //     onPressed: () => {
-                                              //       showDialog(
-                                              //           context: context,
-                                              //           builder: (BuildContext
-                                              //               context) {
-                                              //             return AlertDialog(
-                                              //               title: Text(
-                                              //                   '¿Estás seguro de eliminar el pago?'),
-                                              //               content: Text(
-                                              //                   'El pago se eliminará permanentemente'),
-                                              //               actions: [
-                                              //                 TextButton(
-                                              //                   onPressed: () =>
-                                              //                       Navigator.of(
-                                              //                               context)
-                                              //                           .pop(),
-                                              //                   child: Text(
-                                              //                       'Cancelar'),
-                                              //                 ),
-                                              //                 TextButton(
-                                              //                   onPressed: () =>
-                                              //                       {
-                                              //                     deletePayment(
-                                              //                         payment)
-                                              //                   },
-                                              //                   child: Text(
-                                              //                       'Eliminar'),
-                                              //                 ),
-                                              //               ],
-                                              //             );
-                                              //           }),
-                                              //     },
-                                              //   ),
-                                              // ),
+                                              Visibility(
+                                                visible: selectedStudent != null && (!selectedStudent.paid || (payment.paymentDetail != 'platillo' && payment.paymentDetail != 'paquete')),
+                                                child: Expanded(
+                                                  child: IconButton(
+                                                    icon: Icon(Icons.delete),
+                                                    onPressed: () => {
+                                                      showDialog(
+                                                          context: context,
+                                                          builder: (BuildContext
+                                                              context) {
+                                                            return AlertDialog(
+                                                              title: Text(
+                                                                  '¿Estás seguro de eliminar el pago, el historial de pago se puede ver afectado?'),
+                                                              content: Text(
+                                                                  'El pago se eliminará permanentemente'),
+                                                              actions: [
+                                                                TextButton(
+                                                                  onPressed: () =>
+                                                                      Navigator.of(
+                                                                              context)
+                                                                          .pop(),
+                                                                  child: Text(
+                                                                      'Cancelar'),
+                                                                ),
+                                                                TextButton(
+                                                                  onPressed:
+                                                                      () => {
+                                                                    deletePayment(
+                                                                        payment)
+                                                                  },
+                                                                  child: Text(
+                                                                      'Eliminar'),
+                                                                ),
+                                                              ],
+                                                            );
+                                                          }),
+                                                    },
+                                                  ),
+                                                ),
+                                              ),
                                             ],
                                           ),
                                         ]))
@@ -1413,11 +1521,13 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                                               );
                                             });
                                       }
-                                    } else if (_formKey.currentState!
-                                            .validate() &&
-                                        (_paymentDetail.text != 'platillo' &&
-                                            _paymentDetail.text != 'paquete') &&
-                                        selectedStudent!.folio.isNotEmpty) {
+                                    } else if ((_paymentDetail.text ==
+                                                ADDITIONAL &&
+                                            selectedStudent!
+                                                .folio.isNotEmpty) ||
+                                        (_paymentDetail.text != ADDITIONAL &&
+                                            _paymentDetail.text != 'platillo' &&
+                                            _paymentDetail.text != 'paquete')) {
                                       showDialog(
                                           context: context,
                                           builder: (BuildContext context) {
@@ -1443,6 +1553,17 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                                             );
                                           });
                                     } else {
+                                      log('total cost ${selectedStudent!.totalCost}');
+                                      if( (_paymentDetail.text == 'platillo' || _paymentDetail.text =='paquete') && selectedStudent!.totalCost == 0) {
+                                        Flushbar(
+                                          flushbarPosition: FlushbarPosition.TOP,
+                                          title: 'Error',
+                                          message:
+                                          'El alumno no tiene paquete/platillo asignado, por favor asigna paquete/platillo antes de agregar un pago',
+                                          duration: Duration(seconds: 6),
+                                          backgroundColor: Colors.red,
+                                        ).show(context);
+                                      } else {
                                       Flushbar(
                                         flushbarPosition: FlushbarPosition.TOP,
                                         title: 'Error',
@@ -1451,6 +1572,7 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                                         duration: Duration(seconds: 6),
                                         backgroundColor: Colors.red,
                                       ).show(context);
+                                      }
                                     }
                                   }
                                 },

@@ -6,18 +6,20 @@ class Student {
   final String email;
   final String phone;
   final String packageType;
-  final double additionalQuantity;
+  double additionalQuantity;
   final double totalCost;
   final int eventId;
   final String comments;
   List<Payment> payments;
   String folio;
   final int dishCount;
-  final int additionalNumber;
+  int additionalNumber;
   final bool hasPreParty;
   final bool hasSouvenir;
   final bool hasBracelet;
-  bool paid = false;
+  bool paid;
+  bool cancelled;
+  bool committee;
 
   void setFolio(String folio) {
     this.folio = folio;
@@ -42,6 +44,9 @@ class Student {
     required this.hasPreParty,
     required this.hasSouvenir,
     required this.hasBracelet,
+    required this.paid,
+    required this.cancelled,
+    this.committee = false,
   });
 
   factory Student.fromJson(Map<String, dynamic> json) {
@@ -66,6 +71,9 @@ class Student {
       hasPreParty: json['hasPreParty'] ?? false,
       hasSouvenir: json['hasSouvenir'] ?? false,
       hasBracelet: json['hasBracelet'] ?? false,
+      paid: json['paid'] ?? false,
+      cancelled: json['cancelled'] ?? false,
+      committee: json['committee'] ?? false,
     );
   }
 
@@ -88,6 +96,9 @@ class Student {
         'hasPreParty': hasPreParty,
         'hasSouvenir': hasSouvenir,
         'hasBracelet': hasBracelet,
+        'paid': paid,
+        'cancelled': cancelled,
+        'committee': committee,
       };
 }
 
