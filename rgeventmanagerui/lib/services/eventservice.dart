@@ -6,6 +6,7 @@ import 'package:dio/io.dart';
 import 'package:rg_event_management_ui/models/AdditionalService.dart';
 import 'package:rg_event_management_ui/models/AdditionalServiceResponse.dart';
 import 'package:rg_event_management_ui/models/Event.dart' as eventprefix;
+import 'package:rg_event_management_ui/models/EventEmployeePayment.dart';
 import 'package:rg_event_management_ui/models/Supplier.dart';
 import 'package:rg_event_management_ui/models/Student.dart';
 
@@ -360,6 +361,76 @@ class EventService {
     } catch (e) {
       log('Failed to fetch next folio: $e.toString()');
       throw Exception('Failed to fetch next folio: $e');
+    }
+  }
+
+  Future<String> DownloadEventEmployeePayments(
+      token, int eventId, path) async {
+    try {
+      var current = Directory.current.path;
+      log('current path: $current');
+      var timestamp = DateTime.now().millisecondsSinceEpoch;
+      var pathToSave = '$path/nomina-$timestamp.pdf';
+      final response = (await _dio.download(
+          'https://localhost:8443/api/v1/event-outcomes/employees/payments/events/$eventId/export-payroll',
+          pathToSave,
+          options: Options(
+            headers: {
+              'Authorization': 'Bearer $token',
+              'responseType': ResponseType.bytes,              
+            },
+          )));
+      return pathToSave;
+    } catch (e) {
+      log('Failed to fetch next folio: $e.toString()');
+      throw Exception('Failed to fetch next folio: $e');
+    }
+  }
+
+  Future<List<EventEmployeePayment>> getEventEmployeePayments(
+      String token, int eventId) async {
+    try {
+      final response = await _dio.get(
+          'https://localhost:8443/api/v1/event-outcomes/employees/payments/events/$eventId',
+          options: Options(headers: {'Authorization': 'Bearer $token'}));
+      final data = response.data as List<dynamic>;
+      final eventEmployeePayments = data
+          .map((eventEmployeePayment) =>
+              EventEmployeePayment.fromJson(eventEmployeePayment))
+          .toList();
+      return eventEmployeePayments;
+    } catch (e) {
+      throw Exception('Failed to fetch event employee payments: $e');
+    }
+  }
+
+  Future<List<EventEmployeePayment>> saveEventEmployeePayment(
+      List<EventEmployeePayment> eventEmployeePayment, String token, int eventId) async {
+    try {
+      var data = eventEmployeePayment.map((payment) => payment.toJson()).toList();
+      log('data: $data');
+      final response = await _dio.post(
+          'https://localhost:8443/api/v1/event-outcomes/employees/payments/events/$eventId.',
+          data: data,
+          options: Options(headers: {'Authorization': 'Bearer $token'}));
+
+      final dataResponse = response.data as List<dynamic>;
+      final eventempPayments = dataResponse.map((e) => EventEmployeePayment.fromJson(e)).toList();
+      return eventempPayments;
+    } catch (e) {
+      throw Exception('Failed to create event employee payment: $e');
+    }
+  }
+
+  Future<bool> deleteEventEmployeePayment(
+      int eventEmployeePaymentId, String token) async {
+    try {
+      var response = await _dio.delete(
+          'https://localhost:8443/api/v1/event-outcomes/employees/payments/$eventEmployeePaymentId',
+          options: Options(headers: {'Authorization': 'Bearer $token'}));
+      return response.statusCode == 200;
+    } catch (e) {
+      throw Exception('Failed to delete event employee payment: $e');
     }
   }
 

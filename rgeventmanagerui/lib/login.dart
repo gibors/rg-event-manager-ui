@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:rg_event_management_ui/app_colors.dart';
 import 'package:rg_event_management_ui/main.dart';
 import 'package:rg_event_management_ui/models/AuthResponse.dart';
+import 'package:rg_event_management_ui/models/User.dart';
 import 'package:rg_event_management_ui/services/userservices.dart';
 import 'dart:developer';
 
@@ -16,6 +17,7 @@ class _LoginState extends State<Login> {
   final userText = TextEditingController();
   final passwordText = TextEditingController();
   var token = "";
+  User? user;
   var _isLoading = false;
   @override
   Widget build(BuildContext context) {
@@ -28,7 +30,7 @@ class _LoginState extends State<Login> {
       backgroundColor: AppColors.backColor,
       appBar: AppBar(
       title: Text(
-        'Pantalla inicial',
+        'SISTEMA RG EVENTOS',
         style: TextStyle(
         color: AppColors.blueDarkColor,
         fontWeight: FontWeight.w700,
@@ -191,11 +193,13 @@ class _LoginState extends State<Login> {
                       .login(userText.text, passwordText.text)
                       .then(
                       (AuthResponse response) => setState(() {
+                        user = response.user;
                         token = response.token;
                         _isLoading = false;
                         if (token != "" && response.error == "") {
                         log('token: $token');
                         appState.setToken(token);
+                        appState.setSelectedUser(user);
                         Navigator.push(context,
                           MaterialPageRoute(builder: (context) {
                           return EventsHomePage();

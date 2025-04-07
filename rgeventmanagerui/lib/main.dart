@@ -14,13 +14,16 @@ import 'package:rg_event_management_ui/models/Employee.dart';
 import 'package:rg_event_management_ui/models/Student.dart';
 import 'package:rg_event_management_ui/models/Supplier.dart';
 import 'package:rg_event_management_ui/models/User.dart';
-import 'package:rg_event_management_ui/modules/accountability.dart';
 import 'package:rg_event_management_ui/modules/add_event.dart';
 import 'package:rg_event_management_ui/models/Event.dart';
 import 'package:rg_event_management_ui/modules/additional_services.dart';
 import 'package:rg_event_management_ui/modules/budgetpage.dart';
 import 'package:rg_event_management_ui/modules/employees_list.dart';
+import 'package:rg_event_management_ui/modules/event_operations/expenses_event.dart';
+import 'package:rg_event_management_ui/modules/event_operations/nomina_event.dart';
 import 'package:rg_event_management_ui/modules/eventspayment.dart';
+import 'package:rg_event_management_ui/modules/operations_general/general_nominal.dart';
+import 'package:rg_event_management_ui/modules/operations_general/general_payments.dart';
 import 'package:rg_event_management_ui/modules/provider_list.dart';
 import 'package:rg_event_management_ui/modules/userlistpage.dart';
 import 'package:rg_event_management_ui/services/eventservice.dart';
@@ -56,7 +59,7 @@ class MyApp extends StatelessWidget {
         title: 'rg eventos',
         theme: ThemeData(
           useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(seedColor: AppColors.purpleColor),
+          colorScheme: ColorScheme.fromSeed(seedColor: AppColors.greyColor),
         ),
         home: LayoutBuilder(
           builder: (context, constraints) {
@@ -85,6 +88,7 @@ class MyAppState extends ChangeNotifier {
   Supplier? selectedProvider;
   Employee? selectedEmployee;
   User? selectedUser;
+  User? selectedUserToEdit;
   int selectedIndex = 0;
   // List<PlutoRow> rows = [];
 
@@ -123,7 +127,7 @@ class MyAppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setSelectedUser(User user) {
+  void setSelectedUser(User? user) {
     selectedUser = user;
     notifyListeners();
   }
@@ -143,6 +147,16 @@ class MyAppState extends ChangeNotifier {
 
   void clearSelectedEmployee() {
     selectedEmployee = null;
+    // notifyListeners();
+  }
+
+  void setSelectedUserToEdit(User user) {
+    selectedUserToEdit = user;
+    notifyListeners();
+  }
+
+  void clearSelectedUserToEdit() {
+    selectedUserToEdit = null;
     // notifyListeners();
   }
 }
@@ -175,7 +189,7 @@ class _EventsHomePageState extends State<EventsHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    var colorScheme = ColorScheme.fromSwatch(primarySwatch: Colors.pink);
+    var colorScheme = ColorScheme.fromSwatch(primarySwatch: Colors.blueGrey);
     var appState = context.watch<MyAppState>();
 
     Widget page;
@@ -187,12 +201,14 @@ class _EventsHomePageState extends State<EventsHomePage> {
       case 2:
         page = EmployeesView();
       case 3:
-        page = AccountabilityPage();
+        page = GeneralNominalPage();
       case 4:
-        page = BudgetPage();
+        page = GeneralPaymentsPage();
       case 5:
-        page = UserListPage();
+        page = BudgetPage();
       case 6:
+        page = UserListPage();
+      case 7:
         page = Login();
 
       default:
@@ -212,58 +228,13 @@ class _EventsHomePageState extends State<EventsHomePage> {
     return Scaffold(
       body: LayoutBuilder(
         builder: (context, constraints) {
-          if (constraints.maxWidth < 550) {
-            // Use a more mobile-friendly layout with BottomNavigationBar
-            // on narrow screens.
-            return Column(
-              children: [
-                Expanded(child: mainArea),
-                SizedBox(height: 200),
-                SafeArea(
-                  child: BottomNavigationBar(
-                    items: [
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.home),
-                        label: 'Eventos',
-                      ),
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.favorite),
-                        label: 'Proveedores',
-                      ),
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.person),
-                        label: 'Empleados',
-                      ),
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.account_balance),
-                        label: 'Contabilidad',
-                      ),
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.money_rounded),
-                        label: 'Cotización',
-                      ),
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.security),
-                        label: 'Administrar Usuarios',
-                      ),
-                    ],
-                    currentIndex: selectedIndex,
-                    onTap: (value) {
-                      setState(() {
-                        selectedIndex = value;
-                      });
-                    },
-                  ),
-                )
-              ],
-            );
-          } else {
+          
             return Row(
               children: [
                 SafeArea(
                   child: Row(children: [
                     NavigationRail(
-                      extended: constraints.maxWidth >= 600,
+                       extended: constraints.maxWidth >= 100,
                       destinations: [
                         NavigationRailDestination(
                           icon: Icon(Icons.event),
@@ -278,14 +249,19 @@ class _EventsHomePageState extends State<EventsHomePage> {
                           label: Text('Empleados'),
                         ),
                         NavigationRailDestination(
-                          icon: Icon(Icons.account_balance),
-                          label: Text('Contabilidad'),
+                          icon: Icon(Icons.payment_sharp),
+                          label: Text('Nomina y comisiones'),
+                        ),
+                        NavigationRailDestination(
+                          icon: Icon(Icons.attach_money),
+                          label: Text('Pagos y gastos'),
                         ),
                         NavigationRailDestination(
                           icon: Icon(Icons.money_rounded),
                           label: Text('Cotización'),
                         ),
                         NavigationRailDestination(
+                          disabled: appState.selectedUser != null && appState.selectedUser!.role != 1,
                           icon: Icon(Icons.security),
                           label: Text('Administrar Usuarios'),
                         ),
@@ -295,7 +271,7 @@ class _EventsHomePageState extends State<EventsHomePage> {
                       ],
                       selectedIndex: selectedIndex,
                       onDestinationSelected: (value) {
-                        if (value == 6) {
+                        if (value == 7) {
                           showDialog(
                               context: context,
                               builder: (context) {
@@ -341,7 +317,7 @@ class _EventsHomePageState extends State<EventsHomePage> {
                 Expanded(child: mainArea),
               ],
             );
-          }
+          
         },
       ),
     );
@@ -451,10 +427,13 @@ class _EventsPage extends State<EventsPage> {
   Widget build(BuildContext context) {
     var appState = context.watch<MyAppState>();
 
-    return SizedBox(
-        // height: 800,
-        // width: 1500,
-        child: FutureBuilder<List<Event>>(
+    return Scaffold(
+        appBar: AppBar(
+            title: Text('Sistema RG Eventos - Usuario conectado: ${appState.selectedUser != null ? '${appState.selectedUser!.name} ${appState.selectedUser!.lastname} con rol de ${appState.selectedUser!.role == 1 ? 'admin': (appState.selectedUser!.role == 2 ? 'operativo' : 'solo lectura')}': ''}',
+                style: TextStyle(fontSize: 28.0, color: const Color.fromARGB(255, 113, 7, 132))),
+                automaticallyImplyLeading: false,
+        ),
+        body: FutureBuilder<List<Event>>(
       future: _func,
       builder: (context, snapshot) => snapshot.hasData
           ? Center(
@@ -655,12 +634,35 @@ class _EventsPage extends State<EventsPage> {
                                                 : Icons.payment_rounded),
                                           )
                                         ],
-                                      )))
+                                      ))),
+                                    SizedBox(width: 20),
+                                   Text('Nómina'),
+                                  IconButton(
+                                    icon: Icon(Icons.monetization_on),
+                                    onPressed: () {
+                                      Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  AddEmployeePaymentPage()));
 
-                                      
+                                    },
+                                  ), 
+                                  SizedBox(width: 20),
+                                  Text('pagos y gastos del evento',
+                                      style: Theme.of(context).textTheme.bodyLarge),
+                                  IconButton(
+                                    icon: Icon(Icons.payment_rounded),
+                                    onPressed: () {
+                                      Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  ExpensesEventPage()));
+                                    },
+                                  ),
                                 ],
                               ),
-                            ))
+                            )),
+                            
                       ],
                     ),
                     SizedBox(height: 30),

@@ -7,6 +7,7 @@ import 'package:rg_event_management_ui/formatters/ThousandsSeparatorInputFormatt
 import 'package:rg_event_management_ui/main.dart';
 import 'package:rg_event_management_ui/models/Event.dart';
 import 'package:rg_event_management_ui/modules/additional_services.dart';
+import 'package:rg_event_management_ui/modules/event_operations/nomina_event.dart';
 import 'package:rg_event_management_ui/modules/graduationpayment.dart';
 import 'package:rg_event_management_ui/services/eventservice.dart';
 import 'package:rg_event_management_ui/modules/graduationlist.dart';
@@ -1502,6 +1503,13 @@ class _AddEventPopup extends State<AddEventPopup> {
                           ElevatedButton(
                               onPressed: () {
                                 log('pressed nomina');
+                                appState.selectedEvent = selectedEvent;
+                                appState.setToken(token);
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => AddEmployeePaymentPage(),
+                                  ),
+                                );
                               },
                               style: ButtonStyle(
                                 backgroundColor: WidgetStateProperty.all<Color>(

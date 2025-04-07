@@ -78,10 +78,15 @@ class _UserListPageState extends State<UserListPage> {
   Widget build(BuildContext context) {
      var appState = context.watch<MyAppState>();
 
-         return SizedBox(
+         return Scaffold(
       // height: 800,
       // width: 1500,
-      child: FutureBuilder<List<User>>(
+              appBar: AppBar(
+          title: Text('Sistema RG Eventos - Usuario conectado: ${appState.selectedUser != null ? '${appState.selectedUser!.name} ${appState.selectedUser!.lastname} con privilegios de ${appState.selectedUser!.role == 1 ? 'administrador': (appState.selectedUser!.role == 2 ? 'operativo' : 'solo lectura')}': ''}',
+                    style: TextStyle(fontSize: 24.0, color: const Color.fromARGB(255, 113, 7, 132))),
+                    automaticallyImplyLeading: false,
+        ),
+      body: FutureBuilder<List<User>>(
         future: _func,
         builder: (context, snapshot) => snapshot.hasData
             ? Center( 
@@ -92,37 +97,23 @@ class _UserListPageState extends State<UserListPage> {
         children: [ 
           Row(
             children: [
-              Text('Exportar a PDF', style: Theme.of(context).textTheme.bodyLarge),
-              IconButton(
-                icon: Icon(Icons.picture_as_pdf),
-                onPressed: () {
-                },
-              ),
-              SizedBox(width: 20),
-              Text('Descargar excel', style: Theme.of(context).textTheme.bodyLarge),
-              IconButton(
-                icon: Icon(Icons.download),
-                onPressed: () {
-                },
-              ),
-               SizedBox(width: 20),
               Text('Agregar usuario', style: Theme.of(context).textTheme.bodyLarge),
 
               IconButton(
                 icon: Icon(Icons.add_box),
                 onPressed: () {
-                  appState.clearSelectedUser();
+                  appState.clearSelectedUserToEdit();
                   Navigator.of(context).push(MaterialPageRoute(builder: (context) => AddUserPage()));
                 },
               ),
               SizedBox(width: 20),
-              Visibility(visible: selectedUser != null , 
+              Visibility(visible: appState.selectedUserToEdit != null , 
               child: Container( child: Row(children: [
                 Text('Editar usuario', style: Theme.of(context).textTheme.bodyLarge),
               IconButton(
                 icon: Icon(Icons.edit),
                 onPressed: () {
-                  if (appState.selectedUser != null){
+                  if (appState.selectedUserToEdit != null){
                     Navigator.of(context).push(MaterialPageRoute(builder: (context) => AddUserPage()));
                   } else {
  
@@ -172,7 +163,7 @@ class _UserListPageState extends State<UserListPage> {
             log('selected user: ${event.row!.cells['name']!.value}'),
             setState(() {
               selectedUser = snapshot.data!.firstWhere((element) => element.username == event.row!.cells['username']!.value);
-              appState.setSelectedUser(selectedUser);
+              appState.setSelectedUserToEdit(selectedUser);
             })
           },
           onLoaded: (PlutoGridOnLoadedEvent event) {

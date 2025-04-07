@@ -8,14 +8,13 @@ import 'package:rg_event_management_ui/models/Employee.dart';
 import 'package:rg_event_management_ui/modules/add_employee.dart';
 import 'package:rg_event_management_ui/services/employees_service.dart';
 
-class EmployeesView extends StatefulWidget {
-  // const EmployeesView({Key? key}) : super(key: key);
+class GeneralPaymentsPage extends StatefulWidget {
 
   @override
-  _EmployeesViewState createState() => _EmployeesViewState();
+  _GeneralPaymentsPage createState() => _GeneralPaymentsPage();
 }
 
-class _EmployeesViewState extends State<EmployeesView> {
+class _GeneralPaymentsPage extends State<GeneralPaymentsPage> {
   // final _key = GlobalKey();
   var appState;
   Employee ? SelectedEmployee;
@@ -102,20 +101,8 @@ class _EmployeesViewState extends State<EmployeesView> {
                   children: [
                     Row(
                       children: [
-                        // Text('Exportar a PDF',
-                        //     style: Theme.of(context).textTheme.bodyLarge),
-                        // IconButton(
-                        //   icon: Icon(Icons.picture_as_pdf),
-                        //   onPressed: () {},
-                        // ),
-                        // SizedBox(width: 20),
-                        // Text('Descargar excel',
-                        //     style: Theme.of(context).textTheme.bodyLarge),
-                        // IconButton(
-                        //   icon: Icon(Icons.download),
-                        //   onPressed: () {},
-                        // ),
-                        Text('Agregar Empleado',
+                        
+                        Text('Agregar/editar Nomina',
                             style: Theme.of(context).textTheme.bodyLarge),
                         IconButton(
                           icon: Icon(Icons.add_box),
@@ -131,10 +118,10 @@ class _EmployeesViewState extends State<EmployeesView> {
                             child: Container(
                           child: Row(
                             children: [
-                              Text('Editar Empleado',
+                              Text('Ver historial de nómina',
                                   style: Theme.of(context).textTheme.bodyLarge),
                               IconButton(
-                                icon: Icon(Icons.edit),
+                                icon: Icon(Icons.remove_red_eye_rounded),
                                 onPressed: () {
                                   Navigator.of(context).push(MaterialPageRoute(
                                       builder: (context) => AddEmployeePage()));

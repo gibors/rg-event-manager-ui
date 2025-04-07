@@ -1226,7 +1226,7 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                                               ),
                                               SizedBox(width: 20),
                                               Visibility(
-                                                visible: selectedStudent != null && (!selectedStudent.paid || (payment.paymentDetail != 'platillo' && payment.paymentDetail != 'paquete')),
+                                                visible: selectedStudent != null && (!selectedStudent.paid || (payment.paymentDetail != 'platillo' && payment.paymentDetail != 'paquete')) && appState.selectedUser!.role == 1,
                                                 child: Expanded(
                                                   child: IconButton(
                                                     icon: Icon(Icons.delete),

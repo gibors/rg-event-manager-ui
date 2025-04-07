@@ -313,7 +313,8 @@ class _GraduationListPageState extends State<GraduationListPage> {
                           Visibility(
                             visible: (appState.selectedStudent != null && (
                                 !appState.selectedStudent!.paid &&
-                                !appState.selectedStudent!.cancelled) || (appState.selectedStudent != null && appState.selectedStudent!.totalCost == 0)),
+                                !appState.selectedStudent!.cancelled) || (appState.selectedStudent != null && appState.selectedStudent!.totalCost == 0)) 
+                                && appState.selectedUser!.role == 1,
                             child: Container(
                                 child: Row(
                               children: [
