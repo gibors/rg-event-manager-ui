@@ -184,12 +184,12 @@ class _AddEventPopup extends State<AddEventPopup> {
     var total = 0.0;
 
     if (selectedEventType == null || selectedEventType!.id != 3) {
-      total += double.parse(eventCost.text) * int.parse(minCapacity.text);
+      total += double.tryParse(eventCost.text.isEmpty ? "0" : eventCost.text.replaceAll(",", ""))! * int.parse(minCapacity.text);
       if (selectedEventType!.id == 1) {
         total +=
-            double.parse(childrenCost.text) * int.parse(numberChildren.text);
+            double.tryParse(eventCost.text.isEmpty ? "0" : eventCost.text.replaceAll(",", ""))! * int.parse(numberChildren.text);
       } else if (selectedEventType!.id == 2) {
-        total += double.parse(youngCost.text) * int.parse(numberYoung.text);
+        total += double.tryParse(eventCost.text.isEmpty ? "0" : eventCost.text.replaceAll(",", ""))! * int.parse(numberYoung.text);
       }
       return total;
     } else {

@@ -245,15 +245,18 @@ class _EventsHomePageState extends State<EventsHomePage> {
                           label: Text('Proveedores'),
                         ),
                         NavigationRailDestination(
+                          disabled: appState.selectedUser != null && appState.selectedUser!.role != 1,
                           icon: Icon(Icons.person),
                           label: Text('Empleados'),
                         ),
                         NavigationRailDestination(
+                          disabled: appState.selectedUser != null && appState.selectedUser!.role != 1,
                           icon: Icon(Icons.payment_sharp),
                           label: Text('Nomina y comisiones'),
                         ),
                         NavigationRailDestination(
                           icon: Icon(Icons.attach_money),
+                          disabled: appState.selectedUser != null && appState.selectedUser!.role != 1,
                           label: Text('Pagos y gastos'),
                         ),
                         NavigationRailDestination(
@@ -648,7 +651,7 @@ class _EventsPage extends State<EventsPage> {
                                     },
                                   ), 
                                   SizedBox(width: 20),
-                                  Text('pagos y gastos del evento',
+                                  Text('gastos del evento',
                                       style: Theme.of(context).textTheme.bodyLarge),
                                   IconButton(
                                     icon: Icon(Icons.payment_rounded),

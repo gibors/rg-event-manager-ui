@@ -91,8 +91,8 @@ class _ProviderListPageState extends State<ProviderListPage> {
       // height: 800,
       // width: 1500,
               appBar: AppBar(
-          title: Text('Sistema RG Eventos - Usuario conectado: ${appState.selectedUser != null ? '${appState.selectedUser!.name} ${appState.selectedUser!.lastname} con privilegios de ${appState.selectedUser!.role == 1 ? 'administrador': (appState.selectedUser!.role == 2 ? 'operativo' : 'solo lectura')}': ''}',
-                    style: TextStyle(fontSize: 24.0, color: const Color.fromARGB(255, 113, 7, 132))),
+            title: Text('Sistema RG Eventos - Usuario conectado: ${appState.selectedUser != null ? '${appState.selectedUser!.name} ${appState.selectedUser!.lastname} con rol de ${appState.selectedUser!.role == 1 ? 'admin': (appState.selectedUser!.role == 2 ? 'operativo' : 'solo lectura')}': ''}',
+                style: TextStyle(fontSize: 28.0, color: const Color.fromARGB(255, 113, 7, 132))),
                     automaticallyImplyLeading: false,
         ),
       body: FutureBuilder<List<Supplier>>(
@@ -106,20 +106,6 @@ class _ProviderListPageState extends State<ProviderListPage> {
         children: [ 
           Row(
             children: [
-              // Text('Exportar a PDF', style: Theme.of(context).textTheme.bodyLarge),
-              // IconButton(
-              //   icon: Icon(Icons.picture_as_pdf),
-              //   onPressed: () {
-              //   },
-              // ),
-              // SizedBox(width: 20),
-              // Text('Descargar excel', style: Theme.of(context).textTheme.bodyLarge),
-              // IconButton(
-              //   icon: Icon(Icons.download),
-              //   onPressed: () {
-              //   },
-              // ),
-              //  SizedBox(width: 20),
               Text('Agregar proveedor', style: Theme.of(context).textTheme.bodyLarge),
 
               IconButton(

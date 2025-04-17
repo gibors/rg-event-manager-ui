@@ -86,7 +86,7 @@ class _AddEmployeePaymentPage extends State<AddEmployeePaymentPage> {
   void saveEmployeePayments() {
     eventEmployeePayments = [];
     var widgetsWithColumns =
-        employeePaymentsWidgets.where((element) => element is Column).toList();
+        employeePaymentsWidgets.whereType<Column>().toList();
     for (int i = 0; i < widgetsWithColumns.length; i++) {
       var quantity = double.parse(employeesQuantityTypeControllers[i].text);
       var unitPayment = double.parse(unitPaymentsControllers[i].text);
@@ -158,7 +158,7 @@ class _AddEmployeePaymentPage extends State<AddEmployeePaymentPage> {
   }
 
   void buildEmployeePaymentsWidgets() {
-    if (eventEmployeePayments != null && eventEmployeePayments.isNotEmpty) {
+    if (eventEmployeePayments.isNotEmpty) {
       for (var cat in jobCategories.keys) {
         addSeparator(cat);
 
@@ -219,38 +219,18 @@ class _AddEmployeePaymentPage extends State<AddEmployeePaymentPage> {
       EventService()
           .DownloadEventEmployeePayments(token, selectedEvent!.id, path)
           .then((value) {
-        if (value != null) {
-          Flushbar(
-            icon: Icon(
-              Icons.check,
-              size: 28.0,
-              color: Colors.green[300],
-            ),
-            flushbarPosition: FlushbarPosition.TOP,
-            title: "Descarga exitosa",
-            message: "La nómina se descargó correctamente en $path",
-            duration: Duration(seconds: 5),
-          ).show(context);
-        } else {
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                title: Text("Error"),
-                content: Text("Ocurrió un error al descargar la nómina"),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: Text("Aceptar"),
-                  ),
-                ],
-              );
-            },
-          );
-        }
-      });
+        Flushbar(
+          icon: Icon(
+            Icons.check,
+            size: 28.0,
+            color: Colors.green[300],
+          ),
+          flushbarPosition: FlushbarPosition.TOP,
+          title: "Descarga exitosa",
+          message: "La nómina se descargó correctamente en $path",
+          duration: Duration(seconds: 5),
+        ).show(context);
+            });
     } catch (e) {
       print("Error: $e");
       showDialog(

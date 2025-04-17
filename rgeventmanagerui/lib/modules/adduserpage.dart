@@ -15,7 +15,7 @@ class AddUserPage extends StatefulWidget {
 class _AddUserPageState extends State<AddUserPage> {
   final _formKey = GlobalKey<FormState>();
 
-  List<String> roles = ['Administrador', 'Operador', 'Reporteador'];
+  List<String> roles = ['Administrador', 'Operador', 'Solo lectura'];
   
   String? _selectedRole;
   TextEditingController _nameController = TextEditingController();
@@ -43,7 +43,7 @@ class _AddUserPageState extends State<AddUserPage> {
     _emailController.text = user.email;
     _usernameController.text = user.username;
     _passwordController.text = user.password;
-    _roleController.text = user.role == 1 ? 'Administrador' : user.role == 2 ? 'Operador' : 'Reporteador';
+    _roleController.text = user.role == 1 ? 'Administrador' : user.role == 2 ? 'Operador' : 'Solo lectura';
   }
   
   mapControllerToUser(){

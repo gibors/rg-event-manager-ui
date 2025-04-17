@@ -82,8 +82,8 @@ class _UserListPageState extends State<UserListPage> {
       // height: 800,
       // width: 1500,
               appBar: AppBar(
-          title: Text('Sistema RG Eventos - Usuario conectado: ${appState.selectedUser != null ? '${appState.selectedUser!.name} ${appState.selectedUser!.lastname} con privilegios de ${appState.selectedUser!.role == 1 ? 'administrador': (appState.selectedUser!.role == 2 ? 'operativo' : 'solo lectura')}': ''}',
-                    style: TextStyle(fontSize: 24.0, color: const Color.fromARGB(255, 113, 7, 132))),
+            title: Text('Sistema RG Eventos - Usuario conectado: ${appState.selectedUser != null ? '${appState.selectedUser!.name} ${appState.selectedUser!.lastname} con rol de ${appState.selectedUser!.role == 1 ? 'admin': (appState.selectedUser!.role == 2 ? 'operativo' : 'solo lectura')}': ''}',
+                style: TextStyle(fontSize: 28.0, color: const Color.fromARGB(255, 113, 7, 132))),
                     automaticallyImplyLeading: false,
         ),
       body: FutureBuilder<List<User>>(
@@ -139,7 +139,8 @@ class _UserListPageState extends State<UserListPage> {
           Row(children: [
             Text('Total de usuarios: ${snapshot.data!.length}', style: Theme.of(context).textTheme.bodyMedium),
              SizedBox(width: 30),
-             Text('Usuario seleccionado: ${selectedUser != null ? (selectedUser!.name + ' ' + selectedUser!.lastname) : 'Ninguno'}', style: Theme.of(context).textTheme.bodyMedium),
+             Text('Usuario seleccionado: ${selectedUser != null ? (selectedUser!.name + ' ' + selectedUser!.lastname) : 'Ninguno'}', 
+             style: Theme.of(context).textTheme.bodyMedium),
 
           ],),
           SizedBox(height: 20),
@@ -153,7 +154,7 @@ class _UserListPageState extends State<UserListPage> {
                     'lastName': PlutoCell(value: e.lastname),
                     'email': PlutoCell(value: e.email),
                     'username': PlutoCell(value: e.username),
-                    'role': PlutoCell(value: e.role == 1 ? 'Admin' : (e.role == 2 ? 'Operador' : 'Reporter')),
+                    'role': PlutoCell(value: e.role == 1 ? 'Admin' : (e.role == 2 ? 'Operador' : 'Solo lectura')),
                   }
                 )).toList(),
           onChanged: (PlutoGridOnChangedEvent event) {

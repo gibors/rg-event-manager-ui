@@ -346,9 +346,9 @@ class _AdditionalServices extends State<AdditionalServices> {
                     context: context,
                     builder: (BuildContext context) {
                       return AlertDialog(
-                        title: Text("Eliminar Servicio Adicional"),
+                        title: Text("Eliminar Pago"),
                         content: Text(
-                            "¿Estás seguro de que deseas eliminar este servicio adicional?"),
+                            "¿Estás seguro de que deseas eliminar este pago?"),
                         actions: [
                           TextButton(
                             onPressed: () {

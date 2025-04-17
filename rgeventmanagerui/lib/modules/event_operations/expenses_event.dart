@@ -1,10 +1,11 @@
-
 import 'package:another_flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rg_event_management_ui/formatters/ThousandsSeparatorInputFormatter.dart';
 import 'package:rg_event_management_ui/main.dart';
 import 'package:rg_event_management_ui/models/AdditionalService.dart';
+import 'package:rg_event_management_ui/models/Event.dart';
+import 'package:rg_event_management_ui/models/EventPay.dart';
 import 'package:rg_event_management_ui/models/Supplier.dart';
 import 'package:rg_event_management_ui/services/eventservice.dart';
 
@@ -19,24 +20,28 @@ class _ExpensesEventPage extends State<ExpensesEventPage> {
   var token = "";
   var selectedEvent;
   bool isEditMode = false;
+  bool isEnableSupplier = true;
   List<ServiceType> services = [];
   Map<int, List<Supplier>> suppliersMap = {};
-
-  List<AdditionalService> expenses = [];
+  List<AdditionalService> additionalServices = [];
+  List<EventPay> expenses = [];
   List<Widget> expensesWidgets = [];
-  
-   
-  //  List<int> additionalServiceIds = [];
-  //  List<TextEditingController> additionalServiceDescriptionControllers = [];
-    List<ServiceType?> selectedAdditionalServiceTypes = [];
-    List<TextEditingController> additionalServiceServiceTypeControllers   = [];
-    List<Supplier?> selectedAdditionalServiceSuppliers = [];
-    List<TextEditingController> additionalServiceSupplierControllers = [];
-  //  List<TextEditingController> additionalServiceCostControllers = [];
-  //  List<TextEditingController> additionalServiceSupplierCostControllers = [];
 
-  static String _displayStringServicesForOption(ServiceType option) =>
+  // list controllres to keep track of the values
+
+  List<int> eventPaymentIds = [];
+  List<TextEditingController> eventPayDescriptionControllers = [];
+  List<ServiceType?> selectedServiceTypes = [];
+  List<TextEditingController> eventPaymentServiceTypeControllers = [];
+  List<Supplier?> selectedAdditionalServiceSuppliers = [];
+  List<TextEditingController> additionalServiceSupplierControllers = [];
+  List<TextEditingController> paymentValueControllers = [];
+
+  static String _displayStringServiceTypeForOption(ServiceType option) =>
       option.name;
+  static String _displayStringAdditionalServicesForOption(
+          AdditionalService option) =>
+      option.description;
   static String _displayStringSuppliersForOption(Supplier option) =>
       "${option.name} ${option.lastName}";
 
@@ -46,14 +51,13 @@ class _ExpensesEventPage extends State<ExpensesEventPage> {
     token = appState.appToken;
     selectedEvent = appState.selectedEvent;
 
-      expenses = selectedEvent!.additionalServices;
-      if(expenses.isNotEmpty){
-        for (var additionalService in expenses) {
-          addAdditionalServiceWidget(additionalService);
-        }
-      } else {
-        addAdditionalServiceWidget();
-      }
+    EventService()
+        .getAdditionalServiceByEventId(token, selectedEvent.id)
+        .then((value) {
+      setState(() {
+        additionalServices = value;
+      });
+    });
 
     EventService().getServices(token).then((value) {
       setState(() {
@@ -61,41 +65,49 @@ class _ExpensesEventPage extends State<ExpensesEventPage> {
       });
     });
 
-    super.initState();
-  }
-
-  onSelectedServiceType(ServiceType option, int index) {
-
-
-    EventService().getProvidersByService(token, option.id).then((value) {
+    EventService().getAllEventPayments(token, selectedEvent.id).then((value) {
       setState(() {
-        selectedAdditionalServiceTypes[index] = option;
-        additionalServiceServiceTypeControllers[index].text = option.name.toString();
-        
-        selectedAdditionalServiceSuppliers[index] = null;
-        additionalServiceSupplierControllers[index].text = "";
-        
-        if(suppliersMap.isNotEmpty && value.isNotEmpty){
-          suppliersMap[index] = value;
-        }
-        else{
-          suppliersMap[index] = [];
+        expenses = value;
+        if (value.isNotEmpty) {
+          for (var expense in expenses) {
+            eventPaymentsWidget(expense);
+          }
+        } else {
+          eventPaymentsWidget();
         }
       });
     });
 
+    super.initState();
+  }
 
+  onSelectedServiceType(ServiceType option, int index) {
+    EventService().getProvidersByService(token, option.id).then((value) {
+      setState(() {
+        selectedServiceTypes[index] = option;
+        eventPaymentServiceTypeControllers[index].text = option.name.toString();
+
+        // selectedAdditionalServiceSuppliers[index] = null;
+        // additionalServiceSupplierControllers[index].text = "";
+
+        if (suppliersMap.isNotEmpty && value.isNotEmpty) {
+          suppliersMap[index] = value;
+        } else {
+          suppliersMap[index] = [];
+        }
+      });
+    });
   }
 
   getSuppliersForServiceType(ServiceType serviceType, int index) {
     EventService().getProvidersByService(token, serviceType.id).then((value) {
       setState(() {
-      if(suppliersMap.isNotEmpty && value.isNotEmpty){
+        if (suppliersMap.isNotEmpty && value.isNotEmpty) {
           suppliersMap[index] = value;
-        }
-        else{
+        } else {
           suppliersMap[index] = [];
-        }      });
+        }
+      });
     });
   }
 
@@ -103,25 +115,13 @@ class _ExpensesEventPage extends State<ExpensesEventPage> {
   void saveAdditionalServices() {
     expenses = [];
     var eventTotalAdditional = 0.0;
-    for(int i=0; i < expensesWidgets.length; i++){
-      // AdditionalService additionalService = AdditionalService(
-        // id: additionalServiceIds[i],
-        // eventId: selectedEvent!.id,
-        // description: additionalServiceDescriptionControllers[i].text,
-        // serviceType: selectedAdditionalServiceTypes[i]!,
-        // supplier: selectedAdditionalServiceSuppliers[i],
-        // cost: double.parse(additionalServiceCostControllers[i].text.replaceAll(",", "")),
-        // supplierCost: double.parse(additionalServiceSupplierCostControllers[i].text.replaceAll(",", "")),
-        // quantity: 0,
-      // );
-      // eventTotalAdditional += additionalService.cost;
-      // additionalServices.add(additionalService);
+    for (int i = 0; i < expensesWidgets.length; i++) {
+  
     }
     selectedEvent!.totalAdditional = eventTotalAdditional;
     selectedEvent!.additionalServices.clear();
     selectedEvent!.additionalServices.addAll(expenses);
 
-    
     EventService().createOrUpdateEvent(selectedEvent, token).then((value) {
       Flushbar(
         showProgressIndicator: true,
@@ -131,61 +131,49 @@ class _ExpensesEventPage extends State<ExpensesEventPage> {
         message: "Servicios adicionales guardados correctamente",
         duration: Duration(seconds: 3),
       ).show(context);
-        });
-
-   
+    });
   }
 
-  void addAdditionalServiceWidget([AdditionalService? additionalService]) {
-
+  void eventPaymentsWidget([EventPay? eventPay]) {
+    TextEditingController additionalServiceDescriptionController = TextEditingController();
     TextEditingController serviceTypeController = TextEditingController();
-    FocusNode serviceTypeFocusNode = FocusNode();
     TextEditingController supplierEditorController = TextEditingController();
+    
+    FocusNode additionalServiceDescriptionFocusNode = FocusNode();
+    FocusNode serviceTypeFocusNode = FocusNode();
     FocusNode supplierFocusNode = FocusNode();
+    
     TextEditingController descriptionController = TextEditingController();
-    TextEditingController customerCostController = TextEditingController();
-    TextEditingController supplierCostController = TextEditingController();
+    TextEditingController paymentValueController = TextEditingController();
 
     int index = expensesWidgets.length;
+    AdditionalService? selectedAdditionalService;
     ServiceType? selectedServiceType;
     Supplier? selectedSupplier;
 
-    if(additionalService != null){
+    if (eventPay != null) {
+      // selectedAdditionalService = eventPay!.supplier!.
+      descriptionController.text = eventPay.description;
 
-      descriptionController.text = additionalService.description;
-      serviceTypeController.text = additionalService.serviceType.name;
-      selectedServiceType = additionalService.serviceType;
-      serviceTypeController.text = additionalService.serviceType.name;
-      
-      if(additionalService.supplier != null){
-        selectedSupplier = additionalService.supplier;
-      }
-      
-      supplierEditorController.text = selectedSupplier != null? "${selectedSupplier.name} ${additionalService.supplier!.lastName}" : "";
-      customerCostController.text = additionalService.cost.toString();
-      supplierCostController.text = additionalService.supplierCost.toString();
+      supplierEditorController.text = selectedSupplier != null
+          ? "${selectedSupplier.name} ${eventPay.supplier.lastName}"
+          : "";
 
-      // additionalServiceIds.add(additionalService.id);
-      // additionalServiceDescriptionControllers.add(descriptionController);
-       selectedAdditionalServiceTypes.add(selectedServiceType);
-       additionalServiceServiceTypeControllers.add(serviceTypeController);
-       selectedAdditionalServiceSuppliers.add(selectedSupplier);
-       additionalServiceSupplierControllers.add(supplierEditorController);
-      // additionalServiceCostControllers.add(customerCostController);
-      // additionalServiceSupplierCostControllers.add(supplierCostController);
+      paymentValueController.text = eventPay.amount.toString();
+      eventPaymentIds.add(eventPay.id);
+      eventPayDescriptionControllers.add(descriptionController);
+      eventPaymentServiceTypeControllers.add(serviceTypeController);
+      selectedAdditionalServiceSuppliers.add(selectedSupplier);
+      additionalServiceSupplierControllers.add(supplierEditorController);
+
       suppliersMap[index] = [];
-      getSuppliersForServiceType(selectedServiceType, index);
-
-
     } else {
-      // additionalServiceIds.add(0);
-      // additionalServiceDescriptionControllers.add(descriptionController);
-       selectedAdditionalServiceTypes.add(selectedServiceType);
-       additionalServiceServiceTypeControllers.add(serviceTypeController);
-       selectedAdditionalServiceSuppliers.add(selectedSupplier);
-       additionalServiceSupplierControllers.add(supplierEditorController);
-      // additionalServiceCostControllers.add(customerCostController);
-      // additionalServiceSupplierCostControllers.add(supplierCostController);
+      eventPaymentIds.add(0);
+      eventPayDescriptionControllers.add(descriptionController);
+      eventPaymentServiceTypeControllers.add(serviceTypeController);
+      selectedAdditionalServiceSuppliers.add(selectedSupplier);
+      additionalServiceSupplierControllers.add(supplierEditorController);
+
       suppliersMap[index] = [];
     }
 
@@ -197,20 +185,78 @@ class _ExpensesEventPage extends State<ExpensesEventPage> {
           ),
           Row(
             children: [
-              SizedBox(width: 20,),
-                Expanded(
-                child: RawAutocomplete<ServiceType>(
-                  displayStringForOption: _displayStringServicesForOption,
-                  key: UniqueKey(),
-                  focusNode: serviceTypeFocusNode,
-                  textEditingController: serviceTypeController,
-                      optionsBuilder: (TextEditingValue textEditingValue) {
-                        return services.where((ServiceType option) {
-                          return option.name.toLowerCase()
+              SizedBox(
+                width: 20,
+              ),
+              Visibility(
+                  visible:
+                      selectedEvent != null && selectedEvent!.eventType.id != 3,
+                  child: Expanded(
+                      child: RawAutocomplete<AdditionalService>(
+                    optionsBuilder: (TextEditingValue textEditingValue) {
+                      return additionalServices.isEmpty
+                          ? []
+                          : additionalServices
+                              .where((AdditionalService option) {
+                              return option.description
+                                  .toLowerCase()
+                                  .startsWith(
+                                      textEditingValue.text.toLowerCase());
+                            }).toList();
+                    },
+                    displayStringForOption:
+                        _displayStringAdditionalServicesForOption,
+                    optionsViewBuilder: (BuildContext context,
+                        AutocompleteOnSelected<AdditionalService> onSelected,
+                        Iterable<AdditionalService> options) {
+                      return Material(
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: options.length,
+                          itemBuilder: (context, index) {
+                            final option = options.elementAt(index);
+                            return ListTile(
+                              title: Text(
+                                  _displayStringAdditionalServicesForOption(
+                                      option)),
+                              onTap: () {
+                                onSelected(option);
+                              },
+                            );
+                          },
+                        ),
+                      );
+                    },
+                    onSelected: (AdditionalService option) {
+                      setState(() {
+                        isEnableSupplier = false;
+                      });
+                    },
+                    fieldViewBuilder: (context, textEditingController,
+                            focusNode, onFieldSubmitted) =>
+                        TextFormField(
+                            controller: textEditingController,
+                            focusNode: focusNode,
+                            decoration: InputDecoration(
+                              border: OutlineInputBorder(),
+                              labelText: 'Servicio adicional',
+                            )),
+                  ))),
+              SizedBox(
+                width: 20,
+              ),
+              Expanded(
+                  child: RawAutocomplete<ServiceType>(
+                optionsBuilder: (TextEditingValue textEditingValue) {
+                  return services.isEmpty
+                      ? []
+                      : services.where((ServiceType option) {
+                          return option.name
                               .toLowerCase()
                               .startsWith(textEditingValue.text.toLowerCase());
                         }).toList();
-                      },        
+                },
+                displayStringForOption: _displayStringServiceTypeForOption,
                 optionsViewBuilder: (BuildContext context,
                     AutocompleteOnSelected<ServiceType> onSelected,
                     Iterable<ServiceType> options) {
@@ -221,8 +267,10 @@ class _ExpensesEventPage extends State<ExpensesEventPage> {
                       itemBuilder: (context, index) {
                         final option = options.elementAt(index);
                         return ListTile(
-                          title: Text(_displayStringServicesForOption(option)),
+                          title:
+                              Text(_displayStringServiceTypeForOption(option)),
                           onTap: () {
+                            onSelectedServiceType(option, index);
                             onSelected(option);
                           },
                         );
@@ -231,39 +279,44 @@ class _ExpensesEventPage extends State<ExpensesEventPage> {
                   );
                 },
                 onSelected: (ServiceType option) {
-                  onSelectedServiceType(option, index);
+                  setState(() {
+                    selectedServiceType = option;
+                    serviceTypeController.text = option.name;
+                    getSuppliersForServiceType(option, index);
+                  });
                 },
-                fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) => 
-                TextFormField(
-                  controller: textEditingController,
-                  focusNode: focusNode,
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(),
-                    labelText: 'Tipo de Servicio',
-                  
-                  )
-                ),
-                )
+                fieldViewBuilder: (context, textEditingController, focusNode,
+                        onFieldSubmitted) =>
+                    TextFormField(
+                        controller: textEditingController,
+                        focusNode: focusNode,
+                        enabled: isEnableSupplier,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(),
+                          labelText: 'Tipo de servicio',
+                        )),
+              )),
+              SizedBox(
+                width: 20,
               ),
-              SizedBox(width: 20,),
-               SizedBox(width: 20,),
               Expanded(
                   child: RawAutocomplete<Supplier>(
-                  displayStringForOption: _displayStringSuppliersForOption,
-                  key: UniqueKey(),
-                  focusNode: supplierFocusNode,
-                  textEditingController: supplierEditorController,
-                      optionsBuilder: (TextEditingValue textEditingValue) {
-                        if(suppliersMap.isEmpty || suppliersMap[index] == null){
-                          // log("No suppliers found");
-                          return [];
-                        }
-                        return suppliersMap[index]!.where((Supplier option) {
-                          return option.name.toLowerCase()
-                              .toLowerCase()
-                              .startsWith(textEditingValue.text.toLowerCase());
-                        }).toList();
-                      },        
+                displayStringForOption: _displayStringSuppliersForOption,
+                key: UniqueKey(),
+                focusNode: supplierFocusNode,
+                textEditingController: supplierEditorController,
+                optionsBuilder: (TextEditingValue textEditingValue) {
+                  if (suppliersMap.isEmpty || suppliersMap[index] == null) {
+                    // log("No suppliers found");
+                    return [];
+                  }
+                  return suppliersMap[index]!.where((Supplier option) {
+                    return option.name
+                        .toLowerCase()
+                        .toLowerCase()
+                        .startsWith(textEditingValue.text.toLowerCase());
+                  }).toList();
+                },
                 optionsViewBuilder: (BuildContext context,
                     AutocompleteOnSelected<Supplier> onSelected,
                     Iterable<Supplier> options) {
@@ -284,26 +337,27 @@ class _ExpensesEventPage extends State<ExpensesEventPage> {
                   );
                 },
                 onSelected: (Supplier option) {
-                  setState(() {
-                    selectedAdditionalServiceSuppliers[index] = option;
-                    additionalServiceSupplierControllers[index].text = "${option.name} ${option.lastName}";
-                  });
+                  // setState(() {
+                  //   selectedAdditionalServiceSuppliers[index] = option;
+                  //   additionalServiceSupplierControllers[index].text = "${option.name} ${option.lastName}";
+                  // });
                 },
-                fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) => 
-                TextFormField(
-                  controller: textEditingController,
-                  focusNode: focusNode,
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(),
-                    labelText: 'Proveedor',
-                  
-                  )
-                ),
-                )
+                fieldViewBuilder: (context, textEditingController, focusNode,
+                        onFieldSubmitted) =>
+                    TextFormField(
+                        controller: textEditingController,
+                        focusNode: focusNode,
+                        enabled: isEnableSupplier,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(),
+                          labelText: 'Proveedor',
+                        )),
+              )),
+              SizedBox(
+                width: 20,
               ),
-              SizedBox(width: 20,),
-              Expanded(child: 
-                TextFormField(
+              Expanded(
+                child: TextFormField(
                   controller: descriptionController,
                   decoration: InputDecoration(
                     border: OutlineInputBorder(),
@@ -311,10 +365,12 @@ class _ExpensesEventPage extends State<ExpensesEventPage> {
                   ),
                 ),
               ),
-              SizedBox(width: 20,),
-              Expanded(child: 
-                TextFormField(
-                  controller: customerCostController,
+              SizedBox(
+                width: 20,
+              ),
+              Expanded(
+                child: TextFormField(
+                  controller: paymentValueController,
                   inputFormatters: [ThousandsSeparatorInputFormatter()],
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
@@ -346,7 +402,7 @@ class _ExpensesEventPage extends State<ExpensesEventPage> {
                           TextButton(
                             onPressed: () {
                               setState(() {
-                                expensesWidgets.removeAt(index - 1 );
+                                expensesWidgets.removeAt(index - 1);
                               });
                               Navigator.of(context).pop();
                             },
@@ -358,7 +414,9 @@ class _ExpensesEventPage extends State<ExpensesEventPage> {
                   );
                 },
               ),
-              SizedBox(width: 20,)
+              SizedBox(
+                width: 20,
+              )
             ],
           )
         ],
@@ -380,15 +438,14 @@ class _ExpensesEventPage extends State<ExpensesEventPage> {
               height: 22,
             ),
             Row(
-              
               children: [
-                SizedBox(width: 20),
-                Expanded(child: Text('Total de Pagos: ')),
                 SizedBox(width: 20),
                 Expanded(
                   child: Text(
                     textAlign: TextAlign.left,
-                    selectedEvent!.totalAdditional.toString(),
+                    expenses.isNotEmpty
+                        ? "Total : \$${expenses.map((e) => e.amount).reduce((a, b) => a + b).toStringAsFixed(2)}"
+                        : "Total: \$0.00",
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -398,10 +455,10 @@ class _ExpensesEventPage extends State<ExpensesEventPage> {
               ],
             ),
             SizedBox(height: 22),
-                Column(
-                  children: expensesWidgets,
-                ), 
-            SizedBox(height: 30), 
+            Column(
+              children: expensesWidgets,
+            ),
+            SizedBox(height: 30),
             Row(
               children: [
                 Expanded(
@@ -414,9 +471,9 @@ class _ExpensesEventPage extends State<ExpensesEventPage> {
                       backgroundColor: WidgetStateProperty.all(Colors.blue),
                     ),
                     onPressed: () {
-                      addAdditionalServiceWidget();
+                      eventPaymentsWidget();
                     },
-                    child: Text("Agregar personal"),
+                    child: Text("Agregar pago"),
                   ),
                 ),
                 SizedBox(width: 20),
@@ -426,7 +483,6 @@ class _ExpensesEventPage extends State<ExpensesEventPage> {
                       foregroundColor: WidgetStateProperty.all(Colors.white),
                       textStyle: WidgetStateProperty.all(
                         TextStyle(fontSize: 20),
-
                       ),
                       backgroundColor: WidgetStateProperty.all(Colors.blue),
                     ),
@@ -437,8 +493,8 @@ class _ExpensesEventPage extends State<ExpensesEventPage> {
                         builder: (BuildContext context) {
                           return AlertDialog(
                             title: Text("Guardar Pagos"),
-                            content: Text(
-                                "¿Estás seguro de que deseas guardar ?"),
+                            content:
+                                Text("¿Estás seguro de que deseas guardar ?"),
                             actions: [
                               TextButton(
                                 onPressed: () {
@@ -461,14 +517,12 @@ class _ExpensesEventPage extends State<ExpensesEventPage> {
                     child: Text("Guardar"),
                   ),
                 ),
-                Expanded(
-                  flex: 2,
-                  child: Text('')),
+                Expanded(flex: 2, child: Text('')),
               ],
             ),
             SizedBox(height: 22),
             // Row( children: [
-               
+
             //   ],
             // ),
           ],

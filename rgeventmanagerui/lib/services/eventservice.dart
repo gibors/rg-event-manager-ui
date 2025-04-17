@@ -7,6 +7,7 @@ import 'package:rg_event_management_ui/models/AdditionalService.dart';
 import 'package:rg_event_management_ui/models/AdditionalServiceResponse.dart';
 import 'package:rg_event_management_ui/models/Event.dart' as eventprefix;
 import 'package:rg_event_management_ui/models/EventEmployeePayment.dart';
+import 'package:rg_event_management_ui/models/EventPay.dart';
 import 'package:rg_event_management_ui/models/Supplier.dart';
 import 'package:rg_event_management_ui/models/Student.dart';
 
@@ -432,6 +433,17 @@ class EventService {
     } catch (e) {
       throw Exception('Failed to delete event employee payment: $e');
     }
+  }
+
+  Future<List<EventPay>> getAllEventPayments(String token, int eventId) async 
+  {
+     var response = await _dio.get(
+       'https://localhost:8443/api/v1/event-outcomes/payments/events/$eventId',
+       options: Options(headers: {'Authorization': 'Bearer $token'})
+     );
+      final data = response.data as List<dynamic>;
+      final eventPayments = data.map((eventPayment) => EventPay.fromJson(eventPayment)).toList();
+      return eventPayments;
   }
 
   static Dio createDio(
