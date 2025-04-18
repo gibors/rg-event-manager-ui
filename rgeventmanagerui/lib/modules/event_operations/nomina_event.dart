@@ -1,14 +1,11 @@
 import 'dart:io';
-import 'dart:math';
 
 import 'package:another_flushbar/flushbar.dart';
 import 'package:filepicker_windows/filepicker_windows.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:rg_event_management_ui/formatters/ThousandsSeparatorInputFormatter.dart';
 import 'package:rg_event_management_ui/main.dart';
 import 'package:rg_event_management_ui/models/EventEmployeePayment.dart';
-import 'package:rg_event_management_ui/models/Supplier.dart';
 import 'package:rg_event_management_ui/services/eventservice.dart';
 
 class AddEmployeePaymentPage extends StatefulWidget {

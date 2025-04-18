@@ -557,7 +557,7 @@ class _EventsPage extends State<EventsPage> {
                                             3 &&
                                         appState.selectedEvent!.eventDate
                                             .isAfter(DateTime.now()),
-                                    child: Text('Servicios adicionales',
+                                    child: Text('Administrar Servicios adicionales',
                                         style: Theme.of(context)
                                             .textTheme
                                             .bodyLarge),
@@ -602,7 +602,7 @@ class _EventsPage extends State<EventsPage> {
                                                               .eventType.id ==
                                                           3
                                                   ? 'Administrar graduados'
-                                                  : 'Administrar Pago',
+                                                  : 'Cobro clientes',
                                               style: Theme.of(context)
                                                   .textTheme
                                                   .bodyLarge),
@@ -651,7 +651,7 @@ class _EventsPage extends State<EventsPage> {
                                     },
                                   ), 
                                   SizedBox(width: 20),
-                                  Text('gastos del evento',
+                                  Text('pagos del evento',
                                       style: Theme.of(context).textTheme.bodyLarge),
                                   IconButton(
                                     icon: Icon(Icons.payment_rounded),
