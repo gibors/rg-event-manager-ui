@@ -409,13 +409,14 @@ class EventService {
       List<EventEmployeePayment> eventEmployeePayment, String token, int eventId) async {
     try {
       var data = eventEmployeePayment.map((payment) => payment.toJson()).toList();
-      log('data: $data');
       final response = await _dio.post(
           'https://localhost:8443/api/v1/event-outcomes/employees/payments/events/$eventId.',
           data: data,
           options: Options(headers: {'Authorization': 'Bearer $token'}));
 
       final dataResponse = response.data as List<dynamic>;
+      log('data: $dataResponse');
+
       final eventempPayments = dataResponse.map((e) => EventEmployeePayment.fromJson(e)).toList();
       return eventempPayments;
     } catch (e) {
@@ -444,6 +445,26 @@ class EventService {
       final data = response.data as List<dynamic>;
       final eventPayments = data.map((eventPayment) => EventPay.fromJson(eventPayment)).toList();
       return eventPayments;
+  }
+
+  Future<List<EventPay>> saveEventPayments(String token, List<EventPay> eventPayments) async {
+    try {
+      var data = eventPayments.map((payment) => payment.toJson()).toList();
+      final response = await _dio.post(
+          'https://localhost:8443/api/v1/event-outcomes/payments/events',
+          data: data,
+          options: Options(headers: {'Authorization': 'Bearer $token'}));
+
+      final dataResponse = response.data as List<dynamic>;
+      log('data: $dataResponse');
+
+      final eventPay = dataResponse.map((e) => EventPay.fromJson(e)).toList();
+      return eventPay;
+    } catch (e) {
+      throw Exception('Failed to create event employee payment: $e');
+    }
+
+    
   }
 
   static Dio createDio(

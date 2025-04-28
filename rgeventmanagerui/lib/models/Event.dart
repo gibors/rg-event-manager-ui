@@ -68,7 +68,7 @@ class Event {
       contacts: (json['contacts'] as List)
           .map((contact) => Contact.fromJson(contact))
           .toList(),
-      createdDate: DateTime.parse(json['createdDate']),
+      createdDate: DateTime.parse(json['createdDate']) ,
       eventDate: DateTime.parse(json['eventDate']),
       updatedDate: DateTime.parse(json['updatedDate']),
       createdBy: json['createdBy'] ?? '',
@@ -93,10 +93,13 @@ class Event {
       'id': id == -1 ? null : id,
       'name': name,
       'minCapacity': minCapacity,
+      'folio': folio,
       'eventType': eventType.toJson(),
       'location': location.toJson(),
       'pricing': pricing.toJson(),
       'eventDate': eventDate.toLocal().toIso8601String(),
+      // 'createdDate': createdDate.toLocal().toIso8601String(),
+      // 'updatedDate': updatedDate.toLocal().toIso8601String(),
       'contacts': contacts.map((contact) => contact.toJson()).toList(),
       'grade': grade,
       'school': school,

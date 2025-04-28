@@ -1,10 +1,9 @@
-import 'package:rg_event_management_ui/models/Event.dart';
 import 'package:rg_event_management_ui/models/User.dart';
 
 class EventEmployeePayment {
   
   final int id;
-  final Event event;
+  final int eventId;
   final String jobCategory;
   final String job;
   final double quantity;
@@ -17,7 +16,7 @@ class EventEmployeePayment {
 
   EventEmployeePayment({
     required this.id,
-    required this.event,
+    required this.eventId,
     required this.jobCategory,
     required this.job,
     required this.quantity,
@@ -32,7 +31,7 @@ class EventEmployeePayment {
   factory EventEmployeePayment.fromJson(Map<String, dynamic> json) {
     return EventEmployeePayment(
       id: json['id'],
-      event: Event.fromJson(json['event']),
+      eventId: json['eventId'],
       jobCategory: json['jobCategory'],
       job: json['job'],
       quantity: json['quantity'],
@@ -47,7 +46,7 @@ class EventEmployeePayment {
 
   Map<String, dynamic> toJson() => {
     'id': id == 0 ? null : id,
-    'event': event.toJson(),
+    'eventId': eventId,
     'jobCategory': jobCategory,
     'job': job,
     'quantity': quantity,

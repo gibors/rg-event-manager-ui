@@ -1,4 +1,3 @@
-import 'package:another_flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rg_event_management_ui/formatters/ThousandsSeparatorInputFormatter.dart';
@@ -15,26 +14,30 @@ class ExpensesEventPage extends StatefulWidget {
 
 class _ExpensesEventPage extends State<ExpensesEventPage> {
   var appState;
-  final _formKey = GlobalKey<FormState>();
   var token = "";
   var selectedEvent;
   bool isEditMode = false;
   bool isEnableSupplier = true;
-  List<ServiceType> services = [];
+  List<ServiceType> serviceTypes = [];
   Map<int, List<Supplier>> suppliersMap = {};
+  Map<int, List<ServiceType>> serviceTypeMaps = {};
+
   List<AdditionalService> additionalServices = [];
   List<EventPay> expenses = [];
   List<Widget> expensesWidgets = [];
 
-  // list controllres to keep track of the values
+  // list controllers to keep track of the values
 
   List<int> eventPaymentIds = [];
-  List<TextEditingController> eventPayDescriptionControllers = [];
+  List<AdditionalService?> selectedAdditionalServices = [];
   List<ServiceType?> selectedServiceTypes = [];
-  List<TextEditingController> eventPaymentServiceTypeControllers = [];
-  List<Supplier?> selectedAdditionalServiceSuppliers = [];
-  List<TextEditingController> additionalServiceSupplierControllers = [];
+  List<Supplier?> selectedSuppliers = [];
+
+  List<TextEditingController> additionalServiceControllers = [];
+  List<TextEditingController> serviceTypeControllers = [];
+  List<TextEditingController> supplierControllers = [];
   List<TextEditingController> paymentValueControllers = [];
+  List<TextEditingController> eventPayDescriptionControllers = [];
 
   static String _displayStringServiceTypeForOption(ServiceType option) =>
       option.name;
@@ -51,7 +54,7 @@ class _ExpensesEventPage extends State<ExpensesEventPage> {
     selectedEvent = appState.selectedEvent;
 
     EventService()
-        .getAdditionalServiceByEventId(token, selectedEvent.id)
+        .getAdditionalServiceByEventId(token, selectedEvent!.id)
         .then((value) {
       setState(() {
         additionalServices = value;
@@ -60,34 +63,42 @@ class _ExpensesEventPage extends State<ExpensesEventPage> {
 
     EventService().getServices(token).then((value) {
       setState(() {
-        services = value;
+        serviceTypes = value;
       });
     });
 
-    EventService().getAllEventPayments(token, selectedEvent.id).then((value) {
+    EventService().getAllEventPayments(token, selectedEvent!.id).then((value) {
       setState(() {
         expenses = value;
-        if (value.isNotEmpty) {
-          for (var expense in expenses) {
-            eventPaymentsWidget(expense);
-          }
-        } else {
-          eventPaymentsWidget();
-        }
       });
     });
 
+    buildEventPaymentsWidget();
+
     super.initState();
+  }
+
+  void buildEventPaymentsWidget() {
+    if (expenses.isNotEmpty) {
+      for (var expense in expenses) {
+        eventPaymentsWidget(expense);
+      }
+    } else {
+      eventPaymentsWidget();
+    }
+  }
+
+  onSelectAdditionalService(int index, AdditionalService option) {
+    selectedAdditionalServices[index] = option;
+    selectedServiceTypes[index] = option.serviceType;
+    serviceTypeControllers[index].text = option.serviceType.description;
   }
 
   onSelectedServiceType(ServiceType option, int index) {
     EventService().getProvidersByService(token, option.id).then((value) {
       setState(() {
         selectedServiceTypes[index] = option;
-        eventPaymentServiceTypeControllers[index].text = option.name.toString();
-
-        // selectedAdditionalServiceSuppliers[index] = null;
-        // additionalServiceSupplierControllers[index].text = "";
+        serviceTypeControllers[index].text = option.name.toString();
 
         if (suppliersMap.isNotEmpty && value.isNotEmpty) {
           suppliersMap[index] = value;
@@ -110,71 +121,105 @@ class _ExpensesEventPage extends State<ExpensesEventPage> {
     });
   }
 
-  //TODO: Save Additional Services
+  //TODO: Save expenses
   void saveAdditionalServices() {
-    expenses = [];
-    var eventTotalAdditional = 0.0;
+    List<EventPay> eventPayments = [];
     for (int i = 0; i < expensesWidgets.length; i++) {
-  
+      EventPay eventPay = EventPay(
+        id: eventPaymentIds[i],
+        eventId: selectedEvent!.id,
+        supplier: selectedSuppliers[i],
+        additionalService: selectedAdditionalServices[i],
+        paymentReason: "",
+        description: eventPayDescriptionControllers[i].text,
+        amount: double.parse(paymentValueControllers[i].text.replaceAll(",", "")),
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        addedBy: appState.user,
+        updateBy: appState.user,
+      );
+      eventPayments.add(eventPay);
     }
-    selectedEvent!.totalAdditional = eventTotalAdditional;
-    selectedEvent!.additionalServices.clear();
-    selectedEvent!.additionalServices.addAll(expenses);
+    EventService().saveEventPayments(token, eventPayments).then((value) {
+      if (value.isNotEmpty) {
+        setState(() {
+          expenses = value;
+          expensesWidgets.clear();
+          additionalServiceControllers.clear();
+          serviceTypeControllers.clear();
+          supplierControllers.clear();
+          eventPayDescriptionControllers.clear();
+          selectedAdditionalServices.clear();
+          selectedServiceTypes.clear();
+          selectedSuppliers.clear();
+        });
+        buildEventPaymentsWidget();
+      } else {
+        // Handle error
+        
+      }
+    });
+  }
 
-    EventService().createOrUpdateEvent(selectedEvent, token).then((value) {
-      Flushbar(
-        showProgressIndicator: true,
-        flushbarPosition: FlushbarPosition.TOP,
-        backgroundColor: Colors.green,
-        title: "Pago de nomina del evento",
-        message: "Servicios adicionales guardados correctamente",
-        duration: Duration(seconds: 3),
-      ).show(context);
+
+//TODO: Delete event payment
+  void deleteEventPayments(int index) {
+    setState(() {
+      expensesWidgets.removeAt(index);
+      eventPaymentIds.removeAt(index);
+      additionalServiceControllers.removeAt(index);
+      serviceTypeControllers.removeAt(index);
+      supplierControllers.removeAt(index);
+      eventPayDescriptionControllers.removeAt(index);
+      selectedAdditionalServices.removeAt(index);
+      selectedServiceTypes.removeAt(index);
+      selectedSuppliers.removeAt(index);  
     });
   }
 
   void eventPaymentsWidget([EventPay? eventPay]) {
-    TextEditingController additionalServiceDescriptionController = TextEditingController();
+    FocusNode supplierFocusNode = FocusNode();
+
+    TextEditingController additionalServiceController = TextEditingController();
     TextEditingController serviceTypeController = TextEditingController();
     TextEditingController supplierEditorController = TextEditingController();
-    
-    FocusNode additionalServiceDescriptionFocusNode = FocusNode();
-    FocusNode serviceTypeFocusNode = FocusNode();
-    FocusNode supplierFocusNode = FocusNode();
-    
     TextEditingController descriptionController = TextEditingController();
     TextEditingController paymentValueController = TextEditingController();
 
     int index = expensesWidgets.length;
-    AdditionalService? selectedAdditionalService;
-    ServiceType? selectedServiceType;
-    Supplier? selectedSupplier;
 
     if (eventPay != null) {
-      // selectedAdditionalService = eventPay!.supplier!.
+      // ignore: unnecessary_null_comparison
+
+      eventPaymentIds.add(eventPay.id);
+      suppliersMap[index] = [];
+      serviceTypeMaps[index] =
+          eventPay.additionalService != null ? [] : serviceTypes;
+
+      additionalServiceController.text = ""; // TODO:
+      supplierEditorController.text = eventPay.supplier != null
+          ? "${eventPay.supplier!.name} ${eventPay.supplier!.lastName}"
+          : "";
+      serviceTypeController.text = eventPay.supplier != null
+          ? eventPay.supplier!.serviceType.description
+          : "";
+      paymentValueController.text = eventPay.amount.toString();
       descriptionController.text = eventPay.description;
 
-      supplierEditorController.text = selectedSupplier != null
-          ? "${selectedSupplier.name} ${eventPay.supplier.lastName}"
-          : "";
-
-      paymentValueController.text = eventPay.amount.toString();
-      eventPaymentIds.add(eventPay.id);
-      eventPayDescriptionControllers.add(descriptionController);
-      eventPaymentServiceTypeControllers.add(serviceTypeController);
-      selectedAdditionalServiceSuppliers.add(selectedSupplier);
-      additionalServiceSupplierControllers.add(supplierEditorController);
-
-      suppliersMap[index] = [];
+      selectedAdditionalServices.add(eventPay.additionalService!);
+      selectedServiceTypes.add(eventPay.additionalService!.serviceType);
     } else {
       eventPaymentIds.add(0);
-      eventPayDescriptionControllers.add(descriptionController);
-      eventPaymentServiceTypeControllers.add(serviceTypeController);
-      selectedAdditionalServiceSuppliers.add(selectedSupplier);
-      additionalServiceSupplierControllers.add(supplierEditorController);
-
       suppliersMap[index] = [];
+      serviceTypeMaps[index] = serviceTypes;
+      selectedAdditionalServices.add(null);
+      selectedServiceTypes.add(null);
     }
+
+    additionalServiceControllers.add(additionalServiceController);
+    serviceTypeControllers.add(serviceTypeController);
+    supplierControllers.add(supplierEditorController);
+    eventPayDescriptionControllers.add(descriptionController);
 
     setState(() {
       expensesWidgets.add(Column(
@@ -203,6 +248,8 @@ class _ExpensesEventPage extends State<ExpensesEventPage> {
                                       textEditingValue.text.toLowerCase());
                             }).toList();
                     },
+                    textEditingController: additionalServiceController,
+                    focusNode: FocusNode(),
                     displayStringForOption:
                         _displayStringAdditionalServicesForOption,
                     optionsViewBuilder: (BuildContext context,
@@ -228,7 +275,7 @@ class _ExpensesEventPage extends State<ExpensesEventPage> {
                     },
                     onSelected: (AdditionalService option) {
                       setState(() {
-                        isEnableSupplier = false;
+                        onSelectAdditionalService(index, option);
                       });
                     },
                     fieldViewBuilder: (context, textEditingController,
@@ -247,14 +294,16 @@ class _ExpensesEventPage extends State<ExpensesEventPage> {
               Expanded(
                   child: RawAutocomplete<ServiceType>(
                 optionsBuilder: (TextEditingValue textEditingValue) {
-                  return services.isEmpty
+                  return serviceTypeMaps[index]!.isEmpty
                       ? []
-                      : services.where((ServiceType option) {
+                      : serviceTypeMaps[index]!.where((ServiceType option) {
                           return option.name
                               .toLowerCase()
                               .startsWith(textEditingValue.text.toLowerCase());
                         }).toList();
                 },
+                textEditingController: serviceTypeController,
+                focusNode: FocusNode(),
                 displayStringForOption: _displayStringServiceTypeForOption,
                 optionsViewBuilder: (BuildContext context,
                     AutocompleteOnSelected<ServiceType> onSelected,
@@ -279,7 +328,6 @@ class _ExpensesEventPage extends State<ExpensesEventPage> {
                 },
                 onSelected: (ServiceType option) {
                   setState(() {
-                    selectedServiceType = option;
                     serviceTypeController.text = option.name;
                     getSuppliersForServiceType(option, index);
                   });
@@ -289,7 +337,6 @@ class _ExpensesEventPage extends State<ExpensesEventPage> {
                     TextFormField(
                         controller: textEditingController,
                         focusNode: focusNode,
-                        enabled: isEnableSupplier,
                         decoration: InputDecoration(
                           border: OutlineInputBorder(),
                           labelText: 'Tipo de servicio',
@@ -306,7 +353,6 @@ class _ExpensesEventPage extends State<ExpensesEventPage> {
                 textEditingController: supplierEditorController,
                 optionsBuilder: (TextEditingValue textEditingValue) {
                   if (suppliersMap.isEmpty || suppliersMap[index] == null) {
-                    // log("No suppliers found");
                     return [];
                   }
                   return suppliersMap[index]!.where((Supplier option) {
@@ -336,10 +382,9 @@ class _ExpensesEventPage extends State<ExpensesEventPage> {
                   );
                 },
                 onSelected: (Supplier option) {
-                  // setState(() {
-                  //   selectedAdditionalServiceSuppliers[index] = option;
-                  //   additionalServiceSupplierControllers[index].text = "${option.name} ${option.lastName}";
-                  // });
+                  setState(() {
+                    selectedSuppliers[index] = option;
+                  });
                 },
                 fieldViewBuilder: (context, textEditingController, focusNode,
                         onFieldSubmitted) =>
@@ -400,9 +445,6 @@ class _ExpensesEventPage extends State<ExpensesEventPage> {
                           ),
                           TextButton(
                             onPressed: () {
-                              setState(() {
-                                expensesWidgets.removeAt(index - 1);
-                              });
                               Navigator.of(context).pop();
                             },
                             child: Text("Eliminar"),

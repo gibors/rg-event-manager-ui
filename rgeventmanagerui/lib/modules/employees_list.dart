@@ -9,14 +9,12 @@ import 'package:rg_event_management_ui/modules/add_employee.dart';
 import 'package:rg_event_management_ui/services/employees_service.dart';
 
 class EmployeesView extends StatefulWidget {
-  // const EmployeesView({Key? key}) : super(key: key);
 
   @override
   _EmployeesViewState createState() => _EmployeesViewState();
 }
 
 class _EmployeesViewState extends State<EmployeesView> {
-  // final _key = GlobalKey();
   var appState;
   Employee ? SelectedEmployee;
   final controller = ScrollController();

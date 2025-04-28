@@ -95,15 +95,15 @@ class _AddEmployeePaymentPage extends State<AddEmployeePaymentPage> {
         quantity: quantity,
         unitPayment: unitPayment,
         subtotal: subTotal,
-        event: selectedEvent!,
+        eventId: selectedEvent!.id,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
         addedBy: appState.selectedUser!,
         updateBy: appState.selectedUser!,
       );
-      setState(() {
-        eventEmployeePayments.add(employeePayment);
-      });
+      // setState(() {
+      eventEmployeePayments.add(employeePayment);
+      // });
     }
     EventService()
         .saveEventEmployeePayment(
@@ -113,8 +113,10 @@ class _AddEmployeePaymentPage extends State<AddEmployeePaymentPage> {
         setState(() {
           employeePaymentsWidgets = [];
           eventEmployeePayments = value;
-          buildEmployeePaymentsWidgets();
         });
+      
+        buildEmployeePaymentsWidgets();
+
         showDialog(
           context: context,
           builder: (BuildContext context) {
@@ -151,20 +153,47 @@ class _AddEmployeePaymentPage extends State<AddEmployeePaymentPage> {
           },
         );
       }
+    },
+        onError: (error) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text("Error"),
+            content: Text("Ocurrió un error al guardar los pagos de nómina"),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text("Aceptar"),
+              ),
+            ],
+          );
+        },
+      );
     });
   }
 
   void buildEmployeePaymentsWidgets() {
+    
+    jobCategoriesControllers = [];
+    JobPositionControllers = [];
+    employeesQuantityTypeControllers = [];
+    unitPaymentsControllers = [];
+    SubTotalControllers = [];
+
     if (eventEmployeePayments.isNotEmpty) {
       for (var cat in jobCategories.keys) {
         addSeparator(cat);
+       for (var job in jobCategories[cat]!) { 
+          var employeeInJob = eventEmployeePayments
+              .where((element) => element.jobCategory == cat)
+              .where((element) => element.job == job).firstOrNull;
 
-        var employeesInCategory = eventEmployeePayments
-            .where((element) => element.jobCategory == cat)
-            .toList();
-
-        for (var emp in employeesInCategory) {
-          addNominaWidget(cat, emp.job, emp);
+          if(employeeInJob != null) {
+            addNominaWidget(cat, job, employeeInJob);
+          } 
         }
       }
     } else {
@@ -251,6 +280,7 @@ class _AddEmployeePaymentPage extends State<AddEmployeePaymentPage> {
   }
 
   void addNominaWidget(category, job, [EventEmployeePayment? employeePayment]) {
+   
     TextEditingController categoryController = TextEditingController();
     TextEditingController jobController = TextEditingController();
     TextEditingController employeeQuantityController = TextEditingController();
@@ -262,12 +292,14 @@ class _AddEmployeePaymentPage extends State<AddEmployeePaymentPage> {
     final focusJob = FocusNode();
 
     if (employeePayment != null) {
+      
       nominaIds.add(employeePayment.id);
       categoryController.text = employeePayment.jobCategory;
       jobController.text = employeePayment.job;
       employeeQuantityController.text = employeePayment.quantity.toString();
       unitPaymentController.text = employeePayment.unitPayment.toString();
       subTotalController.text = employeePayment.subtotal.toString();
+
     } else {
       nominaIds.add(0);
       categoryController.text = category;
@@ -276,11 +308,12 @@ class _AddEmployeePaymentPage extends State<AddEmployeePaymentPage> {
       unitPaymentController.text = '0';
       subTotalController.text = '0';
     }
-    jobCategoriesControllers.add(categoryController);
-    JobPositionControllers.add(jobController);
-    employeesQuantityTypeControllers.add(employeeQuantityController);
-    unitPaymentsControllers.add(unitPaymentController);
-    SubTotalControllers.add(subTotalController);
+      jobCategoriesControllers.add(categoryController);
+      JobPositionControllers.add(jobController);
+      employeesQuantityTypeControllers.add(employeeQuantityController);
+      unitPaymentsControllers.add(unitPaymentController);
+      SubTotalControllers.add(subTotalController);
+
 
     setState(() {
       employeePaymentsWidgets.add(Column(
@@ -365,6 +398,7 @@ class _AddEmployeePaymentPage extends State<AddEmployeePaymentPage> {
       child: Scaffold(
         appBar: AppBar(
           title: Text("Nómina del Evento"),
+          backgroundColor: Colors.blue,
           leading: IconButton(
             icon: Icon(Icons.arrow_back),
             onPressed: () {

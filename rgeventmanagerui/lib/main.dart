@@ -250,17 +250,18 @@ class _EventsHomePageState extends State<EventsHomePage> {
                           label: Text('Empleados'),
                         ),
                         NavigationRailDestination(
-                          disabled: appState.selectedUser != null && appState.selectedUser!.role != 1,
+                          disabled: true,// appState.selectedUser != null && appState.selectedUser!.role != 1,
                           icon: Icon(Icons.payment_sharp),
                           label: Text('Nomina y comisiones'),
                         ),
                         NavigationRailDestination(
                           icon: Icon(Icons.attach_money),
-                          disabled: appState.selectedUser != null && appState.selectedUser!.role != 1,
+                          disabled: true, //appState.selectedUser != null && appState.selectedUser!.role != 1,
                           label: Text('Pagos y gastos'),
                         ),
                         NavigationRailDestination(
                           icon: Icon(Icons.money_rounded),
+                          disabled: true,
                           label: Text('Cotización'),
                         ),
                         NavigationRailDestination(
@@ -654,12 +655,13 @@ class _EventsPage extends State<EventsPage> {
                                   Text('pagos del evento',
                                       style: Theme.of(context).textTheme.bodyLarge),
                                   IconButton(
+                                    
                                     icon: Icon(Icons.payment_rounded),
                                     onPressed: () {
-                                      Navigator.of(context).push(
-                                          MaterialPageRoute(
-                                              builder: (context) =>
-                                                  ExpensesEventPage()));
+                                      // Navigator.of(context).push(
+                                      //     MaterialPageRoute(
+                                      //         builder: (context) =>
+                                      //             ExpensesEventPage()));
                                     },
                                   ),
                                 ],

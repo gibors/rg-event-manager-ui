@@ -1,12 +1,13 @@
-import 'package:rg_event_management_ui/models/Event.dart';
+import 'package:rg_event_management_ui/models/AdditionalService.dart';
 import 'package:rg_event_management_ui/models/Supplier.dart';
 import 'package:rg_event_management_ui/models/User.dart';
 
 class EventPay{
   
   final int id;
-  final Event event;
-  final Supplier supplier;
+  final int eventId;
+  final Supplier? supplier;
+  final AdditionalService? additionalService;
   final String paymentReason;
   final String description;
   final double amount;
@@ -17,8 +18,9 @@ class EventPay{
 
   EventPay({
     required this.id,
-    required this.event,
+    required this.eventId,
     required this.supplier,
+    required this.additionalService,
     required this.paymentReason,
     required this.description,
     required this.amount,
@@ -31,8 +33,9 @@ class EventPay{
   factory EventPay.fromJson(Map<String, dynamic> json) {
     return EventPay(
       id: json['id'],
-      event: Event.fromJson(json['event']),
-      supplier: Supplier.fromJson(json['supplier']),
+      eventId: json['eventId'],
+      supplier: json['supplier'] != null ? Supplier.fromJson(json['supplier']) : null,
+      additionalService: json['additionalService'] != null ? AdditionalService.fromJson(json['additionalService']) : null ,
       paymentReason: json['paymentReason'],
       description: json['description'],
       amount: json['amount'],
@@ -45,8 +48,9 @@ class EventPay{
 
   Map<String, dynamic> toJson() => {
     'id': id == 0 ? null : id,
-    'event': event.toJson(),
-    'supplier': supplier.toJson(),
+    'event': eventId,
+    'supplier': supplier!.toJson() ,
+    'additionalService': additionalService!.toJson(),
     'paymentReason': paymentReason,
     'description': description,
     'amount': amount,
