@@ -8,6 +8,7 @@ import 'package:rg_event_management_ui/models/AdditionalServiceResponse.dart';
 import 'package:rg_event_management_ui/models/Event.dart' as eventprefix;
 import 'package:rg_event_management_ui/models/EventEmployeePayment.dart';
 import 'package:rg_event_management_ui/models/EventPay.dart';
+import 'package:rg_event_management_ui/models/StudentSearchDto.dart';
 import 'package:rg_event_management_ui/models/Supplier.dart';
 import 'package:rg_event_management_ui/models/Student.dart';
 
@@ -94,6 +95,49 @@ class EventService {
     }
   }
 
+  Future<List<Student>> getAllStudents(String token) async {
+    try {
+      final response = await _dio.get('https://localhost:8443/api/v1/students',
+          options: Options(headers: {'Authorization': 'Bearer $token'}));
+
+      final data = response.data as List<dynamic>;
+      final students =
+          data.map((student) => Student.fromJson(student)).toList();
+      return students;
+    } catch (e) {
+      throw Exception('Failed to fetch students: $e');
+    }
+  }
+
+  Future<Student> getStudentById(int id, String token) async {
+     try {
+      final response = await _dio.get('https://localhost:8443/api/v1/students/$id',
+          options: Options(headers: {'Authorization': 'Bearer $token'}));
+
+      final data = response.data;
+      final student = Student.fromJson(data);
+      return student;
+    } catch (e) {
+      throw Exception('Failed to fetch students: $e');
+    }
+  }
+
+  Future<List<StudentSearchDto>> getAllStudentsGraduation(token) async {
+    try{
+    final response = await _dio.get(
+        'https://localhost:8443/api/v1/students/event-types/3',
+        options: Options(headers: {'Authorization': 'Bearer $token'}));
+    final data = response.data as List<dynamic>;
+    final students =
+        data.map((student) => StudentSearchDto.fromJson(student)).toList();
+    return students;
+    }
+    catch (e) {
+      log('Dio get request error: ${e.toString()}');
+      throw Exception('Failed to fetch students: $e');
+    }
+  }
+
   Future<List<Student>> getStudentsByEvent(String token, int eventId) async {
     try {
       final response = await _dio.get(
@@ -108,11 +152,15 @@ class EventService {
     }
   }
 
-  Future<Student> saveStudent(Student student, String token) async {
+  Future<Student> saveStudent(Student student, String token,  bool isAdditionalPay) async {
     try {
-      var data = student.toJson();  
+      var data = student.toJson();
       log('data: $data');
-      final response = await _dio.post('https://localhost:8443/api/v1/students',
+      var url = 'https://localhost:8443/api/v1/students';
+      if(isAdditionalPay) {
+        url = '$url?isAdditionalPayment=true';
+      }
+      final response = await _dio.post(url,
           data: data,
           options: Options(headers: {'Authorization': 'Bearer $token'}));
 
@@ -214,9 +262,10 @@ class EventService {
     }
   }
 
-    Future<List<Supplier>> getProvidersByService(String token, serviceId) async {
+  Future<List<Supplier>> getProvidersByService(String token, serviceId) async {
     try {
-      final response = await _dio.get('https://localhost:8443/api/v1/suppliers/service-type/$serviceId',
+      final response = await _dio.get(
+          'https://localhost:8443/api/v1/suppliers/service-type/$serviceId',
           options: Options(headers: {'Authorization': 'Bearer $token'}));
       final data = response.data as List<dynamic>;
       final providers =
@@ -231,7 +280,8 @@ class EventService {
     try {
       var data = service.toJson();
       log('data: $data');
-      var result = await _dio.post('https://localhost:8443/api/v1/suppliers/service-type',
+      var result = await _dio.post(
+          'https://localhost:8443/api/v1/suppliers/service-type',
           data: data,
           options: Options(headers: {'Authorization': 'Bearer $token'}));
 
@@ -257,24 +307,30 @@ class EventService {
     }
   }
 
-  Future<List<AdditionalService>> getAdditionalServiceByEventId(String token, int eventId) async {
+  Future<List<AdditionalService>> getAdditionalServiceByEventId(
+      String token, int eventId) async {
     try {
       final response = await _dio.get(
           'https://localhost:8443/api/v1/additional-services/events/$eventId',
           options: Options(headers: {'Authorization': 'Bearer $token'}));
       final data = response.data as List<dynamic>;
-      final services = data.map((additionalServices) => AdditionalService.fromJson(additionalServices)).toList();
+      final services = data
+          .map((additionalServices) =>
+              AdditionalService.fromJson(additionalServices))
+          .toList();
       return services;
     } catch (e) {
       throw Exception('Failed to fetch service: $e');
     }
   }
-  
-  Future<Additionalserviceresponse> createAdditionalServices(List<AdditionalService> additionalServices, String token) async {
+
+  Future<Additionalserviceresponse> createAdditionalServices(
+      List<AdditionalService> additionalServices, String token) async {
     try {
       var data = additionalServices.map((service) => service.toJson()).toList();
       log('data: $data');
-      var result = await _dio.post('https://localhost:8443/api/v1/additional-services',
+      var result = await _dio.post(
+          'https://localhost:8443/api/v1/additional-services',
           data: data,
           options: Options(headers: {'Authorization': 'Bearer $token'}));
 
@@ -315,7 +371,8 @@ class EventService {
     }
   }
 
-  Future<String> DownloadGraduationListPDF(token, event, path, isInternal) async {
+  Future<String> DownloadGraduationListPDF(
+      token, event, path, isInternal) async {
     try {
       var current = Directory.current.path;
       log('current path: $current');
@@ -330,7 +387,7 @@ class EventService {
           options: Options(
             headers: {
               'Authorization': 'Bearer $token',
-              'responseType': ResponseType.bytes,              
+              'responseType': ResponseType.bytes,
             },
           )));
       return pathToSave;
@@ -348,25 +405,22 @@ class EventService {
       var pathToSave = '$path/lista-eventos-$timestamp.pdf';
       var downloadAll = eventIds.isEmpty;
       final response = (await _dio.download(
-          'https://localhost:8443/api/v1/events/export-pdf',
-          pathToSave,
+          'https://localhost:8443/api/v1/events/export-pdf', pathToSave,
           data: {'eventIds': eventIds, 'exportAllEvents': downloadAll},
           options: Options(
             headers: {
               'Authorization': 'Bearer $token',
-              'responseType': ResponseType.bytes,              
+              'responseType': ResponseType.bytes,
             },
           )));
       return pathToSave;
-      
     } catch (e) {
       log('Failed to fetch next folio: $e.toString()');
       throw Exception('Failed to fetch next folio: $e');
     }
   }
 
-  Future<String> DownloadEventEmployeePayments(
-      token, int eventId, path) async {
+  Future<String> DownloadEventEmployeePayments(token, int eventId, path) async {
     try {
       var current = Directory.current.path;
       log('current path: $current');
@@ -378,7 +432,7 @@ class EventService {
           options: Options(
             headers: {
               'Authorization': 'Bearer $token',
-              'responseType': ResponseType.bytes,              
+              'responseType': ResponseType.bytes,
             },
           )));
       return pathToSave;
@@ -406,9 +460,12 @@ class EventService {
   }
 
   Future<List<EventEmployeePayment>> saveEventEmployeePayment(
-      List<EventEmployeePayment> eventEmployeePayment, String token, int eventId) async {
+      List<EventEmployeePayment> eventEmployeePayment,
+      String token,
+      int eventId) async {
     try {
-      var data = eventEmployeePayment.map((payment) => payment.toJson()).toList();
+      var data =
+          eventEmployeePayment.map((payment) => payment.toJson()).toList();
       final response = await _dio.post(
           'https://localhost:8443/api/v1/event-outcomes/employees/payments/events/$eventId.',
           data: data,
@@ -417,7 +474,8 @@ class EventService {
       final dataResponse = response.data as List<dynamic>;
       log('data: $dataResponse');
 
-      final eventempPayments = dataResponse.map((e) => EventEmployeePayment.fromJson(e)).toList();
+      final eventempPayments =
+          dataResponse.map((e) => EventEmployeePayment.fromJson(e)).toList();
       return eventempPayments;
     } catch (e) {
       throw Exception('Failed to create event employee payment: $e');
@@ -436,22 +494,22 @@ class EventService {
     }
   }
 
-  Future<List<EventPay>> getAllEventPayments(String token, int eventId) async 
-  {
-     var response = await _dio.get(
-       'https://localhost:8443/api/v1/event-outcomes/payments/events/$eventId',
-       options: Options(headers: {'Authorization': 'Bearer $token'})
-     );
-      final data = response.data as List<dynamic>;
-      final eventPayments = data.map((eventPayment) => EventPay.fromJson(eventPayment)).toList();
-      return eventPayments;
+  Future<List<EventPay>> getAllEventPayments(String token, int eventId) async {
+    var response = await _dio.get(
+        'https://localhost:8443/api/v1/event-outcomes/payments/events/$eventId',
+        options: Options(headers: {'Authorization': 'Bearer $token'}));
+    final data = response.data as List<dynamic>;
+    final eventPayments =
+        data.map((eventPayment) => EventPay.fromJson(eventPayment)).toList();
+    return eventPayments;
   }
 
-  Future<List<EventPay>> saveEventPayments(String token, List<EventPay> eventPayments) async {
+  Future<List<EventPay>> saveEventPayments(
+      String token, List<EventPay> eventPayments) async {
     try {
       var data = eventPayments.map((payment) => payment.toJson()).toList();
       final response = await _dio.post(
-          'https://localhost:8443/api/v1/event-outcomes/payments/events',
+          'https://localhost:8443/api/v1/event-outcomes/payments/events/${eventPayments[0].eventId}',
           data: data,
           options: Options(headers: {'Authorization': 'Bearer $token'}));
 
@@ -461,10 +519,22 @@ class EventService {
       final eventPay = dataResponse.map((e) => EventPay.fromJson(e)).toList();
       return eventPay;
     } catch (e) {
+      log('Dio saving event, post request error: ${e.toString()}');
       throw Exception('Failed to create event employee payment: $e');
     }
+  }
 
-    
+  Future<String> deleteEventPayment(int eventPaymentId, String token) async {
+    try {
+      var response = await _dio.delete(
+          'https://localhost:8443/api/v1/event-outcomes/payments/$eventPaymentId',
+          options: Options(headers: {'Authorization': 'Bearer $token'}));
+      return response.statusCode == 200
+          ? ''
+          : 'Error: ${response.statusCode} contacte al desarrollador';
+    } catch (e) {
+      return 'Failed to delete event payment: $e';
+    }
   }
 
   static Dio createDio(

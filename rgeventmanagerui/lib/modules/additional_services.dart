@@ -5,6 +5,7 @@ import 'package:rg_event_management_ui/formatters/ThousandsSeparatorInputFormatt
 import 'package:rg_event_management_ui/main.dart';
 import 'package:rg_event_management_ui/models/AdditionalService.dart';
 import 'package:rg_event_management_ui/models/Supplier.dart';
+import 'package:rg_event_management_ui/modules/event_operations/expenses_event.dart';
 import 'package:rg_event_management_ui/services/eventservice.dart';
 
 class AdditionalServices extends StatefulWidget {
@@ -422,7 +423,11 @@ class _AdditionalServices extends State<AdditionalServices> {
   @override
   Widget build(BuildContext context) {
     var appState = context.read<MyAppState>();
-    return Scaffold(
+    return  Form(
+      key: _formKey,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+      child: 
+    Scaffold(
       appBar: AppBar(
         title: Text("Servicios Adicionales"),
         backgroundColor: Colors.blue,
@@ -544,17 +549,79 @@ class _AdditionalServices extends State<AdditionalServices> {
                     child: Text("Guardar"),
                   ),
                 ),
-                Expanded(flex: 2, child: Text('')),
+                SizedBox(width: 20),
+                Expanded(
+                  child: ElevatedButton(
+                    style: ButtonStyle(
+                      foregroundColor: WidgetStateProperty.all(Colors.white),
+                      textStyle: WidgetStateProperty.all(
+                        TextStyle(fontSize: 20),
+                      ),
+                      backgroundColor: WidgetStateProperty.all(Colors.blue),
+                    ),
+                    onPressed: () {
+                      // Save Additional Services
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: Text("Ir a pago de proveedor"),
+                            content: Text(
+                                "¿Estás seguro de que desea salir e ir a pago de proveedores?"),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                                child: Text("Cancelar"),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  appState.setIndex(2);
+                                  Navigator.of(context).pushReplacement(
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          ExpensesEventPage(),
+                                    ),
+                                  );
+                                },
+                                child: Text("Aceptar"),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                    child: Text("Pago a proveedor"),
+                  ),
+                ),
+                SizedBox(width: 20),
+                Expanded( child: 
+                  ElevatedButton(
+                    style: ButtonStyle(
+                      foregroundColor: WidgetStateProperty.all(Colors.white),
+                      textStyle: WidgetStateProperty.all(
+                        TextStyle(fontSize: 20),
+                      ),
+                      backgroundColor: WidgetStateProperty.all(Colors.blue),
+                    ),
+                    onPressed: () {
+                      appState.setIndex(0);
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(
+                          builder: (context) => EventsHomePage(),
+                        ),
+                      );
+                    },
+                    child: Text("Cancelar"),
+                  )),
               ],
             ),
             SizedBox(height: 22),
-            // Row( children: [
-
-            //   ],
-            // ),
           ],
         ),
       ),
+    ) 
     );
   }
 }

@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -60,6 +61,25 @@ class EmployeesService {
       return employee;
     } catch (e) {
       throw Exception('Failed to save employee: $e');
+    }
+  }
+
+  Future<bool> deleteEmployee(String token, int id) async {
+    try {
+      var response = await _dio.delete('https://localhost:8443/api/v1/employees/$id',
+          options: Options(
+            headers: {
+              'Authorization': 'Bearer $token',
+            },
+          ));
+      if(response.statusCode == 200) {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (e) {
+      log('Error al eliminar empleado: $e');
+      return false;
     }
   }
 

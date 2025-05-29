@@ -48,9 +48,9 @@ class EventPay{
 
   Map<String, dynamic> toJson() => {
     'id': id == 0 ? null : id,
-    'event': eventId,
-    'supplier': supplier!.toJson() ,
-    'additionalService': additionalService!.toJson(),
+    'eventId': eventId,
+    'supplier': supplier?.toJson(),
+    'additionalService': additionalService?.toJson(),
     'paymentReason': paymentReason,
     'description': description,
     'amount': amount,

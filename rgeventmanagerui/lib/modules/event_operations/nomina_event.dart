@@ -392,7 +392,6 @@ class _AddEmployeePaymentPage extends State<AddEmployeePaymentPage> {
 
   @override
   Widget build(BuildContext context) {
-    var appState = context.read<MyAppState>();
     return Form(
       key: _formKey,
       child: Scaffold(

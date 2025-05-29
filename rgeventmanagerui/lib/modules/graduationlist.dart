@@ -18,7 +18,6 @@ class GraduationListPage extends StatefulWidget {
 }
 
 class _GraduationListPageState extends State<GraduationListPage> {
-  // late PlutoGridStateManager plutoGridStateManager;
 
   List<PlutoColumn> columns = [
     PlutoColumn(
@@ -472,7 +471,7 @@ class _GraduationListPageState extends State<GraduationListPage> {
                                                       .saveStudent(
                                                           appState
                                                               .selectedStudent!,
-                                                          appState.appToken)
+                                                          appState.appToken,false)
                                                       .then(
                                                           (value) => {
                                                                 Flushbar(

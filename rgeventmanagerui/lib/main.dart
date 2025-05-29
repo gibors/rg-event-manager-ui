@@ -25,6 +25,7 @@ import 'package:rg_event_management_ui/modules/eventspayment.dart';
 import 'package:rg_event_management_ui/modules/operations_general/general_nominal.dart';
 import 'package:rg_event_management_ui/modules/operations_general/general_payments.dart';
 import 'package:rg_event_management_ui/modules/provider_list.dart';
+import 'package:rg_event_management_ui/modules/search_page.dart';
 import 'package:rg_event_management_ui/modules/userlistpage.dart';
 import 'package:rg_event_management_ui/services/eventservice.dart';
 import 'package:rg_event_management_ui/modules/graduationlist.dart';
@@ -197,18 +198,20 @@ class _EventsHomePageState extends State<EventsHomePage> {
       case 0:
         page = EventsPage();
       case 1:
-        page = ProviderListPage();
+        page = SearchPage();
       case 2:
-        page = EmployeesView();
+        page = ProviderListPage();  
       case 3:
-        page = GeneralNominalPage();
+        page = EmployeesView();
       case 4:
-        page = GeneralPaymentsPage();
+        page = GeneralNominalPage();
       case 5:
-        page = BudgetPage();
+        page = GeneralPaymentsPage();
       case 6:
-        page = UserListPage();
+        page = BudgetPage();
       case 7:
+        page = UserListPage();
+      case 8:
         page = Login();
 
       default:
@@ -236,9 +239,13 @@ class _EventsHomePageState extends State<EventsHomePage> {
                     NavigationRail(
                        extended: constraints.maxWidth >= 100,
                       destinations: [
-                        NavigationRailDestination(
+                        NavigationRailDestination(  
                           icon: Icon(Icons.event),
                           label: Text('Eventos'),
+                        ),
+                         NavigationRailDestination(  
+                          icon: Icon(Icons.event),
+                          label: Text('Busqueda'),
                         ),
                         NavigationRailDestination(
                           icon: Icon(Icons.contacts),
@@ -250,9 +257,9 @@ class _EventsHomePageState extends State<EventsHomePage> {
                           label: Text('Empleados'),
                         ),
                         NavigationRailDestination(
-                          disabled: true,// appState.selectedUser != null && appState.selectedUser!.role != 1,
+                          disabled: appState.selectedUser != null && appState.selectedUser!.role != 1,
                           icon: Icon(Icons.payment_sharp),
-                          label: Text('Nomina y comisiones'),
+                          label: Text('Nomina general'),
                         ),
                         NavigationRailDestination(
                           icon: Icon(Icons.attach_money),
@@ -658,10 +665,10 @@ class _EventsPage extends State<EventsPage> {
                                     
                                     icon: Icon(Icons.payment_rounded),
                                     onPressed: () {
-                                      // Navigator.of(context).push(
-                                      //     MaterialPageRoute(
-                                      //         builder: (context) =>
-                                      //             ExpensesEventPage()));
+                                      Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  ExpensesEventPage()));
                                     },
                                   ),
                                 ],

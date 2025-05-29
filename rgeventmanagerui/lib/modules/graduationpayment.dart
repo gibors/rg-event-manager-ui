@@ -26,6 +26,7 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
   var selectedStudent;
   var selectedEvent;
   bool showAQuantityNumberInput = false;
+  double remindingAdditional = 0.0;
   var appState;
 
   final _formKey = GlobalKey<FormState>();
@@ -89,6 +90,18 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                     .reduce((a, b) => a + b) >=
                 selectedStudent.totalCost
             : false;
+        setState(() {
+          remindingAdditional = selectedStudent != null &&
+                  selectedStudent.payments!
+                      .where((e) => e.paymentDetail == ADDITIONAL)
+                      .isNotEmpty
+              ? selectedStudent.additionalQuantity -
+                  selectedStudent.payments
+                      .where((e) => e.paymentDetail == ADDITIONAL)
+                      .map((e) => e.amount)
+                      .reduce((a, b) => a + b)
+              : 0.0;
+        });
       }
 
       if (selectedEvent.pricing!.paq10TICost > 0) {
@@ -241,7 +254,7 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
       });
     } else {
       // payent by package
-      EventService().saveStudent(student, token).then((studentResponse) {
+      EventService().saveStudent(student, token,false).then((studentResponse) {
         if (studentResponse.id != -1) {
           setState(() {
             selectedStudent = studentResponse;
@@ -327,13 +340,14 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
           : (selectedStudent!.totalCost <= paymentAmount);
 
       // This is just to make sure that the student has already paid the total cost
-      if((_paymentDetail.text == 'platillo' || _paymentDetail.text =='paquete') && selectedStudent.totalCost == 0)
-      {
+      if ((_paymentDetail.text == 'platillo' ||
+              _paymentDetail.text == 'paquete') &&
+          selectedStudent.totalCost == 0) {
         Flushbar(
           flushbarPosition: FlushbarPosition.TOP,
           title: 'Error',
           message:
-          'El alumno no tiene paquete/platillos asignado, por favor asigna paquete/platillos antes de agregar un pago',
+              'El alumno no tiene paquete/platillos asignado, por favor asigna paquete/platillos antes de agregar un pago',
           duration: Duration(seconds: 6),
           backgroundColor: Colors.red,
         ).show(context);
@@ -354,7 +368,7 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
       }
 
       var reminding = 0.0;
-      if (isAlreadyPaidDishOrPackage ) {
+      if (isAlreadyPaidDishOrPackage) {
         reminding = selectedStudent!.additionalQuantity -
             (selectedStudent!.payments.isNotEmpty &&
                     selectedStudent!.payments
@@ -371,16 +385,32 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
       if (isAlreadyPaidDishOrPackage &&
           reminding > 0 &&
           _paymentDetail.text == ADDITIONAL &&
-          paymentAmount != reminding) {
+          paymentAmount > reminding) {
         Flushbar(
           flushbarPosition: FlushbarPosition.TOP,
           title: 'Error',
           message:
-              'Hay un saldo pendiente de adicionales de \$$reminding por pagar antes de agregar otro adicional',
+              'Hay un saldo pendiente de adicionales, puede abonar o completar el pago antes de agregar más \$$reminding ',
           duration: Duration(seconds: 6),
           backgroundColor: Colors.red,
         ).show(context);
         return;
+      }
+
+      if (reminding > 0 && _paymentDetail.text == ADDITIONAL) {
+        setState(() {
+          remindingAdditional = selectedStudent != null &&
+                  selectedStudent.payments!
+                      .where((e) => e.paymentDetail == ADDITIONAL)
+                      .isNotEmpty
+              ? selectedStudent.additionalQuantity -
+                  paymentAmount -
+                  selectedStudent.payments
+                      .where((e) => e.paymentDetail == ADDITIONAL)
+                      .map((e) => e.amount)
+                      .reduce((a, b) => a + b)
+              : 0.0;
+        });
       }
 
       var quantityNumber =
@@ -435,7 +465,7 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
           iva: iva,
           quantity: quantityNumber);
 
-      if(isPayingWithCurrentPayment || isAlreadyPaidDishOrPackage){
+      if (isPayingWithCurrentPayment || isAlreadyPaidDishOrPackage) {
         setState(() {
           selectedStudent!.paid = true;
         });
@@ -489,7 +519,7 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
         var student =
             BuildStudentObject(quantityNumber!, additionalPaymentCost);
 
-        EventService().saveStudent(student, token).then((studentResponse) {
+        EventService().saveStudent(student, token, payment.paymentDetail == ADDITIONAL).then((studentResponse) {
           if (studentResponse.id != -1) {
             setState(() {
               selectedStudent = studentResponse;
@@ -497,6 +527,16 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
             isEditMode = false;
             isNewStudent = false;
             mapSelectedStudent();
+            remindingAdditional = selectedStudent != null &&
+                    selectedStudent.payments!
+                        .where((e) => e.paymentDetail == ADDITIONAL)
+                        .isNotEmpty
+                ? selectedStudent.additionalQuantity -
+                    selectedStudent.payments
+                        .where((e) => e.paymentDetail == ADDITIONAL)
+                        .map((e) => e.amount)
+                        .reduce((a, b) => a + b)
+                : 0.0;
             Flushbar(
               flushbarPosition: FlushbarPosition.TOP,
               title: 'Éxito',
@@ -610,26 +650,47 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
 
   void deletePayment(Payment payment) {
     log('delete payment');
+    setState(() {
+      selectedStudent.payments.remove(payment);
+    });
 
-    selectedStudent.payments.remove(payment);
+    if (payment.paymentDetail == ADDITIONAL) {
+        remindingAdditional = selectedStudent != null &&
+                selectedStudent.payments!
+                    .where((e) => e.paymentDetail == ADDITIONAL)
+                    .isNotEmpty
+            ? selectedStudent.additionalQuantity -
+                selectedStudent.payments
+                    .where((e) => e.paymentDetail == ADDITIONAL)
+                    .map((e) => e.amount)
+                    .reduce((a, b) => a + b)
+            : 0.0;
+      if (remindingAdditional <= 0) {
+        remindingAdditional = 0.0;
+        selectedStudent!.additionalNumber -= payment.quantity;
+        selectedStudent!.additionalQuantity = 0.0;
+      } else {
+        setState(() {
+          remindingAdditional = remindingAdditional - payment.amount;
+        });
+        if(remindingAdditional <=0 ){
+          selectedStudent!.additionalNumber -= payment.quantity;
+          selectedStudent!.additionalQuantity =0;
+        }
+      }
 
-    if(payment.paymentDetail == ADDITIONAL) {
-
-      selectedStudent!.additionalNumber -= payment.quantity;
-      selectedStudent!.additionalQuantity -= payment.amount;
-
-      if(selectedStudent.additionalQuantity < 0) {
+      if (selectedStudent.additionalQuantity < 0) {
         log('(Alert) -- additional quantity is less than 0 for student ${selectedStudent.id}');
         selectedStudent.additionalQuantity = 0;
       }
-      if(selectedStudent.additionalNumber < 0) {
+      if (selectedStudent.additionalNumber < 0) {
         log('(Alert) -- additional additionalNumber is less than 0 for student ${selectedStudent.id}');
         selectedStudent.additionalNumber = 0;
       }
     }
 
     EventService()
-        .saveStudent(selectedStudent, token)
+        .saveStudent(selectedStudent, token, payment.paymentDetail == ADDITIONAL)
         .then((value) => {
               if (value.id != -1)
                 {
@@ -1131,7 +1192,7 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                                 SizedBox(width: 25),
                                 Expanded(
                                   child: Text(
-                                      'Restante: \$${(selectedStudent != null && selectedStudent.payments.isNotEmpty && selectedStudent!.payments.where((e) => e.paymentDetail == ADDITIONAL).isNotEmpty ? selectedStudent!.additionalQuantity - selectedStudent.payments.where((e) => e.paymentDetail == ADDITIONAL).map((e) => e.amount)?.reduce((a, b) => a + b) : 0)}',
+                                      'Restante: \$${(selectedStudent != null && selectedStudent.payments.isNotEmpty && selectedStudent!.payments.where((e) => e.paymentDetail == ADDITIONAL).isNotEmpty ? remindingAdditional : 0)}',
                                       style: TextStyle(
                                           fontSize: 14.0,
                                           color: Colors.black,
@@ -1226,7 +1287,16 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                                               ),
                                               SizedBox(width: 20),
                                               Visibility(
-                                                visible: selectedStudent != null && (!selectedStudent.paid || (payment.paymentDetail != 'platillo' && payment.paymentDetail != 'paquete')) && appState.selectedUser!.role == 1,
+                                                visible: selectedStudent !=
+                                                        null &&
+                                                    (!selectedStudent.paid ||
+                                                        (payment.paymentDetail !=
+                                                                'platillo' &&
+                                                            payment.paymentDetail !=
+                                                                'paquete')) &&
+                                                    appState.selectedUser!
+                                                            .role ==
+                                                        1,
                                                 child: Expanded(
                                                   child: IconButton(
                                                     icon: Icon(Icons.delete),
@@ -1418,7 +1488,8 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                                 ),
                                 SizedBox(width: 20),
                                 Visibility(
-                                    visible: showAQuantityNumberInput,
+                                    visible: showAQuantityNumberInput &&
+                                        remindingAdditional <= 0.0,
                                     child: Expanded(
                                       child: TextFormField(
                                         inputFormatters: [
@@ -1427,6 +1498,7 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                                         validator: (value) => selectedStudent !=
                                                     null &&
                                                 showAQuantityNumberInput &&
+                                                remindingAdditional > 0.0 &&
                                                 (value != null && value.isEmpty)
                                             ? 'El número de personas es requerido'
                                             : null,
@@ -1554,24 +1626,29 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                                           });
                                     } else {
                                       log('total cost ${selectedStudent!.totalCost}');
-                                      if( (_paymentDetail.text == 'platillo' || _paymentDetail.text =='paquete') && selectedStudent!.totalCost == 0) {
+                                      if ((_paymentDetail.text == 'platillo' ||
+                                              _paymentDetail.text ==
+                                                  'paquete') &&
+                                          selectedStudent!.totalCost == 0) {
                                         Flushbar(
-                                          flushbarPosition: FlushbarPosition.TOP,
+                                          flushbarPosition:
+                                              FlushbarPosition.TOP,
                                           title: 'Error',
                                           message:
-                                          'El alumno no tiene paquete/platillo asignado, por favor asigna paquete/platillo antes de agregar un pago',
+                                              'El alumno no tiene paquete/platillo asignado, por favor asigna paquete/platillo antes de agregar un pago',
                                           duration: Duration(seconds: 6),
                                           backgroundColor: Colors.red,
                                         ).show(context);
                                       } else {
-                                      Flushbar(
-                                        flushbarPosition: FlushbarPosition.TOP,
-                                        title: 'Error',
-                                        message:
-                                            'El alumno ya ha pagado el total de su paquete/platillo solo puedes pagar adicionales o extras',
-                                        duration: Duration(seconds: 6),
-                                        backgroundColor: Colors.red,
-                                      ).show(context);
+                                        Flushbar(
+                                          flushbarPosition:
+                                              FlushbarPosition.TOP,
+                                          title: 'Error',
+                                          message:
+                                              'El alumno ya ha pagado el total de su paquete/platillo solo puedes pagar adicionales o extras',
+                                          duration: Duration(seconds: 6),
+                                          backgroundColor: Colors.red,
+                                        ).show(context);
                                       }
                                     }
                                   }

@@ -1,3 +1,5 @@
+import 'package:rg_event_management_ui/models/Event.dart';
+
 class Student {
   final int id;
   final String name;
@@ -20,9 +22,14 @@ class Student {
   bool paid;
   bool cancelled;
   bool committee;
+  Event? eventInfo;
 
   void setFolio(String folio) {
     this.folio = folio;
+  }
+
+  void setEventInfo(Event event) {
+    eventInfo = event;
   }
 
   Student({

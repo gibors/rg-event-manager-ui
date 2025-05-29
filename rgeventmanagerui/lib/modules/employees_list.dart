@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:another_flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
 import 'package:pluto_grid/pluto_grid.dart';
 import 'package:provider/provider.dart';
@@ -9,14 +10,13 @@ import 'package:rg_event_management_ui/modules/add_employee.dart';
 import 'package:rg_event_management_ui/services/employees_service.dart';
 
 class EmployeesView extends StatefulWidget {
-
   @override
   _EmployeesViewState createState() => _EmployeesViewState();
 }
 
 class _EmployeesViewState extends State<EmployeesView> {
   var appState;
-  Employee ? SelectedEmployee;
+  Employee? SelectedEmployee;
   final controller = ScrollController();
   late Future<List<Employee>> _func;
   double offset = 0;
@@ -25,7 +25,6 @@ class _EmployeesViewState extends State<EmployeesView> {
 
   @override
   void initState() {
-    
     appState = context.read<MyAppState>();
     appState.clearSelectedEmployee();
     var token = appState.appToken;
@@ -44,6 +43,29 @@ class _EmployeesViewState extends State<EmployeesView> {
     setState(() {
       offset = (controller.hasClients) ? controller.offset : 0;
     });
+  }
+
+  bool deleteEmployee(Employee employee) {
+    EmployeesService()
+        .deleteEmployee(appState!.appToken, employee.id)
+        .then((value) {
+      Flushbar(
+        title: 'Empleado eliminado',
+        icon: Icon(Icons.check_circle, color: Colors.white),
+        borderRadius: BorderRadius.circular(8),
+        backgroundColor: Colors.green,
+        titleColor: Colors.white,
+        flushbarPosition: FlushbarPosition.TOP,
+        message: 'El empleado ${employee.name} ha sido eliminado correctamente',
+        duration: Duration(seconds: 3),
+      ).show(context);
+      log('Empleado eliminado: ${employee.name}');
+      return true;
+    }).catchError((error) {
+      log('Error al eliminar empleado: $error');
+      return false;
+    });
+    return false;
   }
 
   List<PlutoColumn> columns = [
@@ -81,15 +103,16 @@ class _EmployeesViewState extends State<EmployeesView> {
 
   @override
   Widget build(BuildContext context) {
-     appState = context.watch<MyAppState>();
+    appState = context.watch<MyAppState>();
 
-    return 
-    Scaffold(
-         appBar: AppBar(
-            title: Text('Sistema RG Eventos - Usuario conectado: ${appState.selectedUser != null ? '${appState.selectedUser!.name} ${appState.selectedUser!.lastname} con rol de ${appState.selectedUser!.role == 1 ? 'admin': (appState.selectedUser!.role == 2 ? 'operativo' : 'solo lectura')}': ''}',
-                style: TextStyle(fontSize: 28.0, color: const Color.fromARGB(255, 113, 7, 132))),
-                    automaticallyImplyLeading: false,
-        ),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+            'Sistema RG Eventos - Usuario conectado: ${appState.selectedUser != null ? '${appState.selectedUser!.name} ${appState.selectedUser!.lastname} con rol de ${appState.selectedUser!.role == 1 ? 'admin' : (appState.selectedUser!.role == 2 ? 'operativo' : 'solo lectura')}' : ''}',
+            style: TextStyle(
+                fontSize: 28.0, color: const Color.fromARGB(255, 113, 7, 132))),
+        automaticallyImplyLeading: false,
+      ),
       body: FutureBuilder<List<Employee>>(
         future: _func,
         builder: (context, snapshot) => snapshot.hasData
@@ -114,21 +137,45 @@ class _EmployeesViewState extends State<EmployeesView> {
                         Visibility(
                             visible: SelectedEmployee != null,
                             child: Container(
-                          child: Row(
-                            children: [
-                              Text('Editar Empleado',
-                                  style: Theme.of(context).textTheme.bodyLarge),
-                              IconButton(
-                                icon: Icon(Icons.edit),
-                                onPressed: () {
-                                  Navigator.of(context).push(MaterialPageRoute(
-                                      builder: (context) => AddEmployeePage()));
-                                },
+                              child: Row(
+                                children: [
+                                  Text('Editar Empleado',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge),
+                                  IconButton(
+                                    icon: Icon(Icons.edit),
+                                    onPressed: () {
+                                      Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  AddEmployeePage()));
+                                    },
+                                  ),
+                                  SizedBox(width: 20),
+                                  Text('Eliminar Empleado',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge),
+                                  IconButton(
+                                    icon: Icon(Icons.delete),
+                                    onPressed: () {
+                                      if (SelectedEmployee != null) {
+                                        deleteEmployee(SelectedEmployee!);
+                                        appState.clearSelectedEmployee();
+                                        appState.setIndex(2);
+                                        Navigator.of(context).pushReplacement(
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                EventsHomePage(),
+                                          ),
+                                        );
+                                      }
+                                    },
+                                  ),
+                                ],
                               ),
-                              SizedBox(width: 20),
-                            ],
-                          ),
-                        )),
+                            )),
                       ],
                     ),
                     SizedBox(height: 30),
@@ -138,7 +185,7 @@ class _EmployeesViewState extends State<EmployeesView> {
                             style: Theme.of(context).textTheme.bodyMedium),
                         SizedBox(width: 30),
                         Text(
-                            'Proveedor seleccionado: ${ SelectedEmployee!=null ? '${SelectedEmployee!.name} ${SelectedEmployee!.firstSurname}' : 'Ninguno'}',
+                            'Proveedor seleccionado: ${SelectedEmployee != null ? '${SelectedEmployee!.name} ${SelectedEmployee!.firstSurname}' : 'Ninguno'}',
                             style: Theme.of(context).textTheme.bodyMedium),
                       ],
                     ),
@@ -161,10 +208,10 @@ class _EmployeesViewState extends State<EmployeesView> {
                           .toList(),
                       onSelected: (event) => {
                         setState(() {
-                        SelectedEmployee = (snapshot.data!.firstWhere(
-                            (element) =>
-                                element.name ==
-                                event.row!.cells['name']!.value));
+                          SelectedEmployee = (snapshot.data!.firstWhere(
+                              (element) =>
+                                  element.name ==
+                                  event.row!.cells['name']!.value));
                         }),
                         appState.setSelectedEmployee(SelectedEmployee!),
                         log('Selected employee: ${SelectedEmployee!.name}')
