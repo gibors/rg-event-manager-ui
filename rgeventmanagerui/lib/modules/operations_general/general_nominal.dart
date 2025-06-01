@@ -10,6 +10,9 @@ class GeneralNominalPage extends StatefulWidget {
 
 class _GeneralNominalPage extends State<GeneralNominalPage> {
   var appState;
+  final _formKey = GlobalKey<FormState>();
+  var token = "";
+  var selectedEvent;
 
   @override
   Widget build(BuildContext context) {
@@ -23,6 +26,7 @@ class _GeneralNominalPage extends State<GeneralNominalPage> {
             style: TextStyle(
                 fontSize: 28.0, color: const Color.fromARGB(255, 113, 7, 132))),
  
+
 
       ),
       body: Center(

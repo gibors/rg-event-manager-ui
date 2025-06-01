@@ -18,7 +18,6 @@ class _AddEmployeePaymentPage extends State<AddEmployeePaymentPage> {
   final _formKey = GlobalKey<FormState>();
   var token = "";
   var selectedEvent;
-  bool isEditMode = false;
 
   Map<String, List<String>> jobCategories = {
     'Operativo': [

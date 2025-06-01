@@ -514,6 +514,18 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
           quantityNumber = 0;
         }
 
+        if (_paymentDetail.text == ADDITIONAL && quantityNumber! > 0 && paymentAmount > additionalPaymentCost) {
+          Flushbar(
+            flushbarPosition: FlushbarPosition.TOP,
+            title: 'Error',
+            message:
+                'El pago excede el total de adicionales, puedes abonar o pagar el total \$$additionalPaymentCost y despues agregar pagos adicionales u otro servicio',
+            duration: Duration(seconds: 10),
+            backgroundColor: Colors.red,
+          ).show(context);
+          return;
+        }
+
         selectedStudent.payments.add(payment);
 
         var student =

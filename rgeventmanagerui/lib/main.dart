@@ -282,7 +282,7 @@ class _EventsHomePageState extends State<EventsHomePage> {
                       ],
                       selectedIndex: selectedIndex,
                       onDestinationSelected: (value) {
-                        if (value == 7) {
+                        if (value == 8) {
                           showDialog(
                               context: context,
                               builder: (context) {
