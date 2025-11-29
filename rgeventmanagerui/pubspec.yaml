@@ -19,7 +19,9 @@ dependencies:
   flutter_holo_date_picker: ^1.1.3
   calendar_date_picker2: ^1.1.7
   another_flushbar: ^1.12.30
-  # pluto_grid_export: ^1.0.6
+  filepicker_windows: ^2.1.4
+  currency_text_input_formatter: ^2.2.6
+
 
 dev_dependencies:
   flutter_test:
@@ -33,3 +35,6 @@ flutter:
   assets:
     - assets/images/events.png
     - assets/images/rg.png
+    - assets/images/rg.jpg
+    - assets/images/rg2.png
+    - assets/images/rglogogris.png

@@ -1,3 +1,5 @@
+import 'package:rg_event_management_ui/models/Event.dart';
+
 class Student {
   final int id;
   final String name;
@@ -6,18 +8,28 @@ class Student {
   final String email;
   final String phone;
   final String packageType;
-  final double additionalQuantity;
+  double additionalQuantity;
   final double totalCost;
   final int eventId;
   final String comments;
   List<Payment> payments;
   String folio;
   final int dishCount;
-  final int additionalNumber;
-  bool paid = false;
+  int additionalNumber;
+  final bool hasPreParty;
+  final bool hasSouvenir;
+  final bool hasBracelet;
+  bool paid;
+  bool cancelled;
+  bool committee;
+  Event? eventInfo;
 
   void setFolio(String folio) {
     this.folio = folio;
+  }
+
+  void setEventInfo(Event event) {
+    eventInfo = event;
   }
 
   Student({
@@ -36,6 +48,12 @@ class Student {
     required this.folio,
     required this.dishCount,
     required this.additionalNumber,
+    required this.hasPreParty,
+    required this.hasSouvenir,
+    required this.hasBracelet,
+    required this.paid,
+    required this.cancelled,
+    this.committee = false,
   });
 
   factory Student.fromJson(Map<String, dynamic> json) {
@@ -57,6 +75,12 @@ class Student {
       folio: json['folio'] ?? '',
       dishCount: json['dishCount'] ?? 0,
       additionalNumber: json['additionalNumber'] ?? 0,
+      hasPreParty: json['hasPreParty'] ?? false,
+      hasSouvenir: json['hasSouvenir'] ?? false,
+      hasBracelet: json['hasBracelet'] ?? false,
+      paid: json['paid'] ?? false,
+      cancelled: json['cancelled'] ?? false,
+      committee: json['committee'] ?? false,
     );
   }
 
@@ -76,6 +100,12 @@ class Student {
         'folio': folio,
         'dishCount': dishCount,
         'additionalNumber': additionalNumber,
+        'hasPreParty': hasPreParty,
+        'hasSouvenir': hasSouvenir,
+        'hasBracelet': hasBracelet,
+        'paid': paid,
+        'cancelled': cancelled,
+        'committee': committee,
       };
 }
 
@@ -89,6 +119,7 @@ class Payment {
   final String addedBy;
   final String paymentDetail;
   final double iva;
+  final quantity;
 
   Payment({
     required this.id,
@@ -100,6 +131,7 @@ class Payment {
     required this.addedBy,
     required this.paymentDetail,
     required this.iva,
+    required this.quantity,
   });
 
   void setStudent(int id) {
@@ -117,6 +149,7 @@ class Payment {
       addedBy: json['addedBy'] ?? '',
       paymentDetail: json['paymentDetail'] ?? '',
       iva: json['iva'],
+      quantity: json['quantity'],
     );
   }
 
@@ -130,5 +163,6 @@ class Payment {
         'addedBy': addedBy,
         'paymentDetail': paymentDetail,
         'iva': iva,
+        'quantity': quantity,
       };
 }

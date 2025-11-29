@@ -28,6 +28,7 @@ class _AddEmployeePage extends State<AddEmployeePage> {
     'Practicante',
     'Ventas',
     'Operativo',
+    'Otro'
   ];
 
   final _textNameController = TextEditingController();
@@ -35,7 +36,7 @@ class _AddEmployeePage extends State<AddEmployeePage> {
   final _textLastName2Controller = TextEditingController();
   final _textEmailController = TextEditingController();
   final _textPhoneController = TextEditingController();
-  // final _textJobPositionController = TextEditingController();
+  final _textOtroJobPositionController = TextEditingController();
 
   @override
   void initState() {
@@ -54,6 +55,11 @@ class _AddEmployeePage extends State<AddEmployeePage> {
     _textEmailController.text = employee.email ?? '';
     _textPhoneController.text = employee.phone ?? '';
     _textEditingJobPositionController.text = employee.position ?? '';
+    if (!jobPositions.contains(employee.position)) {
+      jobPositions.remove('Otro');
+      jobPositions.add(employee.position);
+      jobPositions.add('Otro');
+    }
   }
 
   mapFormToEmployee() {
@@ -66,7 +72,9 @@ class _AddEmployeePage extends State<AddEmployeePage> {
       secondSurname: _textLastName2Controller.text,
       email: _textEmailController.text,
       phone: _textPhoneController.text,
-      position: _textEditingJobPositionController.text,
+      position: _textEditingJobPositionController.text == 'Otro'
+          ? _textOtroJobPositionController.text
+          : _textEditingJobPositionController.text,
     );
   }
 
@@ -86,7 +94,7 @@ class _AddEmployeePage extends State<AddEmployeePage> {
           ).show(context);
         });
         // Navigator.of(context).pushReplacement(
-            // MaterialPageRoute(builder: (context) => EmployeesView()));
+        // MaterialPageRoute(builder: (context) => EmployeesView()));
       }, onError: (error) {
         log('Error: $error');
         Flushbar(
@@ -244,8 +252,10 @@ class _AddEmployeePage extends State<AddEmployeePage> {
                                 });
                               },
                               onSelected: (String selection) {
-                                _textEditingJobPositionController.text =
-                                    selection;
+                                setState(() {
+                                  _textEditingJobPositionController.text = selection;
+                                });
+                 
                               },
                               fieldViewBuilder: (BuildContext context,
                                   TextEditingController textEditingController,
@@ -283,6 +293,23 @@ class _AddEmployeePage extends State<AddEmployeePage> {
                               },
                             ),
                           ),
+                          SizedBox(width: 20),
+                          Visibility(
+                            visible: _textEditingJobPositionController
+                                    .text.isNotEmpty &&
+                                _textEditingJobPositionController.text ==
+                                    'Otro',
+                            child: Expanded(
+                                child: TextFormField(
+                              controller: _textOtroJobPositionController,
+                              decoration: InputDecoration(
+                                  labelText: 'Puesto',
+                                  border: OutlineInputBorder()),
+                              validator: (value) => value!.isEmpty
+                                  ? 'El puesto es requerido'
+                                  : null,
+                            )),
+                          )
                         ],
                       ),
                       SizedBox(height: 33),
@@ -318,7 +345,7 @@ class _AddEmployeePage extends State<AddEmployeePage> {
                                   WidgetStateProperty.all<Size>(Size(180, 100)),
                             ),
                             onPressed: () {
-                             showDialog(
+                              showDialog(
                                 context: context,
                                 builder: (BuildContext context) {
                                   return AlertDialog(

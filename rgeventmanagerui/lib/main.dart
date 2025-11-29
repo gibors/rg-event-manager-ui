@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'dart:developer';
+import 'dart:io';
 import 'package:another_flushbar/flushbar.dart';
-// ignore: depend_on_referenced_packages
+import 'package:filepicker_windows/filepicker_windows.dart';
 import 'package:intl/intl.dart';
 import 'package:english_words/english_words.dart';
 import 'package:flutter/material.dart';
@@ -13,19 +14,38 @@ import 'package:rg_event_management_ui/models/Employee.dart';
 import 'package:rg_event_management_ui/models/Student.dart';
 import 'package:rg_event_management_ui/models/Supplier.dart';
 import 'package:rg_event_management_ui/models/User.dart';
-import 'package:rg_event_management_ui/modules/accountability.dart';
 import 'package:rg_event_management_ui/modules/add_event.dart';
 import 'package:rg_event_management_ui/models/Event.dart';
+import 'package:rg_event_management_ui/modules/additional_services.dart';
 import 'package:rg_event_management_ui/modules/budgetpage.dart';
 import 'package:rg_event_management_ui/modules/employees_list.dart';
-import 'package:rg_event_management_ui/modules/eventpayment.dart';
+import 'package:rg_event_management_ui/modules/event_operations/expenses_event.dart';
+import 'package:rg_event_management_ui/modules/event_operations/nomina_event.dart';
+import 'package:rg_event_management_ui/modules/eventspayment.dart';
+import 'package:rg_event_management_ui/modules/operations_general/general_nominal.dart';
+import 'package:rg_event_management_ui/modules/operations_general/general_payments.dart';
 import 'package:rg_event_management_ui/modules/provider_list.dart';
+import 'package:rg_event_management_ui/modules/search_page.dart';
 import 'package:rg_event_management_ui/modules/userlistpage.dart';
 import 'package:rg_event_management_ui/services/eventservice.dart';
 import 'package:rg_event_management_ui/modules/graduationlist.dart';
+import 'package:rg_event_management_ui/services/userservices.dart';
+// import 'package:window_manager/window_manager.dart';
+
+class MyHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    return super.createHttpClient(context)
+      ..badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
+  }
+}
 
 Future<void> main() async {
+  HttpOverrides.global = MyHttpOverrides();
+
   WidgetsFlutterBinding.ensureInitialized();
+
   runApp(MyApp());
 }
 
@@ -40,15 +60,15 @@ class MyApp extends StatelessWidget {
         title: 'rg eventos',
         theme: ThemeData(
           useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(seedColor: AppColors.purpleColor),
+          colorScheme: ColorScheme.fromSeed(seedColor: AppColors.greyColor),
         ),
         home: LayoutBuilder(
           builder: (context, constraints) {
             return Scaffold(
               body: Center(
                 child: SizedBox(
-                  width: 980, // Set the desired width for the app
-                  height: 700,
+                  // width: 980, // Set the desired width for the app
+                  // height: 700,
                   child: Login(),
                 ),
               ),
@@ -69,6 +89,7 @@ class MyAppState extends ChangeNotifier {
   Supplier? selectedProvider;
   Employee? selectedEmployee;
   User? selectedUser;
+  User? selectedUserToEdit;
   int selectedIndex = 0;
   // List<PlutoRow> rows = [];
 
@@ -107,7 +128,7 @@ class MyAppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setSelectedUser(User user) {
+  void setSelectedUser(User? user) {
     selectedUser = user;
     notifyListeners();
   }
@@ -129,6 +150,16 @@ class MyAppState extends ChangeNotifier {
     selectedEmployee = null;
     // notifyListeners();
   }
+
+  void setSelectedUserToEdit(User user) {
+    selectedUserToEdit = user;
+    notifyListeners();
+  }
+
+  void clearSelectedUserToEdit() {
+    selectedUserToEdit = null;
+    // notifyListeners();
+  }
 }
 
 class EventsHomePage extends StatefulWidget {
@@ -145,11 +176,21 @@ class _EventsHomePageState extends State<EventsHomePage> {
 
     selectedIndex = appState.selectedIndex ?? 0;
     super.initState();
+
+    if (appState.appToken.isNotEmpty) {
+      UserService().isValidToken(appState.appToken).then((value) {
+        if (!value) {
+          Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => Login()),
+              (Route<dynamic> route) => false);
+        }
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    var colorScheme = ColorScheme.fromSwatch(primarySwatch: Colors.pink);
+    var colorScheme = ColorScheme.fromSwatch(primarySwatch: Colors.blueGrey);
     var appState = context.watch<MyAppState>();
 
     Widget page;
@@ -157,16 +198,20 @@ class _EventsHomePageState extends State<EventsHomePage> {
       case 0:
         page = EventsPage();
       case 1:
-        page = ProviderListPage();
+        page = SearchPage();
       case 2:
-        page = EmployeesView();
+        page = ProviderListPage();  
       case 3:
-        page = AccountabilityPage();
+        page = EmployeesView();
       case 4:
-        page = BudgetPage();
+        page = GeneralNominalPage();
       case 5:
-        page = UserListPage();
+        page = GeneralPaymentsPage();
       case 6:
+        page = BudgetPage();
+      case 7:
+        page = UserListPage();
+      case 8:
         page = Login();
 
       default:
@@ -186,80 +231,48 @@ class _EventsHomePageState extends State<EventsHomePage> {
     return Scaffold(
       body: LayoutBuilder(
         builder: (context, constraints) {
-          if (constraints.maxWidth < 550) {
-            // Use a more mobile-friendly layout with BottomNavigationBar
-            // on narrow screens.
-            return Column(
-              children: [
-                Expanded(child: mainArea),
-                SizedBox(height: 200),
-                SafeArea(
-                  child: BottomNavigationBar(
-                    items: [
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.home),
-                        label: 'Eventos',
-                      ),
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.favorite),
-                        label: 'Proveedores',
-                      ),
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.person),
-                        label: 'Empleados',
-                      ),
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.account_balance),
-                        label: 'Contabilidad',
-                      ),
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.money_rounded),
-                        label: 'Cotización',
-                      ),
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.security),
-                        label: 'Administrar Usuarios',
-                      ),
-                    ],
-                    currentIndex: selectedIndex,
-                    onTap: (value) {
-                      setState(() {
-                        selectedIndex = value;
-                      });
-                    },
-                  ),
-                )
-              ],
-            );
-          } else {
+          
             return Row(
               children: [
                 SafeArea(
                   child: Row(children: [
                     NavigationRail(
-                      extended: constraints.maxWidth >= 600,
+                       extended: constraints.maxWidth >= 100,
                       destinations: [
-                        NavigationRailDestination(
+                        NavigationRailDestination(  
                           icon: Icon(Icons.event),
                           label: Text('Eventos'),
+                        ),
+                         NavigationRailDestination(  
+                          icon: Icon(Icons.event),
+                          label: Text('Busqueda'),
                         ),
                         NavigationRailDestination(
                           icon: Icon(Icons.contacts),
                           label: Text('Proveedores'),
                         ),
                         NavigationRailDestination(
+                          disabled: appState.selectedUser != null && appState.selectedUser!.role != 1,
                           icon: Icon(Icons.person),
                           label: Text('Empleados'),
                         ),
                         NavigationRailDestination(
-                          icon: Icon(Icons.account_balance),
-                          label: Text('Contabilidad'),
+                          disabled: appState.selectedUser != null && appState.selectedUser!.role != 1,
+                          icon: Icon(Icons.payment_sharp),
+                          label: Text('Nomina general'),
+                        ),
+                        NavigationRailDestination(
+                          icon: Icon(Icons.attach_money),
+                          disabled:  appState.selectedUser != null && appState.selectedUser!.role != 1,
+                          label: Text('Pagos y gastos'),
                         ),
                         NavigationRailDestination(
                           icon: Icon(Icons.money_rounded),
+                          disabled: true,
                           label: Text('Cotización'),
                         ),
                         NavigationRailDestination(
+                          disabled: appState.selectedUser != null && appState.selectedUser!.role != 1,
                           icon: Icon(Icons.security),
                           label: Text('Administrar Usuarios'),
                         ),
@@ -269,7 +282,7 @@ class _EventsHomePageState extends State<EventsHomePage> {
                       ],
                       selectedIndex: selectedIndex,
                       onDestinationSelected: (value) {
-                        if (value == 6) {
+                        if (value == 8) {
                           showDialog(
                               context: context,
                               builder: (context) {
@@ -284,9 +297,11 @@ class _EventsHomePageState extends State<EventsHomePage> {
                                         setState(() {
                                           appState.setIndex(0);
                                           appState.setToken("");
-                                            Navigator.of(context).pushAndRemoveUntil(
-                                              MaterialPageRoute(builder: (context) => Login()),
-                                              (Route<dynamic> route) => false,                                            
+                                          Navigator.of(context)
+                                              .pushAndRemoveUntil(
+                                            MaterialPageRoute(
+                                                builder: (context) => Login()),
+                                            (Route<dynamic> route) => false,
                                           );
                                         });
                                       },
@@ -313,7 +328,7 @@ class _EventsHomePageState extends State<EventsHomePage> {
                 Expanded(child: mainArea),
               ],
             );
-          }
+          
         },
       ),
     );
@@ -423,10 +438,13 @@ class _EventsPage extends State<EventsPage> {
   Widget build(BuildContext context) {
     var appState = context.watch<MyAppState>();
 
-    return SizedBox(
-        // height: 800,
-        // width: 1500,
-        child: FutureBuilder<List<Event>>(
+    return Scaffold(
+        appBar: AppBar(
+            title: Text('Sistema RG Eventos - Usuario conectado: ${appState.selectedUser != null ? '${appState.selectedUser!.name} ${appState.selectedUser!.lastname} con rol de ${appState.selectedUser!.role == 1 ? 'admin': (appState.selectedUser!.role == 2 ? 'operativo' : 'solo lectura')}': ''}',
+                style: TextStyle(fontSize: 28.0, color: const Color.fromARGB(255, 113, 7, 132))),
+                automaticallyImplyLeading: false,
+        ),
+        body: FutureBuilder<List<Event>>(
       future: _func,
       builder: (context, snapshot) => snapshot.hasData
           ? Center(
@@ -441,14 +459,51 @@ class _EventsPage extends State<EventsPage> {
                             style: Theme.of(context).textTheme.bodyLarge),
                         IconButton(
                           icon: Icon(Icons.picture_as_pdf),
-                          onPressed: () {},
-                        ),
-                        SizedBox(width: 20),
-                        Text('Descargar excel',
-                            style: Theme.of(context).textTheme.bodyLarge),
-                        IconButton(
-                          icon: Icon(Icons.download),
-                          onPressed: () {},
+                          onPressed: () {
+                             var path = Directory.current.path;
+
+                             try {
+                                final file = DirectoryPicker()
+                                  ..title = 'Select a directory';
+
+                                final result = file.getDirectory();
+                                if (result != null) {
+                                  print(result.path);
+                                  path = result.path;
+                                }
+                              } catch (e) {
+                                log("error selecting directory:  ${e.toString()}");
+                              }
+                              
+                              try {
+                                EventService().DownloadEventList(appState.appToken, [], path)
+                                    .then((value) {
+                                  Flushbar(
+                                    flushbarPosition: FlushbarPosition.TOP,
+                                    title: 'Éxito',
+                                    message: 'Archivo descargado en $path',
+                                    duration: Duration(seconds: 3),
+                                    backgroundColor: Colors.green,
+                                  ).show(context);
+                                }, onError: (e) {
+                                  Flushbar(
+                                    flushbarPosition: FlushbarPosition.TOP,
+                                    title: 'Error',
+                                    message: 'Error al descargar archivo',
+                                    duration: Duration(seconds: 3),
+                                    backgroundColor: Colors.red,
+                                  ).show(context);
+                                });
+                              } catch (e) {
+                                Flushbar(
+                                  flushbarPosition: FlushbarPosition.TOP,
+                                  title: 'Error',
+                                  message: 'Error al descargar archivo',
+                                  duration: Duration(seconds: 3),
+                                  backgroundColor: Colors.red,
+                                ).show(context);
+                              }
+                          },
                         ),
                         SizedBox(width: 20),
                         Text('Agregar evento',
@@ -467,14 +522,25 @@ class _EventsPage extends State<EventsPage> {
                             child: Container(
                               child: Row(
                                 children: [
-                                  Text('Editar evento',
+                                  Text( (appState.selectedEvent != null &&
+                                appState.selectedEvent!.eventDate
+                                    .isAfter(DateTime.now())) ?'Editar evento' : 'Ver evento',
                                       style: Theme.of(context)
                                           .textTheme
                                           .bodyLarge),
                                   IconButton(
-                                    icon: Icon(Icons.edit),
+                                    icon: appState.selectedEvent != null && appState.selectedEvent!.eventDate.isAfter(DateTime.now())
+                                    ? Icon(Icons.edit) : Icon(Icons.remove_red_eye),
                                     onPressed: () {
                                       if (appState.selectedEvent != null) {
+                                        //TODO: add condition to check if event is in the future
+                                        if(appState.selectedEvent!.eventDate.isAfter(DateTime.now())){
+                                          Navigator.of(context).push(MaterialPageRoute(
+                                              builder: (context) => AddEventPopup()));
+                                        } else {
+                                          Navigator.of(context).push(MaterialPageRoute(
+                                              builder: (context) => AddEventPopup()));
+                                        }
                                         Navigator.of(context).push(
                                             MaterialPageRoute(
                                                 builder: (context) =>
@@ -493,47 +559,122 @@ class _EventsPage extends State<EventsPage> {
                                     },
                                   ),
                                   SizedBox(width: 20),
-                                  Text(
-                                      appState.selectedEvent != null &&
-                                              appState.selectedEvent!.eventType
-                                                      .id ==
-                                                  3
-                                          ? 'Administrar Graduados'
-                                          : 'Administrar Pago',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyLarge),
+                                  Visibility(
+                                    visible: appState.selectedEvent != null &&
+                                        appState.selectedEvent!.eventType.id !=
+                                            3 &&
+                                        appState.selectedEvent!.eventDate
+                                            .isAfter(DateTime.now()),
+                                    child: Text('Administrar Servicios adicionales',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge),
+                                  ),
+                                  Visibility(
+                                    visible: appState.selectedEvent != null &&
+                                        appState.selectedEvent!.eventType.id !=
+                                            3 &&
+                                        appState.selectedEvent!.eventDate
+                                            .isAfter(DateTime.now()),
+                                    child: IconButton(
+                                      onPressed: () {
+                                        if (appState.selectedEvent != null) {
+                                          Navigator.of(context).push(
+                                              MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      AdditionalServices()));
+                                        } else {
+                                          Flushbar(
+                                            flushbarPosition:
+                                                FlushbarPosition.TOP,
+                                            title: 'Error',
+                                            message:
+                                                'Selecciona un evento para agregar servicios adicionales',
+                                            duration: Duration(seconds: 3),
+                                            backgroundColor: Colors.red,
+                                          ).show(context);
+                                        }
+                                      },
+                                      icon: Icon(Icons.room_service_sharp),
+                                    ),
+                                  ),
+                                  SizedBox(width: 20),
+                                  Visibility(
+                                      visible: appState.selectedEvent != null && appState.selectedEvent!.eventDate.isAfter(DateTime.now()),
+                                      child: Container(
+                                          child: Row(
+                                        children: [
+                                          Text(
+                                              appState.selectedEvent != null &&
+                                                      appState.selectedEvent!
+                                                              .eventType.id ==
+                                                          3
+                                                  ? 'Administrar graduados'
+                                                  : 'Cobro clientes',
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyLarge),
+                                          IconButton(
+                                            onPressed: () {
+                                              if (appState.selectedEvent !=
+                                                      null &&
+                                                  appState.selectedEvent!
+                                                          .eventType.id ==
+                                                      3) {
+                                                Navigator.of(context).push(
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        GraduationListPage(),
+                                                  ),
+                                                );
+                                              } else {
+                                                Navigator.of(context).push(
+                                                  MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        EventPaymentPage(),
+                                                  ),
+                                                );
+                                              }
+                                            },
+                                            icon: Icon(appState.selectedEvent !=
+                                                        null &&
+                                                    appState.selectedEvent!
+                                                            .eventType.id ==
+                                                        3
+                                                ? Icons.school_outlined
+                                                : Icons.payment_rounded),
+                                          )
+                                        ],
+                                      ))),
+                                    SizedBox(width: 20),
+                                   Text('Nómina'),
                                   IconButton(
+                                    icon: Icon(Icons.monetization_on),
                                     onPressed: () {
-                                      if (appState.selectedEvent != null &&
-                                          appState.selectedEvent!.eventType
-                                                  .id ==
-                                              3) {
-                                        Navigator.of(context).push(
+                                      Navigator.of(context).push(
                                           MaterialPageRoute(
-                                            builder: (context) =>
-                                                GraduationListPage(),
-                                          ),
-                                        );
-                                      } else {
-                                        Navigator.of(context).push(
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                EventPaymentPage(),
-                                          ),
-                                        );
-                                      }
+                                              builder: (context) =>
+                                                  AddEmployeePaymentPage()));
+
                                     },
-                                    icon: Icon(appState.selectedEvent != null &&
-                                            appState.selectedEvent!.eventType
-                                                    .id ==
-                                                3
-                                        ? Icons.school_outlined
-                                        : Icons.payment_rounded),
-                                  )
+                                  ), 
+                                  SizedBox(width: 20),
+                                  Text('pagos del evento',
+                                      style: Theme.of(context).textTheme.bodyLarge),
+                                  IconButton(
+                                    
+                                    icon: Icon(Icons.payment_rounded),
+                                    onPressed: () {
+                                      Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  ExpensesEventPage()));
+                                    },
+                                  ),
                                 ],
                               ),
-                            ))
+                            )),
+                            
                       ],
                     ),
                     SizedBox(height: 30),
@@ -568,9 +709,11 @@ class _EventsPage extends State<EventsPage> {
                                     PlutoCell(value: e.location.capacity),
                                 'event_total': PlutoCell(
                                     value:
-                                        e.totalCost > 0 && e.eventType.id != 3
-                                            ? e.totalCost.toString()
-                                            : ''),
+                                        e.totalCost + e.totalAdditional > 0 &&
+                                                e.eventType.id != 3
+                                            ? (e.totalCost + e.totalAdditional)
+                                                .toString()
+                                            : '-'),
                                 'event_status': PlutoCell(
                                     value: e.eventDate.isAfter(DateTime.now())
                                         ? 'En progreso'
@@ -605,11 +748,6 @@ class _EventsPage extends State<EventsPage> {
                                   as PlutoFilterType;
                             }),
                       ),
-                      createFooter: (stateManager) {
-                        stateManager.setPageSize(15,
-                            notify: false); // default 40
-                        return PlutoPagination(stateManager);
-                      },
                     )),
                   ],
                 ),

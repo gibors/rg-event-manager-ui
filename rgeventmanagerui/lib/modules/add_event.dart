@@ -1,14 +1,17 @@
 import 'dart:developer';
-
 import 'package:another_flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:rg_event_management_ui/formatters/ThousandsSeparatorInputFormatter.dart';
 import 'package:rg_event_management_ui/main.dart';
 import 'package:rg_event_management_ui/models/Event.dart';
-import 'package:rg_event_management_ui/modules/eventpayment.dart';
+import 'package:rg_event_management_ui/modules/additional_services.dart';
+import 'package:rg_event_management_ui/modules/event_operations/nomina_event.dart';
+import 'package:rg_event_management_ui/modules/graduationpayment.dart';
 import 'package:rg_event_management_ui/services/eventservice.dart';
 import 'package:rg_event_management_ui/modules/graduationlist.dart';
+// import 'package:crud_table/crud_table.dart';
 
 class AddEventPopup extends StatefulWidget {
   @override
@@ -52,6 +55,7 @@ class _AddEventPopup extends State<AddEventPopup> {
   TextEditingController souvenirCost = TextEditingController();
   TextEditingController school = TextEditingController();
   TextEditingController grado = TextEditingController();
+  TextEditingController carer = TextEditingController();
   TextEditingController numberChildren = TextEditingController();
   TextEditingController numberYoung = TextEditingController();
 
@@ -69,6 +73,7 @@ class _AddEventPopup extends State<AddEventPopup> {
   Location? selectedLocation;
   EventType? selectedEventType;
   DateTime? selectedDate;
+  DateTime? selectedEndDate;
   Event? selectedEvent;
 
   final TextEditingController _textEditingLocationController =
@@ -98,7 +103,9 @@ class _AddEventPopup extends State<AddEventPopup> {
 
     if (appState.selectedEvent != null) {
       selectedEvent = appState.selectedEvent;
-      title = "Editar evento";
+      title = selectedEvent!.eventDate.isAfter(DateTime.now())
+          ? "Editar evento"
+          : 'Evento realizado el ${selectedEvent!.eventDate.toLocal().toString().substring(0, 10)}';
       isEditMode = true;
       log('Selected event: ${selectedEvent!.name}');
       mapSelectedEventToFields();
@@ -158,6 +165,7 @@ class _AddEventPopup extends State<AddEventPopup> {
         grado.text = selectedEvent!.grade ?? "";
         school.text = selectedEvent!.school ?? "";
         _textEditingGradoController.text = grado.text;
+        carer.text = selectedEvent!.carer ?? "";
 
         prePartyCost.text = selectedEvent!.pricing.prePartyCost.toString();
         braceletCost.text = selectedEvent!.pricing.braceletCost.toString();
@@ -176,12 +184,12 @@ class _AddEventPopup extends State<AddEventPopup> {
     var total = 0.0;
 
     if (selectedEventType == null || selectedEventType!.id != 3) {
-      total += double.parse(eventCost.text) * int.parse(minCapacity.text);
+      total += double.tryParse(eventCost.text.isEmpty ? "0" : eventCost.text.replaceAll(",", ""))! * int.parse(minCapacity.text);
       if (selectedEventType!.id == 1) {
         total +=
-            double.parse(childrenCost.text) * int.parse(numberChildren.text);
+            double.tryParse(childrenCost.text.isEmpty ? "0" : childrenCost.text.replaceAll(",", ""))! * int.parse(numberChildren.text);
       } else if (selectedEventType!.id == 2) {
-        total += double.parse(youngCost.text) * int.parse(numberYoung.text);
+        total += double.tryParse(youngCost.text.isEmpty ? "0" : youngCost.text.replaceAll(",", ""))! * int.parse(numberYoung.text);
       }
       return total;
     } else {
@@ -193,26 +201,26 @@ class _AddEventPopup extends State<AddEventPopup> {
     var contacts = <Contact>[];
 
     if (selectedEventType != null && selectedEventType!.id == 3) {
-      if (double.tryParse(eventCost.text.isEmpty ? "0" : eventCost.text)! > 0 &&
+      if (double.tryParse(eventCost.text.isEmpty ? "0" : eventCost.text.replaceAll(",", ""))! > 0 &&
           (double.tryParse(eventCostPackage10.text.isEmpty
                       ? "0"
-                      : eventCostPackage10.text)! >
+                      : eventCostPackage10.text.replaceAll(",", ""))! >
                   0 ||
               double.tryParse(eventCostPackage10NoPre.text.isEmpty
                       ? "0"
-                      : eventCostPackage10NoPre.text)! >
+                      : eventCostPackage10NoPre.text.replaceAll(",", ""))! >
                   0 ||
               double.tryParse(eventCostPackageHalf.text.isEmpty
                       ? "0"
-                      : eventCostPackageHalf.text)! >
+                      : eventCostPackageHalf.text.replaceAll(",", ""))! >
                   0 ||
               double.tryParse(eventCostPackageHalfNoPre.text.isEmpty
                       ? "0"
-                      : eventCostPackageHalfNoPre.text)! >
+                      : eventCostPackageHalfNoPre.text.replaceAll(",", ""))! >
                   0 ||
               double.tryParse(eventCostPackageDouble.text.isEmpty
                       ? "0"
-                      : eventCostPackageDouble.text)! >
+                      : eventCostPackageDouble.text.replaceAll(",", ""))! >
                   0)) {
         Flushbar(
           flushbarPosition: FlushbarPosition.TOP,
@@ -253,38 +261,49 @@ class _AddEventPopup extends State<AddEventPopup> {
           : 0,
       pricing: Pricing(
         id: selectedEvent?.pricing.id ?? -1,
-        additionalCost: double.parse(
-            additionalCost.text.isEmpty ? "0" : additionalCost.text),
-        dishCost: double.parse(eventCost.text.isEmpty ? "0" : eventCost.text),
-        paq10TICost: double.parse(
-            eventCostPackage10.text.isEmpty ? "0" : eventCostPackage10.text),
+        additionalCost: double.parse(additionalCost.text.isEmpty
+            ? "0"
+            : additionalCost.text.replaceAll(',', '')),
+        dishCost: double.parse(
+            eventCost.text.isEmpty ? "0" : eventCost.text.replaceAll(',', '')),
+        paq10TICost: double.parse(eventCostPackage10.text.isEmpty
+            ? "0"
+            : eventCostPackage10.text.replaceAll(',', '')),
         paq10SPCost: double.parse(eventCostPackage10NoPre.text.isEmpty
             ? "0"
-            : eventCostPackage10NoPre.text),
+            : eventCostPackage10NoPre.text.replaceAll(',', '')),
         paq5TIPCost: double.parse(eventCostPackageHalf.text.isEmpty
             ? "0"
-            : eventCostPackageHalf.text),
+            : eventCostPackageHalf.text.replaceAll(',', '')),
         paq5SPCost: double.parse(eventCostPackageHalfNoPre.text.isEmpty
             ? "0"
-            : eventCostPackageHalfNoPre.text),
+            : eventCostPackageHalfNoPre.text.replaceAll(',', '')),
         paq10DoubleCost: double.parse(eventCostPackageDouble.text.isEmpty
             ? "0"
-            : eventCostPackageDouble.text),
-        prePartyCost:
-            double.parse(prePartyCost.text.isEmpty ? "0" : prePartyCost.text),
-        braceletCost:
-            double.parse(braceletCost.text.isEmpty ? "0" : braceletCost.text),
-        childrenCost:
-            double.parse(childrenCost.text.isEmpty ? "0" : childrenCost.text),
-        youngCost: double.parse(youngCost.text.isEmpty ? "0" : youngCost.text),
-        souvenirCost:
-            double.parse(souvenirCost.text.isEmpty ? "0" : souvenirCost.text),
+            : eventCostPackageDouble.text.replaceAll(',', '')),
+        prePartyCost: double.parse(prePartyCost.text.isEmpty
+            ? "0"
+            : prePartyCost.text.replaceAll(',', '')),
+        braceletCost: double.parse(braceletCost.text.isEmpty
+            ? "0"
+            : braceletCost.text.replaceAll(',', '')),
+        childrenCost: double.parse(childrenCost.text.isEmpty
+            ? "0"
+            : childrenCost.text.replaceAll(',', '')),
+        youngCost: double.parse(
+            youngCost.text.isEmpty ? "0" : youngCost.text.replaceAll(',', '')),
+        souvenirCost: double.parse(souvenirCost.text.isEmpty
+            ? "0"
+            : souvenirCost.text.replaceAll(',', '')),
       ),
       grade: selectedEventType != null && selectedEventType!.id == 3
           ? grado.text
           : null,
       school: selectedEventType != null && selectedEventType!.id == 3
           ? school.text
+          : null,
+      carer: selectedEventType != null && selectedEventType!.id == 3
+          ? carer.text
           : null,
       // not sending these fields
       createdDate: DateTime.now(),
@@ -294,9 +313,11 @@ class _AddEventPopup extends State<AddEventPopup> {
       status: 'active',
       folio: 0,
       totalCost: calculateCost(),
+      additionalServices: selectedEvent?.additionalServices ?? [],
+      totalAdditional: selectedEvent?.totalAdditional ?? 0,
     );
 
-    EventService().createEvent(event, token).then((value) {
+    EventService().createOrUpdateEvent(event, token).then((value) {
       log('Event created id ${value.id}');
 
       setState(() {
@@ -359,89 +380,91 @@ class _AddEventPopup extends State<AddEventPopup> {
     contactIds.add(contactId);
 
     setState(() {
-      if (contactFields.length < 4) {
-        contactFields.add(
-          Column(children: [
-            SizedBox(height: 22.0),
-            Row(
-              children: [
-                SizedBox(height: 16.0),
-                Expanded(
-                  child: TextFormField(
-                    controller: contactName,
-                    decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10.0),
-                        ),
-                        labelText: 'Nombre de contacto:'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Ingrese el nombre del contacto';
-                      }
-                      return null;
-                    },
-                  ),
+      // if (contactFields.length < 4) {
+      contactFields.add(
+        Column(children: [
+          SizedBox(height: 22.0),
+          Row(
+            children: [
+              SizedBox(height: 16.0),
+              Expanded(
+                child: TextFormField(
+                  controller: contactName,
+                  decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                      labelText: 'Nombre de contacto:'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Ingrese el nombre del contacto';
+                    }
+                    return null;
+                  },
                 ),
-                SizedBox(width: 16.0),
-                Expanded(
-                  child: TextFormField(
-                    controller: contactPhone,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10.0),
-                        ),
-                        labelText: 'Teléfono de contacto:'),
-                    keyboardType: TextInputType.phone,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Ingrese el teléfono del contacto';
-                      }
-                      return null;
-                    },
-                  ),
+              ),
+              SizedBox(width: 16.0),
+              Expanded(
+                child: TextFormField(
+                  controller: contactPhone,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(10),
+                  ],
+                  decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                      labelText: 'Teléfono de contacto:'),
+                  keyboardType: TextInputType.phone,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Ingrese el teléfono del contacto';
+                    }
+                    return null;
+                  },
                 ),
-                SizedBox(width: 16.0),
-                Expanded(
-                  child: TextFormField(
-                    controller: contactEmail,
-                    decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10.0),
-                        ),
-                        labelText: 'Correo de contacto:'),
-                    keyboardType: TextInputType.emailAddress,
-                    validator: (value) {
-                      String pattern =
-                          r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
-                      if (value != null &&
-                          value.isNotEmpty &&
-                          !RegExp(pattern).hasMatch(value)) {
-                        log('Invalid email');
-                        return 'Ingresa un correo válido';
-                      }
-                      return null;
-                    },
-                  ),
+              ),
+              SizedBox(width: 16.0),
+              Expanded(
+                child: TextFormField(
+                  controller: contactEmail,
+                  decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                      labelText: 'Correo de contacto:'),
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (value) {
+                    String pattern =
+                        r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
+                    if (value != null &&
+                        value.isNotEmpty &&
+                        !RegExp(pattern).hasMatch(value)) {
+                      log('Invalid email');
+                      return 'Ingresa un correo válido';
+                    }
+                    return null;
+                  },
                 ),
-                SizedBox(width: 16.0),
-                Visibility(
-                  visible: contactFields.isNotEmpty,
-                  child: Expanded(
-                      child: IconButton(
-                          color: Colors.redAccent,
-                          onPressed: () {
-                            contactFields.length > 1
-                                ? removeContactField(index)
-                                : null;
-                          },
-                          icon: Icon(Icons.delete))),
-                ),
-              ],
-            ),
-          ]),
-        );
-      }
+              ),
+              SizedBox(width: 16.0),
+              Visibility(
+                visible: contactFields.isNotEmpty,
+                child: Expanded(
+                    child: IconButton(
+                        color: Colors.redAccent,
+                        onPressed: () {
+                          contactFields.length > 1
+                              ? removeContactField(index)
+                              : null;
+                        },
+                        icon: Icon(Icons.delete))),
+              ),
+            ],
+          ),
+        ]),
+      );
     });
   }
 
@@ -596,7 +619,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                                 : 'Mínimo de graduados'),
                         keyboardType: TextInputType.number,
                         validator: (value) {
-                          if (value == null || value.isEmpty) {
+                          if (value == null || value.isEmpty && selectedEventType != null && selectedEventType!.id != 6) {
                             return selectedEventType == null ||
                                     selectedEventType!.id != 3
                                 ? 'Ingresa número invitados'
@@ -781,6 +804,158 @@ class _AddEventPopup extends State<AddEventPopup> {
                 SizedBox(height: 16.0),
                 Visibility(
                   visible:
+                      selectedEventType != null && selectedEventType!.id == 6,
+                  child: 
+                  Row(
+                    children: [
+                        Expanded(
+                        child: TextFormField(
+                          readOnly: true,
+                          controller: TextEditingController(
+                              text: selectedDate?.toString().substring(11, 16) ??
+                                  ''),
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                            ),
+                            labelText: 'Hora inicio del evento',
+                          ),
+                          validator: (value) => value == null || value.isEmpty
+                              ? 'Ingresa la hora de inicio del evento'
+                              : null,
+                          onTap: () async {
+                            final TimeOfDay? picked = await showTimePicker(
+                              context: context,
+                              initialTime: TimeOfDay.now(),
+                            );
+                            if (picked != null && selectedDate != null) {
+                              setState(() {
+                                selectedDate = DateTime(
+                                    selectedDate!.year,
+                                    selectedDate!.month,
+                                    selectedDate!.day,
+                                    picked.hour,
+                                    picked.minute);
+                              });
+                            } else {
+                              showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: Text('Error'),
+                                    content: Text(
+                                        'Selecciona primero la fecha del evento'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                        },
+                                        child: Text('Cerrar'),
+                                      )
+                                    ],
+                                  );
+                                },
+                              );
+                            }
+                          },
+                        ),
+                      ),
+                      SizedBox(width: 16.0),
+                      Expanded(child: 
+                        Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        TextFormField(
+                          readOnly: true,
+                          controller: TextEditingController(
+                              text: selectedEndDate?.toString().substring(0, 10) ??
+                                  ''),
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                            ),
+                            labelText: 'Fecha fin del evento',
+                          ),
+                          validator: (value) => value == null || value.isEmpty
+                              ? 'Ingresa la fecha de fin del evento'
+                              : null,
+                          onTap: () async {
+                            final DateTime? picked = await showDatePicker(
+                              context: context,
+                              initialDate: selectedEndDate ?? DateTime.now(),
+                              firstDate: selectedEndDate ?? DateTime.now(),
+                              lastDate:
+                                  DateTime.now().add(Duration(days: 1000)),
+                            );
+                            if (picked != null && picked != selectedEndDate) {
+                              setState(() {
+                                selectedEndDate = picked;
+                              });
+                            }
+                          },
+                        )
+                      ],
+                    )
+                      ),
+                      SizedBox(width: 16.0),                    
+                      Expanded(
+                        child: TextFormField(
+                          readOnly: true,
+                          controller: TextEditingController(
+                              text: selectedEndDate?.add(Duration(hours: 2)).toString().substring(11, 16) ??
+                                  ''),
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                            ),
+                            labelText: 'Hora fin del evento',
+                          ),
+                          validator: (value) => value == null || value.isEmpty
+                              ? 'Ingresa la hora de fin del evento'
+                              : null,
+                          onTap: () async {
+                            final TimeOfDay? picked = await showTimePicker(
+                              context: context,
+                              initialTime: TimeOfDay.now(),
+                            );
+                            if (picked != null && selectedEndDate != null) {
+                              setState(() {
+                                selectedEndDate = DateTime(
+                                    selectedEndDate!.year,
+                                    selectedEndDate!.month,
+                                    selectedEndDate!.day,
+                                    picked.hour,
+                                    picked.minute);
+                              });
+                            } else {
+                              showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: Text('Error'),
+                                    content: Text(
+                                        'Selecciona primero la fecha de fin del evento'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                        },
+                                        child: Text('Cerrar'),
+                                      )
+                                    ],
+                                  );
+                                },
+                              );
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+                ,
+                Visibility(
+                  visible:
                       selectedEventType != null && selectedEventType!.id == 3,
                   child: Row(
                     children: [
@@ -856,6 +1031,19 @@ class _AddEventPopup extends State<AddEventPopup> {
                             }
                             return null;
                           },
+                        ),
+                      ),
+                      SizedBox(width: 16.0),
+                      Expanded(
+                        flex: 2,
+                        child: TextFormField(
+                          controller: carer,
+                          decoration: InputDecoration(
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10.0),
+                              ),
+                              labelText: 'Carrera:'),
+                          keyboardType: TextInputType.text,
                         ),
                       ),
                     ],
@@ -939,8 +1127,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                 Row(
                   children: [
                     OutlinedButton(
-                      onPressed:
-                          contactFields.length < 4 ? addContactField : null,
+                      onPressed: addContactField,
                       child: Text('Agregar contacto'),
                     ),
                   ],
@@ -956,26 +1143,27 @@ class _AddEventPopup extends State<AddEventPopup> {
                 SizedBox(height: 16.0),
                 Row(
                   children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: eventCost,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(
-                              RegExp(r'^\d+\.?\d{0,2}'))
-                        ],
-                        decoration: InputDecoration(
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10.0),
-                            ),
-                            labelText: 'Costo por platillo:'),
-                        keyboardType: TextInputType.number,
-                        validator: (value) {
-                          if (eventCostPackage10.text.isEmpty &&
-                              (value == null || value.isEmpty)) {
-                            return 'Ingresa el costo del platillo';
-                          }
-                          return null;
-                        },
+                    Visibility(
+                      visible: selectedEventType != null &&
+                          selectedEventType!.id != 6,
+                      child: Expanded(
+                        child: TextFormField(
+                          controller: eventCost,
+                          inputFormatters: [ThousandsSeparatorInputFormatter()],
+                          decoration: InputDecoration(
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10.0),
+                              ),
+                              labelText: 'Costo por platillo:'),
+                          keyboardType: TextInputType.number,
+                          validator: (value) {
+                            if (eventCostPackage10.text.isEmpty &&
+                                (value == null || value.isEmpty)) {
+                              return 'Ingresa el costo del platillo';
+                            }
+                            return null;
+                          },
+                        ),
                       ),
                     ),
                     SizedBox(width: 16.0),
@@ -986,8 +1174,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                         child: TextFormField(
                           controller: additionalCost,
                           inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                                RegExp(r'^\d+\.?\d{0,2}'))
+                            ThousandsSeparatorInputFormatter(),
                           ],
                           decoration: InputDecoration(
                               border: OutlineInputBorder(
@@ -1005,8 +1192,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                         child: TextFormField(
                           controller: childrenCost,
                           inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                                RegExp(r'^\d+\.?\d{0,2}'))
+                            ThousandsSeparatorInputFormatter(),
                           ],
                           decoration: InputDecoration(
                               border: OutlineInputBorder(
@@ -1025,8 +1211,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                         child: TextFormField(
                           controller: prePartyCost,
                           inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                                RegExp(r'^\d+\.?\d{0,2}'))
+                            ThousandsSeparatorInputFormatter(),
                           ],
                           decoration: InputDecoration(
                               border: OutlineInputBorder(
@@ -1045,8 +1230,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                         child: TextFormField(
                           controller: souvenirCost,
                           inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                                RegExp(r'^\d+\.?\d{0,2}'))
+                            ThousandsSeparatorInputFormatter(),
                           ],
                           decoration: InputDecoration(
                               border: OutlineInputBorder(
@@ -1064,8 +1248,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                         child: TextFormField(
                           controller: youngCost,
                           inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                                RegExp(r'^\d+\.?\d{0,2}'))
+                            ThousandsSeparatorInputFormatter(),
                           ],
                           decoration: InputDecoration(
                               border: OutlineInputBorder(
@@ -1084,8 +1267,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                         child: TextFormField(
                           controller: braceletCost,
                           inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                                RegExp(r'^\d+\.?\d{0,2}'))
+                            ThousandsSeparatorInputFormatter(),
                           ],
                           decoration: InputDecoration(
                               border: OutlineInputBorder(
@@ -1113,8 +1295,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                         child: TextFormField(
                           controller: eventCostPackage10,
                           inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                                RegExp(r'^\d+\.?\d{0,2}'))
+                            ThousandsSeparatorInputFormatter(),
                           ],
                           decoration: InputDecoration(
                               border: OutlineInputBorder(
@@ -1128,8 +1309,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                       Expanded(
                         child: TextFormField(
                           inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                                RegExp(r'^\d+\.?\d{0,2}'))
+                            ThousandsSeparatorInputFormatter(),
                           ],
                           controller: eventCostPackage10NoPre,
                           decoration: InputDecoration(
@@ -1145,8 +1325,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                         child: TextFormField(
                           controller: eventCostPackageHalf,
                           inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                                RegExp(r'^\d+\.?\d{0,2}'))
+                            ThousandsSeparatorInputFormatter(),
                           ],
                           decoration: InputDecoration(
                               border: OutlineInputBorder(
@@ -1161,8 +1340,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                         child: TextFormField(
                           controller: eventCostPackageHalfNoPre,
                           inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                                RegExp(r'^\d+\.?\d{0,2}'))
+                            ThousandsSeparatorInputFormatter(),
                           ],
                           decoration: InputDecoration(
                               border: OutlineInputBorder(
@@ -1177,8 +1355,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                         child: TextFormField(
                           controller: eventCostPackageDouble,
                           inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                                RegExp(r'^\d+\.?\d{0,2}'))
+                            ThousandsSeparatorInputFormatter(),
                           ],
                           decoration: InputDecoration(
                               border: OutlineInputBorder(
@@ -1192,131 +1369,161 @@ class _AddEventPopup extends State<AddEventPopup> {
                   ),
                 ),
                 SizedBox(height: 50.0),
-                Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  ElevatedButton(
-                    style: ButtonStyle(
-                      backgroundColor: WidgetStateProperty.all<Color>(
-                          Color.fromRGBO(250, 50, 100, 0.8)),
-                      foregroundColor:
-                          WidgetStateProperty.all<Color>(Colors.white),
-                      fixedSize: WidgetStateProperty.all<Size>(Size(180, 80)),
-                    ),
-                    onPressed: () {
-                      if (_formKey.currentState != null &&
-                          _formKey.currentState!.validate()) {
-                        saveEvent();
-                      }
-                    },
-                    child: Text('Guardar Evento'),
-                  ),
-                  SizedBox(width: 16.0),
-                  ElevatedButton(
-                    onPressed: () {
-                      appState.setIndex(0);
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(
-                          builder: (context) => EventsHomePage(),
-                        ),
-                      );
-                    },
-                    style: ButtonStyle(
-                      backgroundColor: WidgetStateProperty.all<Color>(
-                          Color.fromRGBO(250, 50, 100, 0.8)),
-                      foregroundColor:
-                          WidgetStateProperty.all<Color>(Colors.white),
-                      fixedSize: WidgetStateProperty.all<Size>(Size(180, 80)),
-                    ),
-                    child: Text('Salir'),
-                  ),
-                  SizedBox(width: 16.0),
-                  Visibility(
-                      visible: selectedEvent != null &&
-                          selectedEventType != null &&
-                          selectedEventType!.id == 3,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          appState.selectedEvent = selectedEvent;
-                          appState.setToken(token);
-                          if (appState.selectedEvent != null &&
-                              appState.selectedEvent!.eventType.id == 3) {
-                            Navigator.of(context).pushReplacement(
-                              MaterialPageRoute(
-                                builder: (context) => GraduationListPage(),
-                              ),
-                            );
-                          } else {
-                            Navigator.of(context).pushReplacement(
-                              MaterialPageRoute(
-                                builder: (context) => EventPaymentPage(),
-                              ),
-                            );
-                          }
-                        },
-                        style: ButtonStyle(
-                          backgroundColor: WidgetStateProperty.all<Color>(
-                              Color.fromRGBO(250, 50, 100, 0.8)),
-                          foregroundColor:
-                              WidgetStateProperty.all<Color>(Colors.white),
-                          fixedSize:
-                              WidgetStateProperty.all<Size>(Size(220, 80)),
-                        ),
-                        child: Text(selectedEvent != null &&
+                  // Expanded(child: Container(
+                  //   child:
+                  // CrudTable( 
+                  //   crudViewSource: context.read<CrudViewSource>(),
+                  //   onTap: (value) => {
+                  //     log('Tapped on $value')
+                  //   },
+                  //   )
+                  // ),),
+                SizedBox(
+                  height: 50.0,
+                ),
+                Visibility(
+                  visible: ((selectedEvent != null && 
+                      selectedEvent!.eventDate.isAfter(DateTime.now())) || !isEditMode),
+                  child: Container(
+                    child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          ElevatedButton(
+                            style: ButtonStyle(
+                              backgroundColor: WidgetStateProperty.all<Color>(
+                                  Color.fromRGBO(250, 50, 100, 0.8)),
+                              foregroundColor:
+                                  WidgetStateProperty.all<Color>(Colors.white),
+                              fixedSize:
+                                  WidgetStateProperty.all<Size>(Size(180, 80)),
+                            ),
+                            onPressed: () => selectedEvent != null &&
+                                    !selectedEvent!.eventDate
+                                        .isAfter(DateTime.now())
+                                ? null
+                                : {
+                                    if (_formKey.currentState != null &&
+                                        _formKey.currentState!.validate())
+                                      {saveEvent()}
+                                  },
+                            child: Text('Guardar Evento'),
+                          ),
+                          SizedBox(width: 16.0),
+                          ElevatedButton(
+                            onPressed: () {
+                              appState.setIndex(0);
+                              Navigator.of(context).pushReplacement(
+                                MaterialPageRoute(
+                                  builder: (context) => EventsHomePage(),
+                                ),
+                              );
+                            },
+                            style: ButtonStyle(
+                              backgroundColor: WidgetStateProperty.all<Color>(
+                                  Color.fromRGBO(250, 50, 100, 0.8)),
+                              foregroundColor:
+                                  WidgetStateProperty.all<Color>(Colors.white),
+                              fixedSize:
+                                  WidgetStateProperty.all<Size>(Size(180, 80)),
+                            ),
+                            child: Text('Salir'),
+                          ),
+                          SizedBox(width: 16.0),
+                          Visibility(
+                              visible: selectedEvent != null &&
+                                  selectedEventType != null &&
+                                  selectedEventType!.id == 3,
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  appState.selectedEvent = selectedEvent;
+                                  appState.setToken(token);
+                                  if (appState.selectedEvent != null &&
+                                      appState.selectedEvent!.eventType.id ==
+                                          3) {
+                                    Navigator.of(context).pushReplacement(
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            GraduationListPage(),
+                                      ),
+                                    );
+                                  } else {
+                                    Navigator.of(context).pushReplacement(
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            GraduationPaymentPage(),
+                                      ),
+                                    );
+                                  }
+                                },
+                                style: ButtonStyle(
+                                  backgroundColor:
+                                      WidgetStateProperty.all<Color>(
+                                          Color.fromRGBO(250, 50, 100, 0.8)),
+                                  foregroundColor:
+                                      WidgetStateProperty.all<Color>(
+                                          Colors.white),
+                                  fixedSize: WidgetStateProperty.all<Size>(
+                                      Size(220, 80)),
+                                ),
+                                child: Text(selectedEvent != null &&
+                                        selectedEventType != null &&
+                                        selectedEventType!.id == 3
+                                    ? 'Administrar graduados'
+                                    : 'Administrar pagos'),
+                              )),
+                          SizedBox(width: 16.0),
+                          Visibility(
+                            visible: selectedEvent != null &&
                                 selectedEventType != null &&
-                                selectedEventType!.id == 3
-                            ? 'Administrar graduados'
-                            : 'Administrar pagos'),
-                      )),
-                  SizedBox(width: 16.0),
-                  Visibility(
-                    visible: selectedEvent != null &&
-                        selectedEventType != null &&
-                        selectedEventType!.id != 3,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        showAboutDialog(
-                            context: this.context,
-                            applicationIcon: Icon(Icons.info),
-                            applicationName: 'Administrar servicios',
-                            applicationVersion: '1.0.0',
-                            applicationLegalese: 'Administrar servicios',
-                            children: [
-                              Text('Administrar servicios esta en progreso..')
-                            ]);
-
-                        // appState.selectedEvent = selectedEvent;
-                        // appState.setToken(token);
-                        // Navigator.of(context).push(
-                        // MaterialPageRoute(
-                        // builder: (context) => AdditionalServices(),
-                        // ),
-                        // );
-                      },
-                      style: ButtonStyle(
-                        backgroundColor: WidgetStateProperty.all<Color>(
-                            Color.fromRGBO(250, 50, 100, 0.8)),
-                        foregroundColor:
-                            WidgetStateProperty.all<Color>(Colors.white),
-                        fixedSize: WidgetStateProperty.all<Size>(Size(220, 80)),
-                      ),
-                      child: Text('Administrar servicios'),
-                    ),
+                                selectedEventType!.id != 3,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                appState.selectedEvent = selectedEvent;
+                                appState.setToken(token);
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => AdditionalServices(),
+                                  ),
+                                );
+                              },
+                              style: ButtonStyle(
+                                backgroundColor: WidgetStateProperty.all<Color>(
+                                    Color.fromRGBO(250, 50, 100, 0.8)),
+                                foregroundColor: WidgetStateProperty.all<Color>(
+                                    Colors.white),
+                                fixedSize: WidgetStateProperty.all<Size>(
+                                    Size(220, 80)),
+                              ),
+                              child: Text('Administrar servicios'),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 20,
+                          ),
+                          ElevatedButton(
+                              onPressed: () {
+                                log('pressed nomina');
+                                appState.selectedEvent = selectedEvent;
+                                appState.setToken(token);
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => AddEmployeePaymentPage(),
+                                  ),
+                                );
+                              },
+                              style: ButtonStyle(
+                                backgroundColor: WidgetStateProperty.all<Color>(
+                                    Color.fromRGBO(250, 50, 100, 0.8)),
+                                foregroundColor: WidgetStateProperty.all<Color>(
+                                    Colors.white),
+                                fixedSize: WidgetStateProperty.all<Size>(
+                                    Size(220, 80)),
+                              ),
+                              child: Text('Pago Nomina')),
+                        ]),
                   ),
-                  SizedBox(
-                    width: 20,
-                  ),
-                  ElevatedButton(
-                      onPressed: () {
-                        log('pressed nomina');
-                      },
-                      style: ButtonStyle(
-                        backgroundColor: WidgetStateProperty.all<Color>(
-                            Color.fromRGBO(250, 50, 100, 0.8)),
-                        foregroundColor:
-                            WidgetStateProperty.all<Color>(Colors.white),
-                        fixedSize: WidgetStateProperty.all<Size>(Size(220, 80)),
-                      ),
-                      child: Text('Pago Nomina')),
-                ]),
+                ),
+                // final row for buttons
               ],
             ),
           ),

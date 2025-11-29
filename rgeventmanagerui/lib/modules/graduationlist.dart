@@ -1,4 +1,5 @@
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:another_flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
@@ -6,22 +7,23 @@ import 'package:pluto_grid/pluto_grid.dart';
 import 'package:provider/provider.dart';
 import 'package:rg_event_management_ui/main.dart';
 import 'package:rg_event_management_ui/models/Student.dart';
-import 'package:rg_event_management_ui/modules/eventpayment.dart';
+import 'package:rg_event_management_ui/modules/graduationpayment.dart';
 import 'package:rg_event_management_ui/services/eventservice.dart';
-// import 'package:pluto_grid_export/pluto_grid_export.dart' as pluto_grid_export;
+import 'package:filepicker_windows/filepicker_windows.dart';
 
+// import 'package:pluto_grid_export/pluto_grid_export.dart' as pluto_grid_export;
 class GraduationListPage extends StatefulWidget {
   @override
   _GraduationListPageState createState() => _GraduationListPageState();
 }
 
 class _GraduationListPageState extends State<GraduationListPage> {
-    // late PlutoGridStateManager plutoGridStateManager;
 
   List<PlutoColumn> columns = [
     PlutoColumn(
       title: 'Nombre',
       field: 'student_name',
+      width: 200,
       type: PlutoColumnType.text(),
     ),
     PlutoColumn(
@@ -30,28 +32,31 @@ class _GraduationListPageState extends State<GraduationListPage> {
       type: PlutoColumnType.text(),
     ),
     PlutoColumn(
-      title: 'paquete/platillo',
+      title: 'paq/platillo',
       field: 'package',
+      width: 120,
       type: PlutoColumnType.text(),
     ),
     PlutoColumn(
-      title: 'Total platillo/paquete',
+      title: 'Total platillo/paq',
       field: 'total_cost',
-      type: PlutoColumnType.text(),
+      type: PlutoColumnType.currency(symbol: '\$'),
     ),
     PlutoColumn(
-      title: 'Pagado platillo/paquete',
+      title: 'Pagado platillo/paq',
       field: 'paid',
-      type: PlutoColumnType.text(),
+      type: PlutoColumnType.currency(symbol: '\$'),
     ),
     PlutoColumn(
       title: 'Restante',
       field: 'remaining',
-      type: PlutoColumnType.text(),
+      width: 160,
+      type: PlutoColumnType.currency(symbol: '\$'),
     ),
     PlutoColumn(
       title: 'Estado pago',
       field: 'student_status',
+      width: 160,
       type: PlutoColumnType.select(<String>['Pendiente', 'Pagado']),
       renderer: (rendererContext) {
         Color textColor = Colors.black;
@@ -74,9 +79,13 @@ class _GraduationListPageState extends State<GraduationListPage> {
     PlutoColumn(
       title: 'Folio',
       field: 'folio',
+      width: 120,
       type: PlutoColumnType.text(),
     ),
-    PlutoColumn(title: 'Cantidad Adicional', field: 'additional_number',
+    PlutoColumn(
+        title: 'Adicionales',
+        field: 'additional_number',
+        width: 120,
         type: PlutoColumnType.text()),
     PlutoColumn(
       title: 'Pagado Adicional',
@@ -117,29 +126,6 @@ class _GraduationListPageState extends State<GraduationListPage> {
     });
   }
 
-  //  void exportToPdf() async {
-    // final themeData = pluto_grid_export.ThemeData.withFont(
-      // base: pluto_grid_export.Font.ttf(
-        // await rootBundle.load('fonts/open_sans/OpenSans-Regular.ttf'),
-      // ),
-      // bold: pluto_grid_export.Font.ttf(
-        // await rootBundle.load('fonts/open_sans/OpenSans-Bold.ttf'),
-      // ),
-    // );
-
-    // var plutoGridPdfExport = pluto_grid_export.PlutoGridDefaultPdfExport(
-      // title: "Pluto Grid Sample pdf print",
-      // creator: "Pluto Grid Rocks!",
-      // format: pluto_grid_export.PdfPageFormat.a4.landscape,
-      // themeData: themeData,
-    // );
-
-    // await pluto_grid_export.Printing.sharePdf(
-      // bytes: await plutoGridPdfExport.export(plutoGridStateManager),
-      // filename: plutoGridPdfExport.getFilename(),
-    // );
-  // }
-
   @override
   Widget build(BuildContext context) {
     var appState = context.watch<MyAppState>();
@@ -148,7 +134,9 @@ class _GraduationListPageState extends State<GraduationListPage> {
       backgroundColor: Colors.lightBlue[50],
       appBar: AppBar(
         title: Text(
-            appState.selectedEvent != null ? '${appState.selectedEvent!.eventType.description} ${appState.selectedEvent!.name}' : '',
+            appState.selectedEvent != null
+                ? '${appState.selectedEvent!.eventType.description}: ${appState.selectedEvent!.name}'
+                : '',
             style: TextStyle(fontSize: 24.0, color: Colors.blue[900])),
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
@@ -176,21 +164,102 @@ class _GraduationListPageState extends State<GraduationListPage> {
                     children: [
                       Row(
                         children: [
-                          Text('Exportar a PDF',
+                          Text('Descargar PDF para alumnos',
                               style: Theme.of(context).textTheme.bodyLarge),
                           IconButton(
                             icon: Icon(Icons.picture_as_pdf),
                             onPressed: () {
                               log('exporting to pdf');
                               // exportToPdf();
+                              var path = Directory.current.path;
+                              try {
+                                final file = DirectoryPicker()
+                                  ..title = 'Select a directory';
+
+                                final result = file.getDirectory();
+                                if (result != null) {
+                                  print(result.path);
+                                  path = result.path;
+                                }
+                              } catch (e) {
+                                log("error selecting directory:  ${e.toString()}");
+                              }
+                              EventService()
+                                  .DownloadGraduationListPDF(appState.appToken,
+                                      appState.selectedEvent, path, false)
+                                  .then(
+                                      (value) => {
+                                            Flushbar(
+                                              flushbarPosition:
+                                                  FlushbarPosition.TOP,
+                                              title: 'Éxito',
+                                              message:
+                                                  'Lista de graduación descargada correctamente en  $value',
+                                              duration: Duration(seconds: 6),
+                                              backgroundColor: Colors.blue,
+                                            ).show(context)
+                                          },
+                                      onError: (e) => {
+                                            Flushbar(
+                                              flushbarPosition:
+                                                  FlushbarPosition.TOP,
+                                              title: 'Error',
+                                              message:
+                                                  'Error al descargar lista de graduación',
+                                              duration: Duration(seconds: 3),
+                                              backgroundColor: Colors.red,
+                                            ).show(context)
+                                          });
                             },
                           ),
                           SizedBox(width: 20),
-                          Text('Descargar excel',
+                          Text('Descargar PDF interno',
                               style: Theme.of(context).textTheme.bodyLarge),
                           IconButton(
-                            icon: Icon(Icons.download),
-                            onPressed: () {},
+                            icon: Icon(Icons.picture_as_pdf),
+                            onPressed: () {
+                              log('exporting to pdf');
+                              // exportToPdf();
+                              var path = Directory.current.path;
+                              try {
+                                final file = DirectoryPicker()
+                                  ..title = 'Select a directory';
+
+                                final result = file.getDirectory();
+                                if (result != null) {
+                                  print(result.path);
+                                  path = result.path;
+                                }
+                              } catch (e) {
+                                log("error selecting directory:  ${e.toString()}");
+                              }
+                              EventService()
+                                  .DownloadGraduationListPDF(appState.appToken,
+                                      appState.selectedEvent, path, true)
+                                  .then(
+                                      (value) => {
+                                            Flushbar(
+                                              flushbarPosition:
+                                                  FlushbarPosition.TOP,
+                                              title: 'Éxito',
+                                              message:
+                                                  'Lista de graduación descargada correctamente en  $value',
+                                              duration: Duration(seconds: 6),
+                                              backgroundColor: Colors.blue,
+                                            ).show(context)
+                                          },
+                                      onError: (e) => {
+                                            Flushbar(
+                                              flushbarPosition:
+                                                  FlushbarPosition.TOP,
+                                              title: 'Error',
+                                              message:
+                                                  'Error al descargar lista de graduación',
+                                              duration: Duration(seconds: 3),
+                                              backgroundColor: Colors.red,
+                                            ).show(context)
+                                          });
+                            },
                           ),
                           SizedBox(width: 20),
                           Text('Agregar alumno',
@@ -200,12 +269,14 @@ class _GraduationListPageState extends State<GraduationListPage> {
                             onPressed: () {
                               appState.clearSelectedStudent();
                               Navigator.of(context).push(MaterialPageRoute(
-                                  builder: (context) => EventPaymentPage()));
+                                  builder: (context) =>
+                                      GraduationPaymentPage()));
                             },
                           ),
                           SizedBox(width: 20),
                           Visibility(
-                              visible: (appState.selectedStudent != null),
+                              visible: (appState.selectedStudent != null &&
+                                  !appState.selectedStudent!.cancelled),
                               child: Container(
                                 child: Row(
                                   children: [
@@ -220,7 +291,7 @@ class _GraduationListPageState extends State<GraduationListPage> {
                                           Navigator.of(context).push(
                                               MaterialPageRoute(
                                                   builder: (context) =>
-                                                      EventPaymentPage()));
+                                                      GraduationPaymentPage()));
                                         } else {
                                           Flushbar(
                                             flushbarPosition:
@@ -236,27 +307,266 @@ class _GraduationListPageState extends State<GraduationListPage> {
                                     ),
                                   ],
                                 ),
-                              ))
+                              )),
+                          SizedBox(width: 20),
+                          Visibility(
+                            visible: (appState.selectedStudent != null && (
+                                !appState.selectedStudent!.paid &&
+                                !appState.selectedStudent!.cancelled) || (appState.selectedStudent != null && appState.selectedStudent!.totalCost == 0)) 
+                                && appState.selectedUser!.role == 1,
+                            child: Container(
+                                child: Row(
+                              children: [
+                                SizedBox(width: 20),
+                                Text('Eliminar Alumno',
+                                    style:
+                                        Theme.of(context).textTheme.bodyLarge),
+                                IconButton(
+                                  onPressed: () {
+                                    if (appState.selectedStudent != null) {
+                                      if (appState.selectedStudent!.payments
+                                          .isNotEmpty) {
+                                        Flushbar(
+                                          flushbarPosition:
+                                              FlushbarPosition.TOP,
+                                          title: 'Warning',
+                                          message:
+                                              'No se puede eliminar un alumno con pagos registrados',
+                                          duration: Duration(seconds: 3),
+                                          backgroundColor: Colors.orange,
+                                        ).show(context);
+                                      } else {
+                                        showDialog(
+                                          context: context,
+                                          builder: (BuildContext context) {
+                                            return AlertDialog(
+                                              title:
+                                                  Text('Confirmar Eliminación'),
+                                              content: Text(
+                                                  'Estas seguro que deseas eliminar Alumno ?'),
+                                              actions: [
+                                                TextButton(
+                                                  child: Text('Cancel'),
+                                                  onPressed: () {
+                                                    Navigator.of(context).pop();
+                                                  },
+                                                ),
+                                                TextButton(
+                                                  child: Text('Confirm'),
+                                                  onPressed: () {
+                                                    // Perform delete logic here
+                                                    EventService()
+                                                        .deleteStudent(
+                                                            appState
+                                                                .selectedStudent!
+                                                                .id,
+                                                            appState.appToken)
+                                                        .then(
+                                                            (value) => {
+                                                                  Flushbar(
+                                                                    flushbarPosition:
+                                                                        FlushbarPosition
+                                                                            .TOP,
+                                                                    title:
+                                                                        'Éxito',
+                                                                    message:
+                                                                        'Alumno eliminado correctamente',
+                                                                    duration: Duration(
+                                                                        seconds:
+                                                                            3),
+                                                                    backgroundColor:
+                                                                        Colors
+                                                                            .blue,
+                                                                  ).show(
+                                                                      context),
+                                                                  appState
+                                                                      .clearSelectedStudent(),
+                                                                  setState(() {
+                                                                    _func = EventService().getStudentsByEvent(
+                                                                        appState
+                                                                            .appToken,
+                                                                        appState
+                                                                            .selectedEvent!
+                                                                            .id);
+                                                                  }),
+                                                                  Navigator.of(
+                                                                          context)
+                                                                      .pushReplacement(
+                                                                        MaterialPageRoute(
+                                                                          builder: (context) =>
+                                                                              GraduationListPage(),
+                                                                        ),
+                                                                      )
+                                                                      .then(
+                                                                          (_) {}),
+                                                                },
+                                                            onError: (e) => {
+                                                                  Flushbar(
+                                                                    flushbarPosition:
+                                                                        FlushbarPosition
+                                                                            .TOP,
+                                                                    title:
+                                                                        'Error',
+                                                                    message:
+                                                                        'Error al eliminar alumno ${e.toString()}',
+                                                                    duration: Duration(
+                                                                        seconds:
+                                                                            3),
+                                                                    backgroundColor:
+                                                                        Colors
+                                                                            .red,
+                                                                  ).show(
+                                                                      context)
+                                                                });
+                                                    Navigator.of(context).pop();
+                                                  },
+                                                ),
+                                              ],
+                                            );
+                                          },
+                                        );
+                                      }
+                                    } else {
+                                      Flushbar(
+                                        flushbarPosition: FlushbarPosition.TOP,
+                                        title: 'Error',
+                                        message:
+                                            'Seleccioa un alumno para eliminar',
+                                        duration: Duration(seconds: 3),
+                                        backgroundColor: Colors.red,
+                                      ).show(context);
+                                    }
+                                  },
+                                  icon: Icon(Icons.delete),
+                                ),
+                                SizedBox(width: 20),
+                                Text('Cancelar Alumno',
+                                    style:
+                                        Theme.of(context).textTheme.bodyLarge),
+                                IconButton(
+                                  onPressed: () {
+                                    if (appState.selectedStudent != null) {
+                                      showDialog(
+                                        context: context,
+                                        builder: (BuildContext context) {
+                                          return AlertDialog(
+                                            title:
+                                                Text('Confirmar Cancelación'),
+                                            content: Text(
+                                                'Estas seguro que deseas cancelar Alumno ?'),
+                                            actions: [
+                                              TextButton(
+                                                child: Text('Cancel'),
+                                                onPressed: () {
+                                                  Navigator.of(context).pop();
+                                                },
+                                              ),
+                                              TextButton(
+                                                child: Text('Confirm'),
+                                                onPressed: () {
+                                                  // Perform cancelation logic here
+                                                  appState.selectedStudent!
+                                                      .cancelled = true;
+                                                  EventService()
+                                                      .saveStudent(
+                                                          appState
+                                                              .selectedStudent!,
+                                                          appState.appToken,false)
+                                                      .then(
+                                                          (value) => {
+                                                                Flushbar(
+                                                                  flushbarPosition:
+                                                                      FlushbarPosition
+                                                                          .TOP,
+                                                                  title:
+                                                                      'Éxito',
+                                                                  message:
+                                                                      'Alumno cancelado correctamente',
+                                                                  duration:
+                                                                      Duration(
+                                                                          seconds:
+                                                                              3),
+                                                                  backgroundColor:
+                                                                      Colors
+                                                                          .blue,
+                                                                ).show(context),
+                                                                appState
+                                                                    .clearSelectedStudent(),
+                                                                setState(() {
+                                                                  _func = EventService().getStudentsByEvent(
+                                                                      appState
+                                                                          .appToken,
+                                                                      appState
+                                                                          .selectedEvent!
+                                                                          .id);
+                                                                }),
+                                                                Navigator.of(
+                                                                        context)
+                                                                    .pushReplacement(
+                                                                      MaterialPageRoute(
+                                                                        builder: (context) =>
+                                                                            GraduationListPage(),
+                                                                      ),
+                                                                    )
+                                                              },
+                                                          onError: (e) => {
+                                                                Flushbar(
+                                                                  flushbarPosition:
+                                                                      FlushbarPosition
+                                                                          .TOP,
+                                                                  title:
+                                                                      'Error',
+                                                                  message:
+                                                                      'Error al cancelar alumno ${e.toString()}',
+                                                                  duration:
+                                                                      Duration(
+                                                                          seconds:
+                                                                              3),
+                                                                  backgroundColor:
+                                                                      Colors
+                                                                          .red,
+                                                                ).show(context)
+                                                              });
+                                                  Navigator.of(context).pop();
+                                                },
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                      );
+                                    } else {
+                                      Flushbar(
+                                        flushbarPosition: FlushbarPosition.TOP,
+                                        title: 'Error',
+                                        message:
+                                            'Seleccioa un alumno para cancelar',
+                                        duration: Duration(seconds: 3),
+                                        backgroundColor: Colors.red,
+                                      ).show(context);
+                                    }
+                                  },
+                                  icon: Icon(Icons.cancel_presentation),
+                                )
+                              ],
+                            )),
+                          )
                         ],
                       ),
                       SizedBox(height: 30),
                       Row(
                         children: [
                           Text('Total de alumnos: ${snapshot.data!.length}',
-                              style: Theme.of(context).textTheme.bodyMedium),
+                              style: TextStyle(
+                                  fontSize: 20.0,
+                                  color: Colors.blue[900],
+                                  fontWeight: FontWeight.bold)),
                           SizedBox(width: 30),
                           Text(
                               'Alumno seleccionado: ${appState.selectedStudent != null ? ('${appState.selectedStudent!.name} ${appState.selectedStudent!.lastName}') : 'Ninguno'}',
-                              style: Theme.of(context).textTheme.bodyMedium),
-                          SizedBox(width: 30),
-                          IconButton(
-                            icon: Icon(Icons.refresh),
-                            onPressed: () {
-                              setState(() {
-                                appState.clearSelectedStudent();
-                              });
-                            },
-                          ),
+                              style: TextStyle(
+                                  fontSize: 20.0,
+                                  color: Colors.blue[900],
+                                  fontWeight: FontWeight.bold)),
                         ],
                       ),
                       SizedBox(height: 20),
@@ -296,40 +606,55 @@ class _GraduationListPageState extends State<GraduationListPage> {
                                           : 0),
                                   'remaining': PlutoCell(
                                       value: e.totalCost -
-                                          (e.payments.isNotEmpty
-                                              ? e.payments.where((element) => element.paymentDetail == 'platillo' || element.paymentDetail == 'paquete').toList()
+                                          (e.payments
+                                                  .where((element) =>
+                                                      element.paymentDetail ==
+                                                          'platillo' ||
+                                                      element.paymentDetail ==
+                                                          'paquete')
+                                                  .toList()
+                                                  .isNotEmpty
+                                              ? e.payments
+                                                  .where((element) =>
+                                                      element.paymentDetail ==
+                                                          'platillo' ||
+                                                      element.paymentDetail ==
+                                                          'paquete')
+                                                  .toList()
                                                   .map((e) => e.amount)
                                                   .reduce((value, element) =>
                                                       value + element)
                                               : 0)),
                                   'student_status': PlutoCell(
                                       value: e.totalCost -
-                                                  (e.payments.isNotEmpty &&
-                                                          e.payments
+                                                      (e.payments.isNotEmpty && e.payments.where((element) => element.paymentDetail == 'platillo' || element.paymentDetail == 'paquete').isNotEmpty
+                                                          ? e.payments
                                                               .where((element) =>
-                                                                  element.paymentDetail == 'platillo' ||
+                                                                  element.paymentDetail ==
+                                                                      'platillo' ||
                                                                   element.paymentDetail ==
                                                                       'paquete')
-                                                              .isNotEmpty
-                                                      ? e.payments
-                                                          .where((element) =>
-                                                              element.paymentDetail ==
-                                                                  'platillo' ||
-                                                              element.paymentDetail ==
-                                                                  'paquete')
-                                                          .toList()
-                                                          .map((e) => e.amount)
-                                                          .reduce(
-                                                              (value, element) =>
-                                                                  value + element)
-                                                      : 0) <=
-                                              0
+                                                              .toList()
+                                                              .map((e) =>
+                                                                  e.amount)
+                                                              .reduce((value, element) =>
+                                                                  value +
+                                                                  element)
+                                                          : 0) <=
+                                                  0 &&
+                                              e.folio.isNotEmpty && e.totalCost > 0
                                           ? 'Pagado'
-                                          : 'Pendiente'),
+                                          : (e.cancelled
+                                              ? 'Cancelado'
+                                              : (e.totalCost == 0
+                                                  ? 'Pendiente de selección'
+                                                  : 'Pendiente'))),
                                   'folio': PlutoCell(
                                       value: e.folio.isNotEmpty ? e.folio : ''),
                                   'additional_number': PlutoCell(
-                                      value: e.additionalNumber),
+                                      value: e.packageType.isNotEmpty
+                                          ? e.additionalNumber
+                                          : 'NA'),
                                   'additional_cost':
                                       PlutoCell(value: e.additionalQuantity),
                                 }))
@@ -354,12 +679,14 @@ class _GraduationListPageState extends State<GraduationListPage> {
                               0,
                         },
                         onLoaded: (PlutoGridOnLoadedEvent event) {
-                          //plutoGridStateManager = event.stateManager;
-                           stateManagerProviders = event.stateManager;
+                          stateManagerProviders = event.stateManager;
                           event.stateManager.setShowColumnFilter(true);
                           event.stateManager.setSelecting(false);
+                          stateManagerProviders
+                              .setSelectingMode(PlutoGridSelectingMode.row);
                           event.stateManager
                               .setSelectingMode(PlutoGridSelectingMode.row);
+                          event.stateManager.setSortOnlyEvent(true);
                           event.stateManager.setEditing(false);
                         },
                         configuration: PlutoGridConfiguration(
@@ -372,11 +699,6 @@ class _GraduationListPageState extends State<GraduationListPage> {
                                     as PlutoFilterType;
                               }),
                         ),
-                        createFooter: (stateManager) {
-                          stateManager.setPageSize(15,
-                              notify: false); // default 40
-                          return PlutoPagination(stateManager);
-                        },
                       )),
                     ],
                   ),
@@ -384,9 +706,7 @@ class _GraduationListPageState extends State<GraduationListPage> {
               )
             : snapshot.hasError
                 ? Text('Error: ${snapshot.error}')
-                : CircularProgressIndicator(
-                    
-                ),
+                : CircularProgressIndicator(),
       )),
     );
   }

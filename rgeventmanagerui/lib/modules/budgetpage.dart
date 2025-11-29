@@ -10,18 +10,33 @@ class _BudgetPageState extends State<BudgetPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: 
-          IconButton(
-            icon: Icon(Icons.arrow_back),
-            onPressed: () { 
-              // Navigator.pop(context);
-             },),
         title: Text('Budget Page'),
       ),
-      body: Center(
-        child: Text(
-          'Work in Progress',
-          style: TextStyle(fontSize: 24),
+      body: Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Form(
+          child: Column(
+            children: [
+              TextFormField(
+                decoration: InputDecoration(
+                  labelText: 'Expense 1',
+                ),
+              ),
+              TextFormField(
+                decoration: InputDecoration(
+                  labelText: 'Expense 2',
+                ),
+              ),
+              // Add more form fields as needed
+
+              ElevatedButton(
+                onPressed: () {
+                  // Handle form submission
+                },
+                child: Text('Generate Budget'),
+              ),
+            ],
+          ),
         ),
       ),
     );

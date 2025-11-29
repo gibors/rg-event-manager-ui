@@ -15,7 +15,7 @@ class AddUserPage extends StatefulWidget {
 class _AddUserPageState extends State<AddUserPage> {
   final _formKey = GlobalKey<FormState>();
 
-  List<String> roles = ['Administrador', 'Operador', 'Reporteador'];
+  List<String> roles = ['Administrador', 'Operador', 'Solo lectura'];
   
   String? _selectedRole;
   TextEditingController _nameController = TextEditingController();
@@ -31,8 +31,8 @@ class _AddUserPageState extends State<AddUserPage> {
   @override
   void initState() {
     super.initState();
-    if(context.read<MyAppState>().selectedUser != null){
-      mapUserToControllers(context.read<MyAppState>().selectedUser!);
+    if(context.read<MyAppState>().selectedUserToEdit != null){
+      mapUserToControllers(context.read<MyAppState>().selectedUserToEdit!);
     }
 
   }
@@ -43,24 +43,32 @@ class _AddUserPageState extends State<AddUserPage> {
     _emailController.text = user.email;
     _usernameController.text = user.username;
     _passwordController.text = user.password;
-    _roleController.text = user.role == 1 ? 'Administrador' : user.role == 2 ? 'Operador' : 'Reporteador';
+    _roleController.text = user.role == 1 ? 'Administrador' : user.role == 2 ? 'Operador' : 'Solo lectura';
   }
-
-  void saveUser(){
+  
+  mapControllerToUser(){
     var appState = context.read<MyAppState>();
     var user =  User(
-      id: appState.selectedUser != null ? appState.selectedUser!.id : -1,
+      id: appState.selectedUserToEdit != null ? appState.selectedUserToEdit!.id : -1,
       name: _nameController.text,
       lastname: _lastNameController.text,
       email: _emailController.text,
       username: _usernameController.text,
       password: _passwordController.text,
-      role: _selectedRole != null ? _selectedRole == 'Administrador' ? 1 : _selectedRole == 'Operador' ? 2 : 3 : 3
+      role: _selectedRole != null ? _selectedRole == 'Administrador' ? 1 : _selectedRole == 'Operador' ? 2 : 3 : 3,
+      status: true
     );
-    try {
-     UserService().saveUser(user).then(
+    return user;
+  }
+
+  void saveUser(){
+    var user = mapControllerToUser();
+    var appState = context.read<MyAppState>();
+
+    UserService().saverUser(user, appState.appToken).then(
       (value) {
-        appState.setSelectedUser(value);
+        
+        appState.setSelectedUserToEdit(value);
          Flushbar( 
         flushbarPosition : FlushbarPosition.TOP,
         title: 'Guardado',
@@ -73,6 +81,16 @@ class _AddUserPageState extends State<AddUserPage> {
      )
      .catchError((e){
       log('Error saving user ${e.toString()}');
+      if(e.toString().contains('User already exists')){
+        Flushbar( 
+        flushbarPosition : FlushbarPosition.TOP,
+        title: 'Error',
+        message: 'El usuario ya existe',
+        flushbarStyle: FlushbarStyle.FLOATING,
+        messageColor: Colors.red,
+        duration: Duration(seconds: 3),
+      ).show(context);
+      } else {
        Flushbar( 
         flushbarPosition : FlushbarPosition.TOP,
         title: 'Error',
@@ -81,6 +99,60 @@ class _AddUserPageState extends State<AddUserPage> {
         messageColor: Colors.red,
         duration: Duration(seconds: 3),
       ).show(context);
+      }
+     });
+
+  }
+
+  void registerUser(){
+    var appState = context.read<MyAppState>();
+    var user =  User(
+      id: appState.selectedUserToEdit != null ? appState.selectedUserToEdit!.id : -1,
+      name: _nameController.text,
+      lastname: _lastNameController.text,
+      email: _emailController.text,
+      username: _usernameController.text,
+      password: _passwordController.text,
+      role: _selectedRole != null ? _selectedRole == 'Administrador' ? 1 : _selectedRole == 'Operador' ? 2 : 3 : 3,
+      status: true
+    );
+    try {
+     UserService().registerUser(user).then(
+      (value) {
+        setState(() {
+          appState.setSelectedUserToEdit(value);
+        });
+         Flushbar( 
+        flushbarPosition : FlushbarPosition.TOP,
+        title: 'Guardado',
+        message: 'Usuario guardado correctamente',
+        flushbarStyle: FlushbarStyle.FLOATING,
+        messageColor: Colors.green,
+        duration: Duration(seconds: 3),
+      ).show(context);
+      }
+     )
+     .catchError((e){
+      log('Error saving user ${e.toString()}');
+      if(e.toString().contains('User already exists')){
+        Flushbar( 
+        flushbarPosition : FlushbarPosition.TOP,
+        title: 'Error',
+        message: 'El usuario ya existe',
+        flushbarStyle: FlushbarStyle.FLOATING,
+        messageColor: Colors.red,
+        duration: Duration(seconds: 3),
+      ).show(context);
+      } else {
+       Flushbar( 
+        flushbarPosition : FlushbarPosition.TOP,
+        title: 'Error',
+        message: 'Error al guardar el usuario',
+        flushbarStyle: FlushbarStyle.FLOATING,
+        messageColor: Colors.red,
+        duration: Duration(seconds: 3),
+      ).show(context);
+      }
      });
      
     } catch (e) {
@@ -126,13 +198,13 @@ class _AddUserPageState extends State<AddUserPage> {
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: (){
-            appState.clearSelectedUser();
-            appState.setIndex(5);
+            appState.clearSelectedUserToEdit();
+            appState.setIndex(6);
             Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => EventsHomePage()));
 
           },
         ),
-        title: Text(appState.selectedUser == null ? 'Agregar Usuario' : 'Editar Usuario',
+        title: Text(appState.selectedUserToEdit == null ? 'Agregar Usuario' : 'Editar Usuario',
             style: TextStyle(
                 fontSize: 24.0, color: Color.fromRGBO(250, 10, 100, 0.8))),
       ),
@@ -272,10 +344,16 @@ class _AddUserPageState extends State<AddUserPage> {
                 child: OutlinedButton(
                   onPressed: (){
                     if(_formKey.currentState!.validate()){
+                      if(appState.selectedUserToEdit != null){
+                      
                       saveUser();
+                      }
+                     else {
+                      registerUser();
+                    }
                     }
                   },
-                  child: Text('Registrar'),
+                  child: Text(appState.selectedUserToEdit == null ? 'Registrar' :'Guardar'),
                 ),
               ),
             ),
@@ -300,7 +378,7 @@ class _AddUserPageState extends State<AddUserPage> {
                           ),
                           TextButton(
                             onPressed: (){
-                              appState.clearSelectedUser();
+                              appState.clearSelectedUserToEdit();
                               Navigator.pop(context);
                               Navigator.pop(context);
                             },

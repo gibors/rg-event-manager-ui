@@ -7,6 +7,7 @@ class User {
   final String password;
   final String email;
   final int role;
+  final bool status;
 
   User({
     required this.id,
@@ -16,6 +17,7 @@ class User {
     required this.username,
     required this.password,
     required this.role,
+    required this.status
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -27,6 +29,7 @@ class User {
       username: json['username'],
       password: json['password'],
       role: json['role'],
+      status : json['status'] ?? true,
     );
   }
 
@@ -39,6 +42,7 @@ class User {
       'username': username,
       'password': password,
       'role': role,
+      'status': status,
     };
   }
 }

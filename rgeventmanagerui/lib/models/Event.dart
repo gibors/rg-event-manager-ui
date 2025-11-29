@@ -1,4 +1,6 @@
 
+import 'package:rg_event_management_ui/models/AdditionalService.dart';
+
 class Event {
   final int id;
   final String name;
@@ -10,6 +12,7 @@ class Event {
   final List<Contact> contacts;
   final String? grade;
   final String? school;
+  final String? carer;
   final DateTime createdDate;
   final DateTime eventDate;
   final DateTime updatedDate;
@@ -20,7 +23,9 @@ class Event {
   final String? comments;
   final int numberChildren;
   final int numberYoung;
-
+  final List<AdditionalService> additionalServices;
+  double totalAdditional;
+  
   Event({
     required this.id,
     required this.name,
@@ -38,11 +43,18 @@ class Event {
     required this.status,
     required this.grade,
     required this.school,
+    required this.carer,
     required this.totalCost,
     required this.comments,
     required this.numberChildren,
     required this.numberYoung,
+    required this.additionalServices,
+    required this.totalAdditional,
   });
+
+  void SetTotalAdditional(double totalAdditional) {
+    this.totalAdditional = totalAdditional;
+  }
 
   factory Event.fromJson(Map<String, dynamic> json) {
     return Event(
@@ -56,7 +68,7 @@ class Event {
       contacts: (json['contacts'] as List)
           .map((contact) => Contact.fromJson(contact))
           .toList(),
-      createdDate: DateTime.parse(json['createdDate']),
+      createdDate: DateTime.parse(json['createdDate']) ,
       eventDate: DateTime.parse(json['eventDate']),
       updatedDate: DateTime.parse(json['updatedDate']),
       createdBy: json['createdBy'] ?? '',
@@ -64,10 +76,15 @@ class Event {
       status: json['status'] ?? '',
       grade: json['grade'],
       school: json['school'],
+      carer: json['carer'],
       totalCost: json['totalCost'] ?? 0,
       comments: json['comments'],
       numberChildren: json['numberChildren'] ?? 0,
       numberYoung: json['numberYoung'] ?? 0,
+      additionalServices: (json['additionalServices'] as List)
+          .map((service) => AdditionalService.fromJson(service))
+          .toList(),
+      totalAdditional: json['totalAdditional'] ?? 0,
     );
   }
 
@@ -76,17 +93,23 @@ class Event {
       'id': id == -1 ? null : id,
       'name': name,
       'minCapacity': minCapacity,
+      'folio': folio,
       'eventType': eventType.toJson(),
       'location': location.toJson(),
       'pricing': pricing.toJson(),
       'eventDate': eventDate.toLocal().toIso8601String(),
+      // 'createdDate': createdDate.toLocal().toIso8601String(),
+      // 'updatedDate': updatedDate.toLocal().toIso8601String(),
       'contacts': contacts.map((contact) => contact.toJson()).toList(),
       'grade': grade,
       'school': school,
+      'carer':carer,
       'totalCost': totalCost,
       'comments': comments,
       'numberChildren': numberChildren,
       'numberYoung': numberYoung,
+      'additionalServices': additionalServices.map((service) => service.toJson()).toList(),
+      'totalAdditional': totalAdditional,
     };
   }
 }
