@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:rg_event_management_ui/models/Employee.dart';
+import 'package:rg_event_management_ui/models/RgEmployeePayment.dart';
 
 class EmployeesService {
   final Dio _dio;
@@ -64,7 +65,7 @@ class EmployeesService {
     }
   }
 
-  Future<bool> deleteEmployee(String token, int id) async {
+  Future<String> deleteEmployee(String token, int id) async {
     try {
       var response = await _dio.delete('https://localhost:8443/api/v1/employees/$id',
           options: Options(
@@ -73,13 +74,32 @@ class EmployeesService {
             },
           ));
       if(response.statusCode == 200) {
-        return true;
+        return "Ok";
       } else {
-        return false;
+        return "";
       }
     } catch (e) {
       log('Error al eliminar empleado: $e');
-      return false;
+      if(e.toString().contains("Employee has payments")) {
+        return "ForeignKey";
+      }
+      return "";
+    }
+  }
+
+  Future<List<RgEmployeePayment>> getRgEmployeePayments(String token) async {
+    try {
+      final response = await _dio.get('https://localhost:8443/api/v1/payments/rg-employees',
+          options: Options(
+            headers: {
+              'Authorization': 'Bearer $token',
+            },
+          ));
+      final data = response.data as List<dynamic>;
+      final payments = data.map((payment) => RgEmployeePayment.fromJson(payment)).toList();
+      return payments;
+    } catch (e) {
+      throw Exception('Failed to fetch employee payments: $e');
     }
   }
 

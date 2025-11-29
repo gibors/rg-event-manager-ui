@@ -48,24 +48,27 @@ class _EmployeesViewState extends State<EmployeesView> {
   bool deleteEmployee(Employee employee) {
     EmployeesService()
         .deleteEmployee(appState!.appToken, employee.id)
-        .then((value) {
-      Flushbar(
-        title: 'Empleado eliminado',
-        icon: Icon(Icons.check_circle, color: Colors.white),
-        borderRadius: BorderRadius.circular(8),
-        backgroundColor: Colors.green,
-        titleColor: Colors.white,
-        flushbarPosition: FlushbarPosition.TOP,
-        message: 'El empleado ${employee.name} ha sido eliminado correctamente',
-        duration: Duration(seconds: 3),
-      ).show(context);
-      log('Empleado eliminado: ${employee.name}');
-      return true;
-    }).catchError((error) {
-      log('Error al eliminar empleado: $error');
-      return false;
-    });
-    return false;
+        .then((value) => {
+              if (value == "ForeignKey")
+                {
+                  Flushbar(
+                    title: 'Empleado eliminado',
+                    message: 'El empleado ha sido eliminado correctamente',
+                    duration: Duration(seconds: 3),
+                  )..show(context).then((r) => setState(() {
+                        _func = EmployeesService()
+                            .getAllEmployees(appState.appToken);
+                      }))
+                }
+            })
+        .catchError((error) => {
+              Flushbar(
+                title: 'Error',
+                message: 'No se pudo eliminar el empleado',
+                duration: Duration(seconds: 3),
+              )..show(context)
+            });
+    return true;
   }
 
   List<PlutoColumn> columns = [
@@ -163,7 +166,7 @@ class _EmployeesViewState extends State<EmployeesView> {
                                       if (SelectedEmployee != null) {
                                         deleteEmployee(SelectedEmployee!);
                                         appState.clearSelectedEmployee();
-                                        appState.setIndex(2);
+                                        appState.setIndex(3);
                                         Navigator.of(context).pushReplacement(
                                           MaterialPageRoute(
                                             builder: (context) =>

@@ -57,7 +57,7 @@ class _AddEmployeePage extends State<AddEmployeePage> {
     _textEditingJobPositionController.text = employee.position ?? '';
     if (!jobPositions.contains(employee.position)) {
       jobPositions.remove('Otro');
-      jobPositions.add(employee.position!);
+      jobPositions.add(employee.position);
       jobPositions.add('Otro');
     }
   }

@@ -263,7 +263,7 @@ class _EventsHomePageState extends State<EventsHomePage> {
                         ),
                         NavigationRailDestination(
                           icon: Icon(Icons.attach_money),
-                          disabled: true, //appState.selectedUser != null && appState.selectedUser!.role != 1,
+                          disabled:  appState.selectedUser != null && appState.selectedUser!.role != 1,
                           label: Text('Pagos y gastos'),
                         ),
                         NavigationRailDestination(
