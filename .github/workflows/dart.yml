@@ -1,0 +1,31 @@
+name: Windows Desktop Release Pipeline
+
+on:
+  push:
+    branches: [ "main" ] # Or trigger on tag creation for official releases
+
+jobs:
+  build-and-package:
+    runs-on: self-hosted # This targets your specific Windows VM
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Build Flutter Windows Desktop
+      working-directory: ./frontend
+      run: flutter build windows --release
+      # Outputs the Release folder containing the .exe and data
+
+    - name: Stage Artifacts
+      run: |
+        mkdir release_staging
+        copy backend\target\myapp.jar release_staging\
+        xcopy frontend\build\windows\x64\runner\Release release_staging\flutter_app\ /E /I
+        xcopy database\scripts release_staging\sql\ /E /I
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-deployment-package
+        path: release_staging/
