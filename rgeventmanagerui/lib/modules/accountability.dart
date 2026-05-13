@@ -62,9 +62,54 @@ class _AccountabilityPage extends State<AccountabilityPage> {
     return Scaffold(
       backgroundColor: Colors.lightBlue[50],
               appBar: AppBar(
-          title: Text('Sistema RG Eventos - Usuario conectado: ${appState.selectedUser != null ? '${appState.selectedUser!.name} ${appState.selectedUser!.lastname} con privilegios de ${appState.selectedUser!.role == 1 ? 'administrador': (appState.selectedUser!.role == 2 ? 'operativo' : 'solo lectura')}': ''}',
-                    style: TextStyle(fontSize: 24.0, color: const Color.fromARGB(255, 113, 7, 132))),
-                    automaticallyImplyLeading: false,
+          automaticallyImplyLeading: false,
+          title: Row(
+            children: [
+              Icon(Icons.event_note, color: const Color.fromARGB(255, 113, 7, 132), size: 28),
+              SizedBox(width: 10),
+              Text('RG Eventos',
+                  style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: const Color.fromARGB(255, 113, 7, 132))),
+            ],
+          ),
+          actions: [
+            if (appState.selectedUser != null)
+              Padding(
+                padding: EdgeInsets.only(right: 16),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 16,
+                      backgroundColor: const Color.fromARGB(255, 113, 7, 132),
+                      child: Text(
+                        '${appState.selectedUser!.name[0]}${appState.selectedUser!.lastname[0]}',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          '${appState.selectedUser!.name} ${appState.selectedUser!.lastname}',
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                        ),
+                        Text(
+                          appState.selectedUser!.role == 1 ? 'Admin' : (appState.selectedUser!.role == 2 ? 'Operador' : 'Solo lectura'),
+                          style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+          ],
         ),
       body: Center(
           child: FutureBuilder<List<Student>>(

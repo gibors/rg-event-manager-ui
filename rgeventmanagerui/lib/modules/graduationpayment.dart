@@ -9,6 +9,7 @@ import 'package:rg_event_management_ui/models/Student.dart';
 import 'package:rg_event_management_ui/modules/amenities_page.dart';
 import 'package:rg_event_management_ui/modules/graduationlist.dart';
 import 'package:rg_event_management_ui/services/eventservice.dart';
+import 'package:rg_event_management_ui/modules/graduation_payment_helper.dart';
 import 'package:intl/intl.dart';
 import 'dart:developer';
 
@@ -18,6 +19,9 @@ class GraduationPaymentPage extends StatefulWidget {
 }
 
 class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
+  static final NumberFormat _currencyFormat = NumberFormat('#,##0.##');
+  String _fc(num value) => _currencyFormat.format(value);
+
   static const String ADDITIONAL = 'adicional';
   bool isEditMode = false;
   bool isGraduation = false;
@@ -76,31 +80,9 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
     if (selectedEvent != null && selectedEvent!.eventType.id == 3) {
       isGraduation = true;
       if (selectedStudent != null) {
-        selectedStudent.paid = selectedStudent != null &&
-                selectedStudent.payments!
-                    .where((e) =>
-                        e.paymentDetail == 'platillo' ||
-                        e.paymentDetail == 'paquete')
-                    .isNotEmpty
-            ? selectedStudent.payments
-                    .where((e) =>
-                        e.paymentDetail == 'platillo' ||
-                        e.paymentDetail == 'paquete')
-                    .map((e) => e.amount)
-                    .reduce((a, b) => a + b) >=
-                selectedStudent.totalCost
-            : false;
+        selectedStudent.paid = GraduationPaymentHelper.isDishOrPackageFullyPaid(selectedStudent);
         setState(() {
-          remindingAdditional = selectedStudent != null &&
-                  selectedStudent.payments!
-                      .where((e) => e.paymentDetail == ADDITIONAL)
-                      .isNotEmpty
-              ? selectedStudent.additionalQuantity -
-                  selectedStudent.payments
-                      .where((e) => e.paymentDetail == ADDITIONAL)
-                      .map((e) => e.amount)
-                      .reduce((a, b) => a + b)
-              : 0.0;
+          remindingAdditional = GraduationPaymentHelper.getDisplayRemaining(selectedStudent);
         });
       }
 
@@ -137,7 +119,14 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
       });
     }
     setPaymentDetails();
+    _paymentAmount.addListener(_updateAdditionalPersons);
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    _paymentAmount.removeListener(_updateAdditionalPersons);
+    super.dispose();
   }
 
   setAdditionalNumber() {
@@ -152,6 +141,22 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
         showAQuantityNumberInput = false;
       });
     }
+  }
+
+  void _updateAdditionalPersons() {
+    if (_paymentDetail.text != ADDITIONAL) return;
+    double additionalCost = selectedEvent?.pricing?.additionalCost ?? 0;
+    if (additionalCost <= 0) {
+      _quantityNumber.text = '0';
+      return;
+    }
+    double amount = double.tryParse(_paymentAmount.text.replaceAll(',', '')) ?? 0;
+    var result = GraduationPaymentHelper.calculateAdditionalPersons(
+      paymentAmount: amount,
+      additionalCostPerPerson: additionalCost,
+      existingBalance: selectedStudent?.additionalBalance ?? 0.0,
+    );
+    _quantityNumber.text = result.persons.toString();
   }
 
   setPaymentDetails() {
@@ -198,30 +203,12 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
   }
 
   double calculateCost(packageType) {
-    var totalCost = 0.0;
-
-    if (packageTypes.isNotEmpty) {
-      switch (packageType) {
-        case 'paq10ti':
-          totalCost = selectedEvent.pricing!.paq10TICost;
-        case 'paq10sp':
-          totalCost = selectedEvent.pricing!.paq10SPCost;
-        case 'paq5ti':
-          totalCost = selectedEvent.pricing!.paq5TIPCost;
-        case 'paq5sp':
-          totalCost = selectedEvent.pricing!.paq5SPCost;
-        case 'paq20':
-          totalCost = selectedEvent.pricing!.paq10DoubleCost;
-        default:
-          totalCost = 0.0;
-      }
-    } else {
-      totalCost = _dishNumber.text.isEmpty
-          ? 0
-          : double.parse(_dishNumber.text) * selectedEvent.pricing!.dishCost;
-    }
-
-    return totalCost;
+    return GraduationPaymentHelper.calculateCost(
+      packageType: packageType,
+      pricing: selectedEvent.pricing!,
+      dishCount: _dishNumber.text.isEmpty ? 0 : int.parse(_dishNumber.text),
+      hasPackages: packageTypes.isNotEmpty,
+    );
   }
 
   saveStudentData() {
@@ -308,6 +295,7 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
       paid: selectedStudent != null ? selectedStudent!.paid : false,
       cancelled: selectedStudent != null ? selectedStudent!.cancelled : false,
       committee: isComity,
+      additionalBalance: selectedStudent != null ? selectedStudent!.additionalBalance : 0.0,
     );
     return student;
   }
@@ -318,26 +306,14 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
           ? "0"
           : _paymentAmount.text.replaceAll(',', ''));
 
-      var paymentsDishOrPackage = selectedStudent!.payments
-          .where((e) =>
-              e.paymentDetail == 'platillo' || e.paymentDetail == 'paquete')
-          .toList();
-
-      var totalPaid = paymentsDishOrPackage.isNotEmpty
-          ? paymentsDishOrPackage.map((e) => e.amount).reduce((a, b) => a + b)
-          : 0;
+      var totalPaid = GraduationPaymentHelper.totalPaidForDishOrPackage(selectedStudent!.payments);
 
       var isAlreadyPaidDishOrPackage =
-          selectedStudent!.totalCost - totalPaid == 0;
+          GraduationPaymentHelper.isDishOrPackageFullyPaid(selectedStudent!);
 
       // check if the student has already paid the total cost
-      var isPayingWithCurrentPayment = paymentsDishOrPackage.isNotEmpty
-          ? selectedStudent!.totalCost <=
-              paymentsDishOrPackage
-                      .map((e) => e.amount)
-                      .reduce((a, b) => a + b) +
-                  paymentAmount
-          : (selectedStudent!.totalCost <= paymentAmount);
+      var isPayingWithCurrentPayment =
+          GraduationPaymentHelper.willCompletePayment(selectedStudent!, paymentAmount);
 
       // This is just to make sure that the student has already paid the total cost
       if ((_paymentDetail.text == 'platillo' ||
@@ -369,47 +345,12 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
 
       var reminding = 0.0;
       if (isAlreadyPaidDishOrPackage) {
-        reminding = selectedStudent!.additionalQuantity -
-            (selectedStudent!.payments.isNotEmpty &&
-                    selectedStudent!.payments
-                        .where((e) => e.paymentDetail == ADDITIONAL)
-                        .isNotEmpty
-                ? selectedStudent!.payments
-                    .where((e) => e.paymentDetail == ADDITIONAL)
-                    .map((e) => e.amount)
-                    .reduce((a, b) => a + b)
-                : 0.0);
-      }
-
-      // if we have reminding amount to pay for additional services
-      if (isAlreadyPaidDishOrPackage &&
-          reminding > 0 &&
-          _paymentDetail.text == ADDITIONAL &&
-          paymentAmount > reminding) {
-        Flushbar(
-          flushbarPosition: FlushbarPosition.TOP,
-          title: 'Error',
-          message:
-              'Hay un saldo pendiente de adicionales, puede abonar o completar el pago antes de agregar más \$$reminding ',
-          duration: Duration(seconds: 6),
-          backgroundColor: Colors.red,
-        ).show(context);
-        return;
+        reminding = GraduationPaymentHelper.calculateAdditionalRemaining(selectedStudent!);
       }
 
       if (reminding > 0 && _paymentDetail.text == ADDITIONAL) {
         setState(() {
-          remindingAdditional = selectedStudent != null &&
-                  selectedStudent.payments!
-                      .where((e) => e.paymentDetail == ADDITIONAL)
-                      .isNotEmpty
-              ? selectedStudent.additionalQuantity -
-                  paymentAmount -
-                  selectedStudent.payments
-                      .where((e) => e.paymentDetail == ADDITIONAL)
-                      .map((e) => e.amount)
-                      .reduce((a, b) => a + b)
-              : 0.0;
+          remindingAdditional = GraduationPaymentHelper.calculateAdditionalRemaining(selectedStudent!) - paymentAmount;
         });
       }
 
@@ -418,9 +359,13 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
 
       switch (_paymentDetail.text) {
         case ADDITIONAL:
-          if (reminding > 0) {
-            quantityNumber = 0;
-          }
+          var additionalResult = GraduationPaymentHelper.calculateAdditionalPersons(
+            paymentAmount: paymentAmount,
+            additionalCostPerPerson: selectedEvent!.pricing.additionalCost,
+            existingBalance: selectedStudent?.additionalBalance ?? 0.0,
+          );
+          quantityNumber = additionalResult.persons;
+          selectedStudent!.additionalBalance = additionalResult.balance;
         case 'pre-fiesta':
           paymentAmount = selectedEvent!.pricing.prePartyCost * quantityNumber!;
         case 'souvenir':
@@ -433,7 +378,7 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
 
       double iva = 0;
       if (_paymentMethodController.text.trim() == paymentMethods[2].trim()) {
-        iva = double.parse((paymentAmount * 0.16).toStringAsFixed(2));
+        iva = GraduationPaymentHelper.calculateIva(paymentAmount);
       }
 
       // package or dish payment validation
@@ -445,7 +390,7 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
             flushbarPosition: FlushbarPosition.TOP,
             title: 'Error',
             message:
-                'El pago excede el costo total del paquete/platillo, solo puedes cobrar  \$${double.parse(_paymentAmount.text.replaceAll(',', '')) - (totalAmount - selectedStudent!.totalCost)} y despues agregar pagos adicionales u otro servicio',
+                'El pago excede el costo total del paquete/platillo, solo puedes cobrar  \$${_fc(double.parse(_paymentAmount.text.replaceAll(',', '')) - (totalAmount - selectedStudent!.totalCost))} y despues agregar pagos adicionales u otro servicio',
             duration: Duration(seconds: 10),
             backgroundColor: Colors.red,
           ).show(context);
@@ -505,31 +450,17 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
         var additionalPaymentCost = 0.0;
 
         if (_paymentDetail.text == ADDITIONAL) {
-          double additionalNum = quantityNumber != null
-              ? double.parse(quantityNumber.toString())
-              : 0.0;
+          // quantityNumber was already calculated in the switch above
           additionalPaymentCost =
-              additionalNum * selectedEvent!.pricing.additionalCost;
+              quantityNumber!.toDouble() * selectedEvent!.pricing.additionalCost;
         } else {
           quantityNumber = 0;
-        }
-
-        if (_paymentDetail.text == ADDITIONAL && quantityNumber! > 0 && paymentAmount > additionalPaymentCost) {
-          Flushbar(
-            flushbarPosition: FlushbarPosition.TOP,
-            title: 'Error',
-            message:
-                'El pago excede el total de adicionales, puedes abonar o pagar el total \$$additionalPaymentCost y despues agregar pagos adicionales u otro servicio',
-            duration: Duration(seconds: 10),
-            backgroundColor: Colors.red,
-          ).show(context);
-          return;
         }
 
         selectedStudent.payments.add(payment);
 
         var student =
-            BuildStudentObject(quantityNumber!, additionalPaymentCost);
+            BuildStudentObject(quantityNumber!, additionalPaymentCost.toDouble());
 
         EventService().saveStudent(student, token, payment.paymentDetail == ADDITIONAL).then((studentResponse) {
           if (studentResponse.id != -1) {
@@ -539,16 +470,7 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
             isEditMode = false;
             isNewStudent = false;
             mapSelectedStudent();
-            remindingAdditional = selectedStudent != null &&
-                    selectedStudent.payments!
-                        .where((e) => e.paymentDetail == ADDITIONAL)
-                        .isNotEmpty
-                ? selectedStudent.additionalQuantity -
-                    selectedStudent.payments
-                        .where((e) => e.paymentDetail == ADDITIONAL)
-                        .map((e) => e.amount)
-                        .reduce((a, b) => a + b)
-                : 0.0;
+            remindingAdditional = GraduationPaymentHelper.getDisplayRemaining(selectedStudent);
             Flushbar(
               flushbarPosition: FlushbarPosition.TOP,
               title: 'Éxito',
@@ -634,12 +556,6 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
   void onQuantityChange(String value) {
     log("OnQuantityChange: $value");
     switch (_paymentDetail.text) {
-      case ADDITIONAL:
-        _paymentAmount.text = (double.tryParse(value)! *
-                (selectedEvent.pricing!.additionalCost == 0
-                    ? 0
-                    : selectedEvent.pricing!.additionalCost!))
-            .toString();
       case 'pre-fiesta':
         _paymentAmount.text =
             (double.tryParse(value)! * selectedEvent.pricing!.prePartyCost)
@@ -654,7 +570,6 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                 .toString();
       default:
         _paymentAmount.text = 0.0.toString();
-        break;
     }
 
     log(_paymentAmount.text);
@@ -667,29 +582,16 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
     });
 
     if (payment.paymentDetail == ADDITIONAL) {
-        remindingAdditional = selectedStudent != null &&
-                selectedStudent.payments!
-                    .where((e) => e.paymentDetail == ADDITIONAL)
-                    .isNotEmpty
-            ? selectedStudent.additionalQuantity -
-                selectedStudent.payments
-                    .where((e) => e.paymentDetail == ADDITIONAL)
-                    .map((e) => e.amount)
-                    .reduce((a, b) => a + b)
-            : 0.0;
-      if (remindingAdditional <= 0) {
-        remindingAdditional = 0.0;
-        selectedStudent!.additionalNumber -= payment.quantity;
-        selectedStudent!.additionalQuantity = 0.0;
-      } else {
-        setState(() {
-          remindingAdditional = remindingAdditional - payment.amount;
-        });
-        if(remindingAdditional <=0 ){
-          selectedStudent!.additionalNumber -= payment.quantity;
-          selectedStudent!.additionalQuantity =0;
-        }
-      }
+      // Reverse the persons and cost for this payment
+      selectedStudent!.additionalNumber -= payment.quantity;
+      double costForPersons = payment.quantity * selectedEvent!.pricing.additionalCost;
+      selectedStudent!.additionalQuantity -= costForPersons;
+
+      selectedStudent!.additionalBalance = GraduationPaymentHelper.recalculateBalanceAfterDelete(
+        remainingPayments: selectedStudent!.payments,
+        remainingAdditionalNumber: selectedStudent!.additionalNumber,
+        additionalCostPerPerson: selectedEvent!.pricing.additionalCost,
+      );
 
       if (selectedStudent.additionalQuantity < 0) {
         log('(Alert) -- additional quantity is less than 0 for student ${selectedStudent.id}');
@@ -703,22 +605,20 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
 
     EventService()
         .saveStudent(selectedStudent, token, payment.paymentDetail == ADDITIONAL)
-        .then((value) => {
-              if (value.id != -1)
-                {
+        .then((value) {
+              if (value.id != -1) {
                   setState(() {
                     paymentsHistory.remove(payment);
-                  }),
+                  });
                   Flushbar(
                     flushbarPosition: FlushbarPosition.TOP,
                     title: 'Éxito',
                     message: 'Pago del estudiante eliminado correctamente',
                     duration: Duration(seconds: 3),
                     backgroundColor: Colors.green,
-                  ).show(context)
+                  ).show(context);
                 }
-              else
-                {
+              else {
                   Flushbar(
                     flushbarPosition: FlushbarPosition.TOP,
                     title: 'Error',
@@ -726,10 +626,10 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                         'Error al eliminar el pago, intente de nuevo o contacte a soporte',
                     duration: Duration(seconds: 3),
                     backgroundColor: Colors.red,
-                  ).show(context)
+                  ).show(context);
                 }
             })
-        .catchError((error) => {
+        .catchError((error) {
               Flushbar(
                 flushbarPosition: FlushbarPosition.TOP,
                 title: 'Error',
@@ -737,7 +637,7 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                     'Error al eliminar el pago, intente de nuevo o contacte a soporte',
                 duration: Duration(seconds: 3),
                 backgroundColor: Colors.red,
-              ).show(context)
+              ).show(context);
             });
   }
 
@@ -1155,19 +1055,19 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                               Expanded(
                                 // flex: 1,
                                 child: Text(
-                                    'Total pagado: \$${(selectedStudent != null && selectedStudent!.payments.where((e) => e.paymentDetail == 'platillo' || e.paymentDetail == 'paquete').isNotEmpty ? selectedStudent.payments.where((e) => e.paymentDetail == 'platillo' || e.paymentDetail == 'paquete').map((e) => e.amount).reduce((a, b) => a + b) : 0)}',
+                                    'Total pagado: \$${_fc(selectedStudent != null && selectedStudent!.payments.where((e) => e.paymentDetail == 'platillo' || e.paymentDetail == 'paquete').isNotEmpty ? selectedStudent.payments.where((e) => e.paymentDetail == 'platillo' || e.paymentDetail == 'paquete').map((e) => e.amount).reduce((a, b) => a + b) : 0)}',
                                     style: TextStyle(
                                         fontSize: 14.0, color: Colors.black)),
                               ),
                               SizedBox(width: 25),
                               Expanded(
                                 child: Text(
-                                    'Restante: \$${(selectedStudent != null && selectedStudent.payments.where((e) => e.paymentDetail == 'platillo' || e.paymentDetail == 'paquete').isNotEmpty ? selectedStudent!.totalCost - selectedStudent.payments.where((e) => e.paymentDetail == 'platillo' || e.paymentDetail == 'paquete').map((e) => e.amount).reduce((a, b) => a + b) : 0)}'),
+                                    'Restante: \$${_fc(selectedStudent != null && selectedStudent.payments.where((e) => e.paymentDetail == 'platillo' || e.paymentDetail == 'paquete').isNotEmpty ? selectedStudent!.totalCost - selectedStudent.payments.where((e) => e.paymentDetail == 'platillo' || e.paymentDetail == 'paquete').map((e) => e.amount).reduce((a, b) => a + b) : 0)}'),
                               ),
                               SizedBox(width: 20),
                               Expanded(
                                 child: Text(
-                                    'Total: \$${(selectedStudent != null ? selectedStudent!.totalCost : 0)}',
+                                    'Total: \$${_fc(selectedStudent != null ? selectedStudent!.totalCost : 0)}',
                                     style: TextStyle(
                                         fontSize: 14.0, color: Colors.black)),
                               ),
@@ -1195,7 +1095,7 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                                 // Expanded(child:  Text('')),
                                 Expanded(
                                   child: Text(
-                                      'Total abonado adicionales: \$${(selectedStudent != null && selectedStudent!.payments.isNotEmpty && selectedStudent!.payments.where((e) => e.paymentDetail == ADDITIONAL).isNotEmpty ? selectedStudent.payments.where((e) => e.paymentDetail == ADDITIONAL).map((e) => e.amount)?.reduce((a, b) => a + b) : 0)}',
+                                      'Total abonado adicionales: \$${_fc(selectedStudent != null && selectedStudent!.payments.isNotEmpty && selectedStudent!.payments.where((e) => e.paymentDetail == ADDITIONAL).isNotEmpty ? selectedStudent.payments.where((e) => e.paymentDetail == ADDITIONAL).map((e) => e.amount)?.reduce((a, b) => a + b) : 0)}',
                                       style: TextStyle(
                                           fontSize: 14.0,
                                           color: Colors.black,
@@ -1204,7 +1104,7 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                                 SizedBox(width: 25),
                                 Expanded(
                                   child: Text(
-                                      'Restante: \$${(selectedStudent != null && selectedStudent.payments.isNotEmpty && selectedStudent!.payments.where((e) => e.paymentDetail == ADDITIONAL).isNotEmpty ? remindingAdditional : 0)}',
+                                      'Restante: \$${_fc(selectedStudent != null && selectedStudent.additionalBalance > 0 ? 0 : (selectedStudent != null && selectedStudent.payments.isNotEmpty && selectedStudent!.payments.where((e) => e.paymentDetail == ADDITIONAL).isNotEmpty ? remindingAdditional : 0))}',
                                       style: TextStyle(
                                           fontSize: 14.0,
                                           color: Colors.black,
@@ -1213,7 +1113,7 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                                 SizedBox(width: 20),
                                 Expanded(
                                   child: Text(
-                                      'Total Adicionales: \$${(selectedStudent != null ? selectedStudent!.additionalQuantity : 0)}',
+                                      'Total Adicionales: \$${_fc(selectedStudent != null ? selectedStudent!.additionalQuantity : 0)}',
                                       style: TextStyle(
                                           fontSize: 14.0,
                                           color: Colors.black,
@@ -1226,6 +1126,14 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                                         style: TextStyle(
                                             fontSize: 14.0,
                                             color: Colors.black,
+                                            fontWeight: FontWeight.bold))),
+                                SizedBox(width: 20),
+                                Expanded(
+                                    child: Text(
+                                        'Saldo a favor: \$${_fc(selectedStudent != null ? selectedStudent!.additionalBalance : 0)}',
+                                        style: TextStyle(
+                                            fontSize: 14.0,
+                                            color: Colors.blue,
                                             fontWeight: FontWeight.bold))),
                               ])),
                           SizedBox(height: 20),
@@ -1240,8 +1148,7 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                                                 child: TextFormField(
                                                   controller:
                                                       TextEditingController(
-                                                          text: payment.amount
-                                                              .toString()),
+                                                          text: _fc(payment.amount)),
                                                   decoration: InputDecoration(
                                                       labelText:
                                                           'Monto del pago',
@@ -1504,13 +1411,14 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                                         remindingAdditional <= 0.0,
                                     child: Expanded(
                                       child: TextFormField(
-                                        inputFormatters: [
-                                          FilteringTextInputFormatter.digitsOnly
-                                        ],
+                                        inputFormatters: _paymentDetail.text == ADDITIONAL
+                                            ? []
+                                            : [FilteringTextInputFormatter.digitsOnly],
+                                        readOnly: _paymentDetail.text == ADDITIONAL,
                                         validator: (value) => selectedStudent !=
                                                     null &&
                                                 showAQuantityNumberInput &&
-                                                remindingAdditional > 0.0 &&
+                                                _paymentDetail.text != ADDITIONAL &&
                                                 (value != null && value.isEmpty)
                                             ? 'El número de personas es requerido'
                                             : null,
@@ -1518,12 +1426,13 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                                         decoration: InputDecoration(
                                           labelText:
                                               _paymentDetail.text == ADDITIONAL
-                                                  ? 'Personas adicionales'
+                                                  ? 'Personas adicionales (auto)'
                                                   : 'cantidad',
                                           border: OutlineInputBorder(),
                                         ),
                                         onChanged: (value) => {
-                                          if (value.isNotEmpty)
+                                          if (value.isNotEmpty &&
+                                              _paymentDetail.text != ADDITIONAL)
                                             {onQuantityChange(value)}
                                         },
                                       ),
@@ -1561,7 +1470,7 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                                                 title: Text(
                                                     'Confirmar pago por transferencia'),
                                                 content: Text(
-                                                    '¿Recuerde que la cantidad ingresada por transferencia ${_paymentAmount.text} se le cobrará el 16% qué es un total de ${double.tryParse(_paymentAmount.text.replaceAll(',', ''))! * 1.16} ?'),
+                                                    '¿Recuerde que la cantidad ingresada por transferencia ${_paymentAmount.text} se le cobrará el 16% qué es un total de ${_fc(double.tryParse(_paymentAmount.text.replaceAll(',', ''))! * 1.16)} ?'),
                                                 actions: [
                                                   TextButton(
                                                       onPressed: () {
@@ -1618,7 +1527,7 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
                                             return AlertDialog(
                                               title: Text('Confirmar pago'),
                                               content: Text(
-                                                  '¿Está seguro de agregar el pago de ${_paymentDetail.text} ${double.parse(_paymentAmount.text.replaceAll(",", ""))} ?'),
+                                                  '¿Está seguro de agregar el pago de ${_paymentDetail.text} ${_fc(double.parse(_paymentAmount.text.replaceAll(",", "")))} ?'),
                                               actions: [
                                                 TextButton(
                                                     onPressed: () {

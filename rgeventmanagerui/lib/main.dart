@@ -263,7 +263,7 @@ class _EventsHomePageState extends State<EventsHomePage> {
                         ),
                         NavigationRailDestination(
                           icon: Icon(Icons.attach_money),
-                          disabled:  appState.selectedUser != null && appState.selectedUser!.role != 1,
+                          disabled:  true, //appState.selectedUser != null && appState.selectedUser!.role != 1,
                           label: Text('Pagos y gastos'),
                         ),
                         NavigationRailDestination(
@@ -341,6 +341,8 @@ class EventsPage extends StatefulWidget {
 }
 
 class _EventsPage extends State<EventsPage> {
+  static const _brandColor = Color.fromARGB(255, 113, 7, 132);
+
   List<PlutoColumn> columns = [
     PlutoColumn(
       title: 'Tipo de evento',
@@ -377,7 +379,7 @@ class _EventsPage extends State<EventsPage> {
     PlutoColumn(
         title: 'Total',
         field: 'event_total',
-        type: PlutoColumnType.text(),
+        type: PlutoColumnType.currency(symbol: '\$'),
         width: 120),
     PlutoColumn(
       title: 'Estado',
@@ -440,257 +442,68 @@ class _EventsPage extends State<EventsPage> {
 
     return Scaffold(
         appBar: AppBar(
-            title: Text('Sistema RG Eventos - Usuario conectado: ${appState.selectedUser != null ? '${appState.selectedUser!.name} ${appState.selectedUser!.lastname} con rol de ${appState.selectedUser!.role == 1 ? 'admin': (appState.selectedUser!.role == 2 ? 'operativo' : 'solo lectura')}': ''}',
-                style: TextStyle(fontSize: 28.0, color: const Color.fromARGB(255, 113, 7, 132))),
-                automaticallyImplyLeading: false,
+            automaticallyImplyLeading: false,
+            title: Row(
+              children: [
+                Icon(Icons.event_note, color: _brandColor, size: 28),
+                SizedBox(width: 10),
+                Text('RG Eventos',
+                    style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: _brandColor)),
+              ],
+            ),
+            actions: [
+              if (appState.selectedUser != null)
+                Padding(
+                  padding: EdgeInsets.only(right: 16),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 16,
+                        backgroundColor: _brandColor,
+                        child: Text(
+                          '${appState.selectedUser!.name[0]}${appState.selectedUser!.lastname[0]}',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            '${appState.selectedUser!.name} ${appState.selectedUser!.lastname}',
+                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                          ),
+                          Text(
+                            appState.selectedUser!.role == 1 ? 'Admin' : (appState.selectedUser!.role == 2 ? 'Operador' : 'Solo lectura'),
+                            style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+            ],
         ),
         body: FutureBuilder<List<Event>>(
       future: _func,
       builder: (context, snapshot) => snapshot.hasData
-          ? Center(
-              child: Padding(
-                padding: const EdgeInsets.all(10.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Row(
-                      children: [
-                        Text('Exportar a PDF',
-                            style: Theme.of(context).textTheme.bodyLarge),
-                        IconButton(
-                          icon: Icon(Icons.picture_as_pdf),
-                          onPressed: () {
-                             var path = Directory.current.path;
-
-                             try {
-                                final file = DirectoryPicker()
-                                  ..title = 'Select a directory';
-
-                                final result = file.getDirectory();
-                                if (result != null) {
-                                  print(result.path);
-                                  path = result.path;
-                                }
-                              } catch (e) {
-                                log("error selecting directory:  ${e.toString()}");
-                              }
-                              
-                              try {
-                                EventService().DownloadEventList(appState.appToken, [], path)
-                                    .then((value) {
-                                  Flushbar(
-                                    flushbarPosition: FlushbarPosition.TOP,
-                                    title: 'Éxito',
-                                    message: 'Archivo descargado en $path',
-                                    duration: Duration(seconds: 3),
-                                    backgroundColor: Colors.green,
-                                  ).show(context);
-                                }, onError: (e) {
-                                  Flushbar(
-                                    flushbarPosition: FlushbarPosition.TOP,
-                                    title: 'Error',
-                                    message: 'Error al descargar archivo',
-                                    duration: Duration(seconds: 3),
-                                    backgroundColor: Colors.red,
-                                  ).show(context);
-                                });
-                              } catch (e) {
-                                Flushbar(
-                                  flushbarPosition: FlushbarPosition.TOP,
-                                  title: 'Error',
-                                  message: 'Error al descargar archivo',
-                                  duration: Duration(seconds: 3),
-                                  backgroundColor: Colors.red,
-                                ).show(context);
-                              }
-                          },
-                        ),
-                        SizedBox(width: 20),
-                        Text('Agregar evento',
-                            style: Theme.of(context).textTheme.bodyLarge),
-                        IconButton(
-                          icon: Icon(Icons.add_box),
-                          onPressed: () {
-                            appState.clearSelectedEvent();
-                            Navigator.of(context).push(MaterialPageRoute(
-                                builder: (context) => AddEventPopup()));
-                          },
-                        ),
-                        SizedBox(width: 20),
-                        Visibility(
-                            visible: (appState.selectedEvent != null),
-                            child: Container(
-                              child: Row(
-                                children: [
-                                  Text( (appState.selectedEvent != null &&
-                                appState.selectedEvent!.eventDate
-                                    .isAfter(DateTime.now())) ?'Editar evento' : 'Ver evento',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyLarge),
-                                  IconButton(
-                                    icon: appState.selectedEvent != null && appState.selectedEvent!.eventDate.isAfter(DateTime.now())
-                                    ? Icon(Icons.edit) : Icon(Icons.remove_red_eye),
-                                    onPressed: () {
-                                      if (appState.selectedEvent != null) {
-                                        //TODO: add condition to check if event is in the future
-                                        if(appState.selectedEvent!.eventDate.isAfter(DateTime.now())){
-                                          Navigator.of(context).push(MaterialPageRoute(
-                                              builder: (context) => AddEventPopup()));
-                                        } else {
-                                          Navigator.of(context).push(MaterialPageRoute(
-                                              builder: (context) => AddEventPopup()));
-                                        }
-                                        Navigator.of(context).push(
-                                            MaterialPageRoute(
-                                                builder: (context) =>
-                                                    AddEventPopup()));
-                                      } else {
-                                        Flushbar(
-                                          flushbarPosition:
-                                              FlushbarPosition.TOP,
-                                          title: 'Error',
-                                          message:
-                                              'Selecciona un evento para editar',
-                                          duration: Duration(seconds: 3),
-                                          backgroundColor: Colors.red,
-                                        ).show(context);
-                                      }
-                                    },
-                                  ),
-                                  SizedBox(width: 20),
-                                  Visibility(
-                                    visible: appState.selectedEvent != null &&
-                                        appState.selectedEvent!.eventType.id !=
-                                            3 &&
-                                        appState.selectedEvent!.eventDate
-                                            .isAfter(DateTime.now()),
-                                    child: Text('Administrar Servicios adicionales',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodyLarge),
-                                  ),
-                                  Visibility(
-                                    visible: appState.selectedEvent != null &&
-                                        appState.selectedEvent!.eventType.id !=
-                                            3 &&
-                                        appState.selectedEvent!.eventDate
-                                            .isAfter(DateTime.now()),
-                                    child: IconButton(
-                                      onPressed: () {
-                                        if (appState.selectedEvent != null) {
-                                          Navigator.of(context).push(
-                                              MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      AdditionalServices()));
-                                        } else {
-                                          Flushbar(
-                                            flushbarPosition:
-                                                FlushbarPosition.TOP,
-                                            title: 'Error',
-                                            message:
-                                                'Selecciona un evento para agregar servicios adicionales',
-                                            duration: Duration(seconds: 3),
-                                            backgroundColor: Colors.red,
-                                          ).show(context);
-                                        }
-                                      },
-                                      icon: Icon(Icons.room_service_sharp),
-                                    ),
-                                  ),
-                                  SizedBox(width: 20),
-                                  Visibility(
-                                      visible: appState.selectedEvent != null && appState.selectedEvent!.eventDate.isAfter(DateTime.now()),
-                                      child: Container(
-                                          child: Row(
-                                        children: [
-                                          Text(
-                                              appState.selectedEvent != null &&
-                                                      appState.selectedEvent!
-                                                              .eventType.id ==
-                                                          3
-                                                  ? 'Administrar graduados'
-                                                  : 'Cobro clientes',
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .bodyLarge),
-                                          IconButton(
-                                            onPressed: () {
-                                              if (appState.selectedEvent !=
-                                                      null &&
-                                                  appState.selectedEvent!
-                                                          .eventType.id ==
-                                                      3) {
-                                                Navigator.of(context).push(
-                                                  MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        GraduationListPage(),
-                                                  ),
-                                                );
-                                              } else {
-                                                Navigator.of(context).push(
-                                                  MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        EventPaymentPage(),
-                                                  ),
-                                                );
-                                              }
-                                            },
-                                            icon: Icon(appState.selectedEvent !=
-                                                        null &&
-                                                    appState.selectedEvent!
-                                                            .eventType.id ==
-                                                        3
-                                                ? Icons.school_outlined
-                                                : Icons.payment_rounded),
-                                          )
-                                        ],
-                                      ))),
-                                    SizedBox(width: 20),
-                                   Text('Nómina'),
-                                  IconButton(
-                                    icon: Icon(Icons.monetization_on),
-                                    onPressed: () {
-                                      Navigator.of(context).push(
-                                          MaterialPageRoute(
-                                              builder: (context) =>
-                                                  AddEmployeePaymentPage()));
-
-                                    },
-                                  ), 
-                                  SizedBox(width: 20),
-                                  Text('pagos del evento',
-                                      style: Theme.of(context).textTheme.bodyLarge),
-                                  IconButton(
-                                    
-                                    icon: Icon(Icons.payment_rounded),
-                                    onPressed: () {
-                                      Navigator.of(context).push(
-                                          MaterialPageRoute(
-                                              builder: (context) =>
-                                                  ExpensesEventPage()));
-                                    },
-                                  ),
-                                ],
-                              ),
-                            )),
-                            
-                      ],
-                    ),
-                    SizedBox(height: 30),
-                    Row(
-                      children: [
-                        Text('Total de eventos: ${snapshot.data!.length}',
-                            style: Theme.of(context).textTheme.bodyMedium),
-                        SizedBox(width: 30),
-                        Text(
-                            'Evento seleccionado: ${appState.selectedEvent != null ? appState.selectedEvent!.name : 'Ninguno'}',
-                            style: Theme.of(context).textTheme.bodyMedium),
-                      ],
-                    ),
-                    SizedBox(height: 20),
-                    Expanded(
-                        child: PlutoGrid(
+          ? Column(
+              children: [
+                // Header section
+                _buildHeaderSection(context, appState, snapshot.data!),
+                Divider(height: 1),
+                // Grid
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.all(16),
+                    child: PlutoGrid(
                       mode: mode,
                       columns: columns,
                       rows: snapshot.data!
@@ -748,13 +561,257 @@ class _EventsPage extends State<EventsPage> {
                                   as PlutoFilterType;
                             }),
                       ),
-                    )),
-                  ],
+                    ),
+                  ),
                 ),
-              ),
+                // Footer
+                _buildFooter(appState, snapshot.data!),
+              ],
             )
           : const Center(child: CircularProgressIndicator()),
     ));
+  }
+
+  Widget _buildHeaderSection(
+      BuildContext context, MyAppState appState, List<Event> events) {
+    return Container(
+      color: Colors.grey.shade50,
+      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Eventos',
+            style: TextStyle(
+                fontSize: 26, fontWeight: FontWeight.bold, color: _brandColor),
+          ),
+          SizedBox(height: 16),
+          // Primary actions row
+          Wrap(
+            spacing: 12,
+            runSpacing: 8,
+            children: [
+              ElevatedButton.icon(
+                onPressed: () {
+                  appState.clearSelectedEvent();
+                  Navigator.of(context).push(MaterialPageRoute(
+                      builder: (context) => AddEventPopup()));
+                },
+                icon: Icon(Icons.add, size: 18),
+                label: Text('Agregar evento'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _brandColor,
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+              ElevatedButton.icon(
+                onPressed: () {
+                  var path = Directory.current.path;
+                  try {
+                    final file = DirectoryPicker()..title = 'Select a directory';
+                    final result = file.getDirectory();
+                    if (result != null) {
+                      path = result.path;
+                    }
+                  } catch (e) {
+                    log("error selecting directory:  ${e.toString()}");
+                  }
+                  try {
+                    EventService()
+                        .DownloadEventList(appState.appToken, [], path)
+                        .then((value) {
+                      Flushbar(
+                        flushbarPosition: FlushbarPosition.TOP,
+                        title: 'Éxito',
+                        message: 'Archivo descargado en $path',
+                        duration: Duration(seconds: 3),
+                        backgroundColor: Colors.green,
+                      ).show(context);
+                    }, onError: (e) {
+                      Flushbar(
+                        flushbarPosition: FlushbarPosition.TOP,
+                        title: 'Error',
+                        message: 'Error al descargar archivo',
+                        duration: Duration(seconds: 3),
+                        backgroundColor: Colors.red,
+                      ).show(context);
+                    });
+                  } catch (e) {
+                    Flushbar(
+                      flushbarPosition: FlushbarPosition.TOP,
+                      title: 'Error',
+                      message: 'Error al descargar archivo',
+                      duration: Duration(seconds: 3),
+                      backgroundColor: Colors.red,
+                    ).show(context);
+                  }
+                },
+                icon: Icon(Icons.picture_as_pdf, size: 18),
+                label: Text('Exportar a PDF'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blueGrey,
+                  foregroundColor: Colors.white,
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+              if (appState.selectedEvent != null) ...[
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).push(MaterialPageRoute(
+                        builder: (context) => AddEventPopup()));
+                  },
+                  icon: Icon(Icons.edit, size: 18),
+                  label: Text('Editar evento'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange.shade700,
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+                if (appState.selectedEvent!.eventType.id != 3 &&
+                    appState.selectedEvent!.eventDate.isAfter(DateTime.now()))
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).push(MaterialPageRoute(
+                          builder: (context) => AdditionalServices()));
+                    },
+                    icon: Icon(Icons.room_service_sharp, size: 18),
+                    label: Text('Servicios adicionales'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.teal,
+                      foregroundColor: Colors.white,
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    if (appState.selectedEvent!.eventType.id == 3) {
+                      Navigator.of(context).push(MaterialPageRoute(
+                          builder: (context) => GraduationListPage()));
+                    } else {
+                      Navigator.of(context).push(MaterialPageRoute(
+                          builder: (context) => EventPaymentPage()));
+                    }
+                  },
+                  icon: Icon(
+                      appState.selectedEvent!.eventType.id == 3
+                          ? Icons.school_outlined
+                          : Icons.payment_rounded,
+                      size: 18),
+                  label: Text(appState.selectedEvent!.eventType.id == 3
+                      ? 'Administrar graduados'
+                      : 'Cobro clientes'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green.shade700,
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).push(MaterialPageRoute(
+                        builder: (context) => AddEmployeePaymentPage()));
+                  },
+                  icon: Icon(Icons.monetization_on, size: 18),
+                  label: Text('Nómina'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.indigo,
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).push(MaterialPageRoute(
+                        builder: (context) => ExpensesEventPage()));
+                  },
+                  icon: Icon(Icons.payment_rounded, size: 18),
+                  label: Text('Pagos del evento'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.brown,
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          SizedBox(height: 12),
+          Row(
+            children: [
+              Chip(
+                avatar: Icon(Icons.event, size: 18),
+                label: Text('Total eventos: ${events.length}'),
+              ),
+              SizedBox(width: 12),
+              Chip(
+                avatar: Icon(Icons.check_circle_outline, size: 18),
+                label: Text(appState.selectedEvent != null
+                    ? 'Seleccionado: ${appState.selectedEvent!.name}'
+                    : 'Ninguno seleccionado'),
+                backgroundColor: appState.selectedEvent != null
+                    ? _brandColor.withOpacity(0.1)
+                    : Colors.grey.shade200,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFooter(MyAppState appState, List<Event> events) {
+    final activeCount =
+        events.where((e) => e.eventDate.isAfter(DateTime.now())).length;
+    final closedCount = events.length - activeCount;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        border: Border(top: BorderSide(color: Colors.grey.shade300)),
+      ),
+      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'En progreso: $activeCount  |  Cerrados: $closedCount  |  Total: ${events.length}',
+            style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
+          ),
+          if (appState.selectedEvent != null)
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              decoration: BoxDecoration(
+                color: _brandColor,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                'Evento: ${appState.selectedEvent!.name}',
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }
 

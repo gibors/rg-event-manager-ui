@@ -21,6 +21,13 @@ class _GraduationListPageState extends State<GraduationListPage> {
 
   List<PlutoColumn> columns = [
     PlutoColumn(
+      title: 'Id',
+      field: 'student_id',
+      width: 0,
+      hide: true,
+      type: PlutoColumnType.number(),
+    ),
+    PlutoColumn(
       title: 'Nombre',
       field: 'student_name',
       width: 200,
@@ -90,8 +97,9 @@ class _GraduationListPageState extends State<GraduationListPage> {
     PlutoColumn(
       title: 'Pagado Adicional',
       field: 'additional_cost',
-      type: PlutoColumnType.text(),
+      type: PlutoColumnType.currency(symbol: '\$'),
     ),
+    PlutoColumn(title: 'comentarios', field: 'comments', type: PlutoColumnType.text())
   ];
 
   List<PlutoRow> rows = [];
@@ -576,6 +584,7 @@ class _GraduationListPageState extends State<GraduationListPage> {
                         columns: columns,
                         rows: snapshot.data!
                             .map((e) => PlutoRow(cells: {
+                                  'student_id': PlutoCell(value: e.id),
                                   'student_name': PlutoCell(value: e.name),
                                   'student_lastname':
                                       PlutoCell(value: e.lastName),
@@ -657,6 +666,7 @@ class _GraduationListPageState extends State<GraduationListPage> {
                                           : 'NA'),
                                   'additional_cost':
                                       PlutoCell(value: e.additionalQuantity),
+                                  'comments': PlutoCell(value: e.comments),
                                 }))
                             .toList(),
                         onChanged: (PlutoGridOnChangedEvent event) {
@@ -666,8 +676,8 @@ class _GraduationListPageState extends State<GraduationListPage> {
                           log('selected student: ${student.row!.cells['student_name']!.value}'),
                           appState.setSelectedStudent(snapshot.data!.firstWhere(
                               (element) =>
-                                  element.name ==
-                                  student.row!.cells['student_name']!.value)),
+                                  element.id ==
+                                  student.row!.cells['student_id']!.value)),
                           appState.selectedStudent!.paid = appState
                                       .selectedStudent!.totalCost -
                                   (appState.selectedStudent!.payments.isNotEmpty
@@ -686,7 +696,7 @@ class _GraduationListPageState extends State<GraduationListPage> {
                               .setSelectingMode(PlutoGridSelectingMode.row);
                           event.stateManager
                               .setSelectingMode(PlutoGridSelectingMode.row);
-                          event.stateManager.setSortOnlyEvent(true);
+                          // event.stateManager.setSortOnlyEvent(true);
                           event.stateManager.setEditing(false);
                         },
                         configuration: PlutoGridConfiguration(
