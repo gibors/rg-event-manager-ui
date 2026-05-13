@@ -139,7 +139,7 @@ class _AddEmployeePage extends State<AddEmployeePage> {
         leading: IconButton(
             onPressed: () => {
                   appState.clearSelectedEmployee(),
-                  appState.setIndex(2),
+                  appState.setIndex(3),
                   Navigator.of(context).pushReplacement(
                       MaterialPageRoute(builder: (context) => EventsHomePage()))
                 },

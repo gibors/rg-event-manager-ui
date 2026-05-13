@@ -22,6 +22,7 @@ class Student {
   bool paid;
   bool cancelled;
   bool committee;
+  double additionalBalance;
   Event? eventInfo;
 
   void setFolio(String folio) {
@@ -54,24 +55,27 @@ class Student {
     required this.paid,
     required this.cancelled,
     this.committee = false,
+    this.additionalBalance = 0.0,
   });
 
   factory Student.fromJson(Map<String, dynamic> json) {
     return Student(
       id: json['id'] ?? -1,
-      name: json['name'],
-      lastName: json['lastName'],
-      age: json['age'],
-      email: json['email'],
-      phone: json['phone'],
-      packageType: json['packageType'],
-      additionalQuantity: json['additionalQuantity'],
-      totalCost: json['totalCost'],
-      eventId: json['eventId'],
-      comments: json['comments'],
-      payments: (json['payments'] as List)
-          .map((payment) => Payment.fromJson(payment))
-          .toList(),
+      name: json['name'] ?? '',
+      lastName: json['lastName'] ?? '',
+      age: json['age'] ?? 0,
+      email: json['email'] ?? '',
+      phone: json['phone'] ?? '',
+      packageType: json['packageType'] ?? '',
+      additionalQuantity: (json['additionalQuantity'] ?? 0).toDouble(),
+      totalCost: (json['totalCost'] ?? 0).toDouble(),
+      eventId: json['eventId'] ?? 0,
+      comments: json['comments'] ?? '',
+      payments: json['payments'] != null
+          ? (json['payments'] as List)
+              .map((payment) => Payment.fromJson(payment))
+              .toList()
+          : [],
       folio: json['folio'] ?? '',
       dishCount: json['dishCount'] ?? 0,
       additionalNumber: json['additionalNumber'] ?? 0,
@@ -81,6 +85,7 @@ class Student {
       paid: json['paid'] ?? false,
       cancelled: json['cancelled'] ?? false,
       committee: json['committee'] ?? false,
+      additionalBalance: json['additionalBalance'] ?? 0.0,
     );
   }
 
@@ -106,6 +111,7 @@ class Student {
         'paid': paid,
         'cancelled': cancelled,
         'committee': committee,
+        'additionalBalance': additionalBalance == null ? 0.0 : additionalBalance,
       };
 }
 

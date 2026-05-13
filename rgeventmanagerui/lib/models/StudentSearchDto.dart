@@ -25,12 +25,20 @@ class StudentSearchDto {
       };
 
     factory StudentSearchDto.fromJson(Map<String, dynamic> json) {
+      // Support both nested format {student: {...}, eventName: ...}
+      // and flat format where the student fields are at the top level
+      final bool isNested = json.containsKey('student') && json['student'] is Map;
+
       return StudentSearchDto(
-        student: Student.fromJson(json['student']),
-        eventId: json['eventId'],
-        eventName: json['eventName'],
-        school: json['school'],
-        eventDate: DateTime.parse(json['eventDate']),
+        student: isNested
+            ? Student.fromJson(json['student'])
+            : Student.fromJson(json),
+        eventId: json['eventId'] ?? 0,
+        eventName: json['eventName'] ?? '',
+        school: json['school'] ?? '',
+        eventDate: json['eventDate'] != null
+            ? DateTime.parse(json['eventDate'])
+            : DateTime.now(),
       );
     }
 }

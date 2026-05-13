@@ -1382,8 +1382,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                   height: 50.0,
                 ),
                 Visibility(
-                  visible: ((selectedEvent != null && 
-                      selectedEvent!.eventDate.isAfter(DateTime.now())) || !isEditMode),
+                  visible: (selectedEvent != null ), // selectedEvent!.eventDate.isAfter(DateTime.now())) ||
                   child: Container(
                     child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -1397,11 +1396,8 @@ class _AddEventPopup extends State<AddEventPopup> {
                               fixedSize:
                                   WidgetStateProperty.all<Size>(Size(180, 80)),
                             ),
-                            onPressed: () => selectedEvent != null &&
-                                    !selectedEvent!.eventDate
-                                        .isAfter(DateTime.now())
-                                ? null
-                                : {
+                            onPressed: () => 
+                                  {
                                     if (_formKey.currentState != null &&
                                         _formKey.currentState!.validate())
                                       {saveEvent()}

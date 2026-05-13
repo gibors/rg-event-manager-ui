@@ -184,7 +184,7 @@ class _AddProviderPage extends State<AddProviderPage> {
           icon: Icon(Icons.arrow_back, color: AppColors.pinkColor),
           onPressed: () {
             setState(() {
-              appState.setIndex(1);
+              appState.setIndex(2);
             });
             Navigator.pushReplacement(
               context,

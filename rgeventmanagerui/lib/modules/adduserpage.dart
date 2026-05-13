@@ -199,7 +199,7 @@ class _AddUserPageState extends State<AddUserPage> {
           icon: Icon(Icons.arrow_back),
           onPressed: (){
             appState.clearSelectedUserToEdit();
-            appState.setIndex(6);
+            appState.setIndex(7);
             Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => EventsHomePage()));
 
           },
