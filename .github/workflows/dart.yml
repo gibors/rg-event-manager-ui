@@ -13,14 +13,14 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Build Flutter Windows Desktop
-      working-directory: ./frontend
+      working-directory: ./rgeventmanagerui
       run: flutter build windows --release
       # Outputs the Release folder containing the .exe and data
 
     - name: Stage Artifacts
       run: |
         mkdir release_staging
-        xcopy frontend\build\windows\x64\runner\Release release_staging\flutter_app\ /E /I
+        xcopy rgeventmanagerui\build\windows\x64\runner\Release release_staging\flutter_app\ /E /I
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
