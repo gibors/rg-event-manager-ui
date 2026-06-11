@@ -111,7 +111,7 @@ class Student {
         'paid': paid,
         'cancelled': cancelled,
         'committee': committee,
-        'additionalBalance': additionalBalance == null ? 0.0 : additionalBalance,
+        'additionalBalance': additionalBalance,
       };
 }
 

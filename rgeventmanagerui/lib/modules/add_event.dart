@@ -1382,7 +1382,7 @@ class _AddEventPopup extends State<AddEventPopup> {
                   height: 50.0,
                 ),
                 Visibility(
-                  visible: (selectedEvent != null ), // selectedEvent!.eventDate.isAfter(DateTime.now())) ||
+                  visible: true, // Always show action row; inner buttons gate themselves on selectedEvent
                   child: Container(
                     child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
