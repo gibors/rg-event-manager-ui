@@ -766,7 +766,7 @@ class _EventsPage extends State<EventsPage> {
                     ? 'Seleccionado: ${appState.selectedEvent!.name}'
                     : 'Ninguno seleccionado'),
                 backgroundColor: appState.selectedEvent != null
-                    ? _brandColor.withOpacity(0.1)
+                    ? _brandColor.withValues(alpha: 0.1)
                     : Colors.grey.shade200,
               ),
             ],

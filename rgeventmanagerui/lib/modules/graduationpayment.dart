@@ -460,7 +460,7 @@ class _GraduationPaymentPageState extends State<GraduationPaymentPage> {
         selectedStudent.payments.add(payment);
 
         var student =
-            BuildStudentObject(quantityNumber!, additionalPaymentCost.toDouble());
+            BuildStudentObject(quantityNumber, additionalPaymentCost.toDouble());
 
         EventService().saveStudent(student, token, payment.paymentDetail == ADDITIONAL).then((studentResponse) {
           if (studentResponse.id != -1) {

@@ -325,7 +325,7 @@ class _EmployeesViewState extends State<EmployeesView> {
                     ? 'Seleccionado: ${SelectedEmployee!.name} ${SelectedEmployee!.firstSurname}'
                     : 'Ninguno seleccionado'),
                 backgroundColor: SelectedEmployee != null
-                    ? _brandColor.withOpacity(0.1)
+                    ? _brandColor.withValues(alpha: 0.1)
                     : Colors.grey.shade200,
               ),
             ],

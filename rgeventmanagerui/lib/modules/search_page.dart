@@ -300,7 +300,7 @@ class _SearchPageState extends State<SearchPage> {
         return Container(
           decoration: BoxDecoration(
             color: isSelected
-                ? _brandColor.withOpacity(0.08)
+                ? _brandColor.withValues(alpha: 0.08)
                 : (index % 2 == 0 ? Colors.white : Colors.grey.shade50),
             border: Border(
               left: isSelected
@@ -311,7 +311,7 @@ class _SearchPageState extends State<SearchPage> {
           ),
           child: ListTile(
             leading: CircleAvatar(
-              backgroundColor: _brandColor.withOpacity(0.1),
+              backgroundColor: _brandColor.withValues(alpha: 0.1),
               child: Text(
                 student.student.name.isNotEmpty
                     ? student.student.name[0].toUpperCase()

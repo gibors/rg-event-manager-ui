@@ -284,7 +284,7 @@ class _ProviderListPageState extends State<ProviderListPage> {
                     ? 'Seleccionado: ${selectedSupplier!.name} ${selectedSupplier!.lastName}'
                     : 'Ninguno seleccionado'),
                 backgroundColor: selectedSupplier != null
-                    ? _brandColor.withOpacity(0.1)
+                    ? _brandColor.withValues(alpha: 0.1)
                     : Colors.grey.shade200,
               ),
             ],

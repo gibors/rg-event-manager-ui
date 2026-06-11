@@ -132,7 +132,7 @@ class _LoginState extends State<Login> {
                     hintText: ' Ingresa tu usuario',
                     hintStyle: TextStyle(
                     fontWeight: FontWeight.w400,
-                    color: AppColors.blueDarkColor.withOpacity(0.5),
+                    color: AppColors.blueDarkColor.withValues(alpha: 0.5),
                     fontSize: 12.0,
                     ),
                   ),
@@ -175,7 +175,7 @@ class _LoginState extends State<Login> {
                     hintText: 'Ingresa tu contraseña',
                     hintStyle: TextStyle(
                     fontWeight: FontWeight.w400,
-                    color: AppColors.blueDarkColor.withOpacity(0.5),
+                    color: AppColors.blueDarkColor.withValues(alpha: 0.5),
                     fontSize: 12.0,
                     ),
                   ),

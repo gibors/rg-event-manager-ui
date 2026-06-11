@@ -281,7 +281,7 @@ class _UserListPageState extends State<UserListPage> {
                     ? 'Seleccionado: ${selectedUser!.name} ${selectedUser!.lastname}'
                     : 'Ninguno seleccionado'),
                 backgroundColor: selectedUser != null
-                    ? _brandColor.withOpacity(0.1)
+                    ? _brandColor.withValues(alpha: 0.1)
                     : Colors.grey.shade200,
               ),
             ],
